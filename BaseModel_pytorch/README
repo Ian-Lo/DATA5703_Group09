@@ -1,1 +1,13 @@
-# We could put a description about how to get started here. This is just a test by Anders. 
+REQUIREMENTS
+
+Python 3.8
+
+numpy
+pandas
+matplotlib
+jsonlines
+pillow (PIL)
+h5py
+pytorch
+torchvision
+tdqm

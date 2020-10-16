@@ -5,7 +5,8 @@ import jsonlines
 annotations = jsonlines.open('/Users/andersborges/Downloads/pubtabnet/PubTabNet_2.0.0.jsonl', 'r')
 
 # randomly select 20k indices
-rng = np.random.default_rng()
+rng = np.random.default_rng(seed = 291)
+
 indices = np.random.choice(np.array(range(500000)), size=20000, replace=False)
 
 dev_indices = indices[0:10000]

@@ -66,13 +66,18 @@ cell_content_attention_size = 50
 decoder_cell_content = DecoderCellContent(cell_content_token2integer, embedding_size, encoder_size, structural_hidden_size, cell_content_hidden_size, cell_content_attention_size)
 decoder_cell_content_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, decoder_cell_content.parameters()))
 
+# set up training variables
+epochs = 5
+
+
 t1_start = perf_counter()
 
-for j in range(5):
+# what are we looping over? if j is a dummy variable, rename to "_"
+for epoch in range(epochs):
 
     encoded_features_map = encoder.forward(features_map)
 
-    predictions, loss_s, storage = decoder_structural.forward(encoded_features_map, structural_tokens)
+    predictions, loss_s, storage = decoder_structural.forward(encoded_features_map, structural_tokens, train = True)
 
     ### PROCESSING STORAGE ###
     list1 = []

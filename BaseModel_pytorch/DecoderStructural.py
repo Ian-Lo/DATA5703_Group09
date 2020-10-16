@@ -70,7 +70,7 @@ class DecoderStructural(torch.nn.Module):
 
         return prediction, structural_hidden_state
 
-    def forward(self, encoded_features_map, structural_target):
+    def forward(self, encoded_features_map, structural_target, train = False):
 
         # prepare to collect all predictions
         num_timesteps = structural_target.size()[-1]
@@ -79,6 +79,7 @@ class DecoderStructural(torch.nn.Module):
         predictions = torch.from_numpy(predictions)
 
         # TODO: implement more efficiently
+        # create storage for hidden states of structural decoder
         storage = np.zeros((num_timesteps, 1, batch_size, self.hidden_size), dtype=np.float32)
         storage = torch.from_numpy(storage)
 
@@ -96,7 +97,11 @@ class DecoderStructural(torch.nn.Module):
             predictions[t] = prediction
 
             # teacher forcing
-            structural_input = structural_target[:, t]
+            if train == True:
+                structural_input = structural_target[:, t]
+            # inference
+            if train == False:
+                structural_input =
 
             # compute loss
             loss += self.loss_criterion(prediction, structural_input)
@@ -105,5 +110,3 @@ class DecoderStructural(torch.nn.Module):
             storage[t] = structural_hidden_state
 
         return predictions, loss, storage
-
-

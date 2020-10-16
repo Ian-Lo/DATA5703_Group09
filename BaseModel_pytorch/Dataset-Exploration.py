@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 
 # open the annotations file
-annotations_filename = Utils.create_abs_path('pubtabnet/PubTabNet_2.0.0.jsonl')
+annotations_filename = Utils.create_abs_path('PubTabNet_2.0.0.jsonl')
 annotations = jsonlines.open(annotations_filename, 'r')
 
 # create a descriptions file

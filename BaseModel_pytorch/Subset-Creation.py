@@ -70,23 +70,25 @@ idx_example = 0
 idx_chunk = 0
 
 # open the annotations file
-annotations_filename = Utils.create_abs_path('pubtabnet/PubTabNet_2.0.0.jsonl')
+annotations_filename = create_abs_path('PubTabNet_2.0.0.jsonl')
 annotations = jsonlines.open(annotations_filename, 'r')
 
 # create the metadata file
-metadata_filename = Utils.create_abs_path('Dataset/metadata.jsonl')
+metadata_filename = create_abs_path('Dataset/metadata.jsonl')
 metadata = jsonlines.open(metadata_filename, 'w')
 
 # imgids of examples to use for the creation of the subset
 # criteria are explored in Subset_Criteria_Analysis.py
-subset_imgids = np.load('SubsetCriteria/subset_imgids.npy')
+subset_imgids = np.load('SubsetCriteria/subset-imgids.npy')
+dev_imgids = np.load('SubsetCriteria/dev-imgids.npy')
+test_imgids = np.load('SubsetCriteria/test-imgids.npy')
 
 for annotation in annotations:
 
     imgid = annotation['imgid']
 
     # only process imgids fulfilling certain criteria
-    if imgid in subset_imgids:
+    if (imgid in subset_imgids) & (imgid not in dev_imgids) & (imgid not in test_imgids):
 
         # check if we need to create new H5DF storages
         if idx_example % storage_size == 0:
@@ -102,7 +104,7 @@ for annotation in annotations:
             suffix = '{:0>2}'.format(suffix)
 
             # create new HDF5 storage
-            storage_path = Utils.create_abs_path('Dataset/dataset_' + suffix + '.hdf5')
+            storage_path = create_abs_path('Dataset/dataset_' + suffix + '.hdf5')
             storage = h5py.File(storage_path, "w")
 
             data_features_maps = storage.create_dataset('features maps',
@@ -134,7 +136,7 @@ for annotation in annotations:
 
         # retrieve the image
         filename = annotation['filename']
-        image_filename = Utils.create_abs_path('pubtabnet/train/' + filename)
+        image_filename = create_abs_path('train/' + filename)
         image = PIL.Image.open(image_filename)
 
         # compute index within storage

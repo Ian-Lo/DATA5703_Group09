@@ -7,7 +7,7 @@ annotations_path = Utils.create_abs_path('PubTabNet_2.0.0.jsonl')
 annotations = jsonlines.open(annotations_path, 'r')
 
 # randomly select 20k indices
-rng = np.random.default_rng(seed=291)
+rng = np.random.seed(291)
 
 indices = np.random.choice(np.array(range(500000)), size=20000, replace=False)
 

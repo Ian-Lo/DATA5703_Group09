@@ -1,11 +1,13 @@
 import numpy as np
 import jsonlines
+import Utils
 
 # open the annotations
-annotations = jsonlines.open('/Users/andersborges/Downloads/pubtabnet/PubTabNet_2.0.0.jsonl', 'r')
+annotations_path = Utils.create_abs_path('PubTabNet_2.0.0.jsonl')
+annotations = jsonlines.open(annotations_path, 'r')
 
 # randomly select 20k indices
-rng = np.random.default_rng(seed = 291)
+rng = np.random.default_rng(seed=291)
 
 indices = np.random.choice(np.array(range(500000)), size=20000, replace=False)
 

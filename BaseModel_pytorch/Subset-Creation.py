@@ -19,15 +19,15 @@ cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content
 
 # HDF5 storage
 # number of examples in each HDF5 file
-storage_size = 100
+storage_size = 1000
 # batch size for the encoder
 # and all other processing steps
 # choose a divisor of storage_size
-chunk_size = 10
+chunk_size = 50
 
 # total number of examples to process and store
 # it needs to be a multiple of the storage size
-num_examples = 200
+num_examples = 100000
 
 # note: these numbers are a result of the way the images
 # are preprocessed in the CNN encoder (e.g. 512 is determined by ResNet-18)

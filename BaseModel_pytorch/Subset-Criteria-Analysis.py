@@ -9,7 +9,7 @@ descriptions = jsonlines.open('Statistics/descriptions.jsonl', 'r')
 # only tables fitting these criteria will be counted
 num_structural_tokens_criterion = 200
 num_cells_criterion = 30
-max_num_cell_content_tokens_criterion = 50
+max_num_cell_content_tokens_criterion = 100
 
 count = 0
 max_num_structural_tokens = 0
@@ -65,6 +65,3 @@ print('Number of Examples in the Subset: {}'.format(count))
 if len(imgids) != len(set(imgids)):
     print('Duplicated ImageIds!!!')
     assert 0
-
-
-

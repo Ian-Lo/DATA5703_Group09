@@ -37,12 +37,12 @@ w_fm = 512
 
 # note: these numbers are the *actual* criteria found in SubsetCriteria/subset_analysis.txt
 # max length of structural tokens
-w_st_tks = 154
+w_st_tks = 160
 # we add 1 to account for the future addition of the '<end>' token
 w_st_tks += 1
 # max shape of cells content tokens
 h_cc_tks = 30
-w_cc_tks = 50
+w_cc_tks = 100
 # we add 1 to account for the future addition of the '<end>' token
 w_cc_tks += 1
 
@@ -70,11 +70,11 @@ idx_example = 0
 idx_chunk = 0
 
 # open the annotations file
-annotations_filename = create_abs_path('PubTabNet_2.0.0.jsonl')
+annotations_filename = Utils.create_abs_path('PubTabNet_2.0.0.jsonl')
 annotations = jsonlines.open(annotations_filename, 'r')
 
 # create the metadata file
-metadata_filename = create_abs_path('Dataset/metadata.jsonl')
+metadata_filename = Utils.create_abs_path('Dataset/metadata.jsonl')
 metadata = jsonlines.open(metadata_filename, 'w')
 
 # imgids of examples to use for the creation of the subset
@@ -104,7 +104,7 @@ for annotation in annotations:
             suffix = '{:0>2}'.format(suffix)
 
             # create new HDF5 storage
-            storage_path = create_abs_path('Dataset/dataset_' + suffix + '.hdf5')
+            storage_path = Utils.create_abs_path('Dataset/dataset_' + suffix + '.hdf5')
             storage = h5py.File(storage_path, "w")
 
             data_features_maps = storage.create_dataset('features maps',
@@ -136,7 +136,7 @@ for annotation in annotations:
 
         # retrieve the image
         filename = annotation['filename']
-        image_filename = create_abs_path('train/' + filename)
+        image_filename = Utils.create_abs_path('train/' + filename)
         image = PIL.Image.open(image_filename)
 
         # compute index within storage

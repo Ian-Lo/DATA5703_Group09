@@ -1,0 +1,10 @@
+INITIAL CRITERIA
+Criterion on the Number of Structural Tokens: 200
+Criterion on the Number of Cells: 30
+Criterion on the Maximum Number of Cell Content Tokens: 100
+
+ANALYSIS
+Number of Examples in the Subset: 121570
+Actual Maximum Number of Structural Tokens: 160
+Actual Maximum Number of Cells: 30
+Actual Maximum of Maximum of Cell Content Tokens: 100

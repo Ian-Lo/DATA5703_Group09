@@ -138,13 +138,13 @@ for key, value in cell_content_tokens_counter.most_common():
 # store to file
 # we use a tab separator as one of the tokens is ','
 # and that causes confusion while parsing the file later on
-with open('Vocabularies/cell_content_token2integer.tsv', 'w') as f:
+with open('Vocabularies/cell_content_token2integer.tsv', 'w', encoding='utf8') as f:
     for key, value in cell_content_token2integer.items():
         f.write('{}\t{}\n'.format(key, value))
 
 # store to file
 # we use a tab separator as one of the tokens is ','
 # and that causes confusion while parsing the file later on
-with open('Vocabularies/cell_content_integer2token.tsv', 'w') as f:
+with open('Vocabularies/cell_content_integer2token.tsv', 'w', encoding='utf8') as f:
     for key, value in cell_content_integer2token.items():
         f.write('{}\t{}\n'.format(key, value))

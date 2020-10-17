@@ -37,7 +37,7 @@ for annotation in annotations:
     idx += 1
 
 dev_imgids = np.array(dev_imgids)
-np.save('SubsetCriteria/dev-imgids.npy', dev_imgids)
+np.save('SubsetCriteria/dev_imgids.npy', dev_imgids)
 
 test_imgids = np.array(test_imgids)
-np.save('SubsetCriteria/test-imgids.npy', test_imgids)
+np.save('SubsetCriteria/test_imgids.npy', test_imgids)

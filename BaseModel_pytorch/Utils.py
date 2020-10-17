@@ -14,7 +14,7 @@ def create_abs_path(path):
 def load_structural_vocabularies():
 
     structural_token2integer = {}
-    with open('Vocabularies/structural-token2integer.csv', 'r') as f:
+    with open('Vocabularies/structural_token2integer.csv', 'r') as f:
         lines = f.readlines()
         for line in lines:
             item = line.strip('\n').split(sep=',')
@@ -23,7 +23,7 @@ def load_structural_vocabularies():
             structural_token2integer[token] = integer
 
     structural_integer2token = {}
-    with open('Vocabularies/structural-integer2token.csv', 'r') as f:
+    with open('Vocabularies/structural_integer2token.csv', 'r') as f:
         lines = f.readlines()
         for line in lines:
             item = line.strip('\n').split(sep=',')
@@ -39,7 +39,7 @@ def load_structural_vocabularies():
 def load_cell_content_vocabularies():
 
     cell_content_token2integer = {}
-    with open('Vocabularies/cell-content-token2integer.tsv', 'r') as f:
+    with open('Vocabularies/cell_content_token2integer.tsv', 'r') as f:
         lines = f.readlines()
         for line in lines:
             item = line.strip('\n').split(sep='\t')
@@ -48,7 +48,7 @@ def load_cell_content_vocabularies():
             cell_content_token2integer[token] = integer
 
     cell_content_integer2token = {}
-    with open('Vocabularies/cell-content-integer2token.tsv', 'r') as f:
+    with open('Vocabularies/cell_content_integer2token.tsv', 'r') as f:
         lines = f.readlines()
         for line in lines:
             item = line.strip('\n').split(sep='\t')

@@ -82,9 +82,9 @@ metadata = jsonlines.open(metadata_filename, 'w')
 
 # imgids of examples to use for the creation of the subset
 # criteria are explored in Subset_Criteria_Analysis.py
-subset_imgids = np.load('SubsetCriteria/subset-imgids.npy')
-dev_imgids = np.load('SubsetCriteria/dev-imgids.npy')
-test_imgids = np.load('SubsetCriteria/test-imgids.npy')
+subset_imgids = np.load('SubsetCriteria/subset_imgids.npy')
+dev_imgids = np.load('SubsetCriteria/dev_imgids.npy')
+test_imgids = np.load('SubsetCriteria/test_imgids.npy')
 
 for annotation in annotations:
 

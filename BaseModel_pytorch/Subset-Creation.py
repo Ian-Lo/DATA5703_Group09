@@ -73,8 +73,11 @@ idx_chunk = 0
 annotations_filename = Utils.create_abs_path('PubTabNet_2.0.0.jsonl')
 annotations = jsonlines.open(annotations_filename, 'r')
 
+# Filename Prefix
+write_fn = f'train_'
+
 # create the metadata file
-metadata_filename = Utils.create_abs_path('Dataset/metadata.jsonl')
+metadata_filename = Utils.create_abs_path(f'Dataset/{write_fn}metadata.jsonl')
 metadata = jsonlines.open(metadata_filename, 'w')
 
 # imgids of examples to use for the creation of the subset
@@ -101,10 +104,11 @@ for annotation in annotations:
 
             # get storage suffix
             suffix = idx_example // storage_size
-            suffix = '{:0>2}'.format(suffix)
+            suffix = '{:0>3}'.format(suffix)
 
             # create new HDF5 storage
-            storage_path = Utils.create_abs_path('Dataset/dataset_' + suffix + '.hdf5')
+            storage_fn = f'{write_fn}dataset_{suffix}.hdf5'
+            storage_path = Utils.create_abs_path(f'Dataset/{storage_fn}')
             storage = h5py.File(storage_path, "w")
 
             data_features_maps = storage.create_dataset('features maps',
@@ -186,7 +190,10 @@ for annotation in annotations:
         cells_content_tokens = [cell_content_tokens + ['<end>'] for cell_content_tokens in cells_content_tokens]
 
         # encode the cells content tokens
-        cells_content_tokens_int = [[cell_content_token2integer[tk] for tk in cell_content_tokens] for cell_content_tokens in cells_content_tokens]
+        cells_content_tokens_int = [
+                                    [cell_content_token2integer.get(tk,cell_content_token2integer['<oov>']) for tk in cell_content_tokens]
+                                    for cell_content_tokens in cells_content_tokens
+                                   ]
         cells_content_tokens_int = pd.DataFrame(cells_content_tokens_int).fillna(0).values.astype(np.uint16)
         cells_content_tokens_int_padded = np.zeros((h_cc_tks, w_cc_tks), dtype=np.uint16)
         cells_content_tokens_int_padded[:cells_content_tokens_int.shape[0], :cells_content_tokens_int.shape[1]] = cells_content_tokens_int

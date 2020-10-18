@@ -29,6 +29,9 @@ class DecoderStructural(torch.nn.Module):
         # the loss criterion
         self.loss_criterion = torch.nn.CrossEntropyLoss()
 
+        # softmax function for inference
+        self.softmax = torch.nn.Softmax(dim=1)
+
     def initialise(self, batch_size):
 
         # initialise structural input
@@ -97,8 +100,6 @@ class DecoderStructural(torch.nn.Module):
 
             # teacher forcing
             structural_input = structural_target[:, t]
-
-            # compute loss
             loss += self.loss_criterion(prediction, structural_input)
 
             # TODO: implement more efficiently
@@ -106,4 +107,47 @@ class DecoderStructural(torch.nn.Module):
 
         return predictions, loss, storage
 
+    def predict(self, encoded_features_map, structural_target = False):
+            ### make list of lists and append to lists
 
+            batch_size = encoded_features_map.shape[0]
+
+            num_timesteps = structural_target.size()[-1]
+            predictions = np.zeros((num_timesteps, batch_size, self.vocabulary_size), dtype=np.float32)
+            predictions = torch.from_numpy(predictions)
+
+            # TODO: implement more efficiently
+            storage = np.zeros((num_timesteps, 1, batch_size, self.hidden_size), dtype=np.float32)
+            storage = torch.from_numpy(storage)
+
+            # initialisation
+            structural_input, structural_hidden_state = self.initialise(batch_size)
+
+            loss = 0
+
+            # run the timesteps
+            for t in range(1000):
+
+#            for t in range(0, num_timesteps):
+
+                prediction, structural_hidden_state = self.timestep(encoded_features_map, structural_input, structural_hidden_state)
+
+                # apply softmax
+                output = self.softmax(prediction)
+
+                # greedy decoder
+
+                #self.softmax = nn.LogSoftmax(dim=1)
+
+                # stores the predictions
+                predictions[t] = prediction
+
+                # teacher forcing
+                structural_input = structural_target[:, t]
+                loss += self.loss_criterion(prediction, structural_input)
+                print("teacher")
+
+                # TODO: implement more efficiently
+                storage[t] = structural_hidden_state
+
+            return predictions, loss, storage

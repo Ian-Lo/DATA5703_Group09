@@ -103,6 +103,62 @@ class BatchingMechanism:
 
         return batches
 
+    # trim the the array removing trailing columns
+    # filled with '<pad>' for all examples
+    @staticmethod
+    def _trim_structural_tokens(padded_structural_tokens):
+
+        # one boolean per column
+        # True if at least one entry is not '<pad>' (=0)
+        is_any_data = np.any(padded_structural_tokens != 0, axis=0)
+
+        # indices of columns with at least one entry which is not '<pad>'
+        indices = np.where(is_any_data)
+
+        # first index of columns with all '<pad>'
+        # all subsequent columns are filled with '<pad>'
+        cut_off_index = np.max(indices) + 1
+
+        # trim the columns with all '<pad>'
+        trimmed_structural_tokens = padded_structural_tokens[:, :cut_off_index]
+
+        return trimmed_structural_tokens
+
+    # trim the the array removing trailing rows and trailing columns
+    # filled with '<pad>' for all examples and all time-steps
+    @staticmethod
+    def _trim_cells_content_tokens(padded_cells_content_tokens):
+
+        # one boolean per row
+        # True if at least one entry is not '<pad>'
+        is_any_data = np.any(padded_cells_content_tokens != 0, axis=2)
+
+        # indices of rows with at least one entry which is not '<pad>'
+        indices = np.where(is_any_data)[1]
+
+        # first index of rows with all '<pad>'
+        # all subsequent rows are filled with '<pad>'
+        cut_off_index = np.max(indices) + 1
+
+        # trim the rows with all '<pad>'
+        trimmed_cells_content_tokens = padded_cells_content_tokens[:, :cut_off_index, :]
+
+        # one boolean per column
+        # True if at least one entry is not '<pad>'
+        is_any_data = np.any(trimmed_cells_content_tokens != 0, axis=1)
+
+        # indices of columns with at least one entry which is not '<pad>'
+        indices = np.where(is_any_data)[1]
+
+        # first index of columns with all '<pad>'
+        # all subsequent columns are filled with '<pad>'
+        cut_off_index = np.max(indices) + 1
+
+        # trim the columns with all '<pad>'
+        trimmed_cells_content_tokens = trimmed_cells_content_tokens[:, :, :cut_off_index]
+
+        return trimmed_cells_content_tokens
+
     # given a batch, retrieve the corresponding data
     # the output are already tensors with the required data type
     def get_batch(self, batch):
@@ -120,6 +176,7 @@ class BatchingMechanism:
 
         # get the structural tokens from the HDF5 file
         structural_tokens = np.array(list(map(self.storage.structural_tokens.__getitem__, indices))).astype(np.int64)
+        structural_tokens = self._trim_structural_tokens(structural_tokens)
         structural_tokens = torch.from_numpy(structural_tokens)
 
         # get the triggers from the HDF5 file
@@ -128,6 +185,7 @@ class BatchingMechanism:
 
         # get the cell content from the HDF5 file
         cells_content_tokens = np.array(list(map(self.storage.cells_content_tokens.__getitem__, indices))).astype(np.int64)
+        cells_content_tokens = self._trim_cells_content_tokens(cells_content_tokens)
         cells_content_tokens = torch.from_numpy(cells_content_tokens)
 
         # close the storage

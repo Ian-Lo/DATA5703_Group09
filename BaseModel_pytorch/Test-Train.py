@@ -102,8 +102,10 @@ for epoch in range(epochs):
     list2 = []
     list3 = []
 
-    for example_num, example_triggers in enumerate(triggers):
+    print("triggers")
+    print(triggers.shape)
 
+    for example_num, example_triggers in enumerate(triggers):
         cc_tk = cells_content_tokens[example_num]
 
         for cell_num, example_trigger in enumerate(example_triggers):
@@ -120,9 +122,9 @@ for epoch in range(epochs):
     structural_hidden_state = torch.stack(list2).unsqueeze(0)
     new_cells_content_tokens = torch.stack(list3)
 
-#    predictions_cell, loss_cc = decoder_cell_content.forward(new_encoded_features_map, structural_hidden_state, new_cells_content_tokens)
+    predictions_cell, loss_cc = decoder_cell_content.forward(new_encoded_features_map, structural_hidden_state, new_cells_content_tokens)
 
-#    loss = LAMBDA * loss_s + (1.0-LAMBDA) * loss_cc
+    loss = LAMBDA * loss_s# + (1.0-LAMBDA) * loss_cc
 
 #    print(loss)
 
@@ -150,9 +152,9 @@ for epoch in range(epochs):
     print("epoch", epoch)
     print("training loss", loss_s)
     print("validation loss", loss_s_val)
-#    for example_num, example_triggers in enumerate(triggers):
+    for example_num, example_triggers in enumerate(triggers):
 
-#        cc_tk = cells_content_tokens[example_num]
+        cc_tk = cells_content_tokens[example_num]
 
 #        for cell_num, example_trigger in enumerate(example_triggers):
 

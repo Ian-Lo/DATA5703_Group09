@@ -138,7 +138,6 @@ class DecoderStructural(torch.nn.Module):
             continue_decoder = torch.tensor(range(batch_size))
 
             for t in range(maxT):
-                print("continue_decoder, start", continue_decoder)
 
                 # slice out only those in continue_decoder
                 encoded_features_map_in = encoded_features_map[continue_decoder,:,:]
@@ -159,8 +158,8 @@ class DecoderStructural(torch.nn.Module):
                     truth = structural_target[continue_decoder, t]
                     loss += self.loss_criterion(prediction, truth)
 
+                # loop through predictions
                 for n, id in enumerate(predict_id):
-                    print(n, id)
                     # if stop:
                     if id in [2]:
                         #remove element from continue_decoder

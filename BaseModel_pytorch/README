@@ -13,7 +13,7 @@ torchvision
 tdqm
 
 PubTabNet: this dataset can be downloaded from https://developer.ibm.com/technologies/artificial-intelligence/data/pubtabnet/
-Untar the file in a convenient location and leave its folder structure intact. 
+Untar the file in a convenient location and leave its folder structure intact.
 Under the 'PubTabNet' folder, create a folder named 'Dataset'.
 Modify the function 'create_abs_path(path)' in 'Utils.py' so that it points to the folder 'PubTabNet'.
 

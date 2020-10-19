@@ -120,6 +120,10 @@ class DecoderStructural(torch.nn.Module):
             # create list to hold predictions since we sometimes don't know the size
             predictions = [ [] for n in range(batch_size)]
 
+            # create list to td tokens:
+
+            td_indices = [ [] for n in range(batch_size)]
+
             # create list to store hidden state
             storage = [ [] for n in range(batch_size)]
 
@@ -137,6 +141,7 @@ class DecoderStructural(torch.nn.Module):
             # define tensor to contain batch indices run through timestep.
             continue_decoder = torch.tensor(range(batch_size))
 
+
             for t in range(maxT):
 
                 # slice out only those in continue_decoder
@@ -152,7 +157,8 @@ class DecoderStructural(torch.nn.Module):
 
                 # greedy decoder:
                 _, predict_id = torch.max(log_p, dim = 1 )
-
+                print("artificially setting a <td>")
+                predict_id[0] = 5
                 # calculate loss when possible
                 if structural_target is not None:
                     truth = structural_target[continue_decoder, t]
@@ -171,12 +177,14 @@ class DecoderStructural(torch.nn.Module):
                         # get correct index
                         index = continue_decoder[n]
                         # save prediction
-                        predictions[index].append(prediction[n,:])
+                        predictions[index].append(id)
                     # if <td> or >:
                     if id in [5, 9]:
+#                        print("found td")
                         # keep hidden state
                         storage[index].append(structural_hidden_state[:,n, :])
+                        td_indices[index].append(t)
             if structural_target is not None:
-                return predictions, loss, storage
+                return predictions, loss, storage, td_indices
             else:
-                return predictions, storage
+                return predictions, storage, td_indices

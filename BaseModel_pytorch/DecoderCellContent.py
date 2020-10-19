@@ -99,7 +99,7 @@ class DecoderCellContent(torch.nn.Module):
 
         return predictions, loss
 
-    def predict(self, encoded_features_map, structural_hidden_state, cell_content_target=None):
+    def predict(self, encoded_features_map, structural_hidden_state, cell_content_target=None, maxT = 500):
 
         batch_size = encoded_features_map.shape[0]
 
@@ -113,9 +113,7 @@ class DecoderCellContent(torch.nn.Module):
 
         # set maximum number of cell tokens
         if cell_content_target is not None:
-            maxT = structural_target.shape[1]
-        else:
-            maxT = 1000
+            maxT = cell_content_target.shape[1]
 
         # define tensor to contain batch indices run through timestep.
         continue_decoder = torch.tensor(range(batch_size))
@@ -124,11 +122,9 @@ class DecoderCellContent(torch.nn.Module):
         for t in range(maxT):
 
             # slice out only those in continue_decoder
-            encoded_features_map_in = torch.stack(encoded_features_map[continue_decoder])
+            encoded_features_map_in = encoded_features_map[continue_decoder, :,:]
 
-            # this is where I am
-#            structural_hidden_state_in = structural_hidden_state[:, continue_decoder, :]
-
+            structural_hidden_state_in = structural_hidden_state[:, continue_decoder, :]
 
             structural_input_in = structural_input[continue_decoder]
 

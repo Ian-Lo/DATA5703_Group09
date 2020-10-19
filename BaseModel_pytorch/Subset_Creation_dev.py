@@ -19,15 +19,15 @@ cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content
 
 # HDF5 storage
 # number of examples in each HDF5 file
-storage_size = 100
+storage_size = 1000
 # batch size for the encoder
 # and all other processing steps
 # choose a divisor of storage_size
-chunk_size = 10
+chunk_size = 50
 
 # total number of examples to process and store
 # it needs to be a multiple of the storage size
-num_examples = 200
+num_examples = 100000
 
 # note: these numbers are a result of the way the images
 # are preprocessed in the CNN encoder (e.g. 512 is determined by ResNet-18)
@@ -37,20 +37,17 @@ w_fm = 512
 
 # note: these numbers are the *actual* criteria found in SubsetCriteria/subset_analysis.txt
 # max length of structural tokens
-w_st_tks = 154
+w_st_tks = 1732
 # we add 1 to account for the future addition of the '<end>' token
 w_st_tks += 1
 # max shape of cells content tokens
-h_cc_tks = 30
-w_cc_tks = 50
+h_cc_tks = 822
+w_cc_tks = 1185
 # we add 1 to account for the future addition of the '<end>' token
 w_cc_tks += 1
 
 # placeholders for HDF5 storages
-storage_features_maps = None
-storage_structural_tokens = None
-storage_triggers = None
-storage_cells_content_tokens = None
+storage = None
 data_features_maps = None
 data_structural_tokens = None
 data_triggers = None
@@ -73,23 +70,26 @@ idx_example = 0
 idx_chunk = 0
 
 # open the annotations file
-annotations_filename = Utils.create_abs_path('pubtabnet/PubTabNet_2.0.0.jsonl')
+annotations_filename = Utils.create_abs_path('PubTabNet_2.0.0.jsonl')
 annotations = jsonlines.open(annotations_filename, 'r')
 
+# Filename Prefix
+write_fn = f'dev_'
+
 # create the metadata file
-metadata_filename = Utils.create_abs_path('Dataset/metadata.jsonl')
+metadata_filename = Utils.create_abs_path(f'Dataset/{write_fn}metadata.jsonl')
 metadata = jsonlines.open(metadata_filename, 'w')
 
 # imgids of examples to use for the creation of the subset
 # criteria are explored in Subset_Criteria_Analysis.py
-subset_imgids = np.load('SubsetCriteria/subset_imgids.npy')
+dev_imgids = np.load('SubsetCriteria/dev_imgids.npy')
 
 for annotation in annotations:
 
     imgid = annotation['imgid']
 
     # only process imgids fulfilling certain criteria
-    if imgid in subset_imgids:
+    if imgid in dev_imgids:
 
         # check if we need to create new H5DF storages
         if idx_example % storage_size == 0:
@@ -98,47 +98,37 @@ for annotation in annotations:
             # except at the very beginning
             if idx_example != 0:
 
-                storage_features_maps.close()
-                storage_structural_tokens.close()
-                storage_triggers.close()
-                storage_cells_content_tokens.close()
+                storage.close()
 
             # get storage suffix
             suffix = idx_example // storage_size
-            suffix = '{:0>2}'.format(suffix)
+            suffix = '{:0>3}'.format(suffix)
 
             # create new HDF5 storage
-            storage_features_maps_path = Utils.create_abs_path('Dataset/features_maps_' + suffix + '.hdf5')
-            storage_features_maps = h5py.File(storage_features_maps_path, "w")
-            data_features_maps = storage_features_maps.create_dataset('data',
-                                                                      shape=(storage_size, h_fm, w_fm),
-                                                                      dtype=np.float16)
+            storage_fn = f'{write_fn}dataset_{suffix}.hdf5'
+            storage_path = Utils.create_abs_path(f'Dataset/{storage_fn}')
+            storage = h5py.File(storage_path, "w")
 
-            # create new HDF5 storage
-            storage_structural_tokens_path = Utils.create_abs_path('Dataset/structural_tokens_' + suffix + '.hdf5')
-            storage_structural_tokens = h5py.File(storage_structural_tokens_path, "w")
-            data_structural_tokens = storage_structural_tokens.create_dataset('data',
-                                                                              shape=(storage_size, w_st_tks),
-                                                                              dtype=np.uint8)
+            data_features_maps = storage.create_dataset('features maps',
+                                                        shape=(storage_size, h_fm, w_fm),
+                                                        dtype=np.float16)
 
-            # create new HDF5 storage
-            storage_triggers_path = Utils.create_abs_path('Dataset/triggers_' + suffix + '.hdf5')
-            storage_triggers = h5py.File(storage_triggers_path, "w")
-            data_triggers = storage_triggers.create_dataset('data',
-                                                            shape=(storage_size, h_cc_tks),
+            data_structural_tokens = storage.create_dataset('structural tokens',
+                                                            shape=(storage_size, w_st_tks),
                                                             dtype=np.uint8)
 
-            # create new HDF5 storage
-            storage_cells_content_tokens_path = Utils.create_abs_path('Dataset/cells_content_tokens_' + suffix + '.hdf5')
-            storage_cells_content_tokens = h5py.File(storage_cells_content_tokens_path, "w")
-            data_cells_content_tokens = storage_cells_content_tokens.create_dataset('data',
-                                                                                    shape=(storage_size, h_cc_tks, w_cc_tks),
-                                                                                    dtype=np.uint16)
+            data_triggers = storage.create_dataset('triggers',
+                                                   shape=(storage_size, h_cc_tks),
+                                                   dtype=np.uint8)
+
+            data_cells_content_tokens = storage.create_dataset('cells content tokens',
+                                                               shape=(storage_size, h_cc_tks, w_cc_tks),
+                                                               dtype=np.uint16)
 
         # compute index within the chunk
         idx_chunk = idx_example % chunk_size
 
-        # check if we need initialise temporary storages
+        # check if we need to initialise temporary storages
         if idx_chunk == 0:
 
             images = []
@@ -148,7 +138,7 @@ for annotation in annotations:
 
         # retrieve the image
         filename = annotation['filename']
-        image_filename = Utils.create_abs_path('pubtabnet/train/' + filename)
+        image_filename = Utils.create_abs_path('train/' + filename)
         image = PIL.Image.open(image_filename)
 
         # compute index within storage
@@ -198,7 +188,10 @@ for annotation in annotations:
         cells_content_tokens = [cell_content_tokens + ['<end>'] for cell_content_tokens in cells_content_tokens]
 
         # encode the cells content tokens
-        cells_content_tokens_int = [[cell_content_token2integer[tk] for tk in cell_content_tokens] for cell_content_tokens in cells_content_tokens]
+        cells_content_tokens_int = [
+                                    [cell_content_token2integer.get(tk,cell_content_token2integer['<oov>']) for tk in cell_content_tokens]
+                                    for cell_content_tokens in cells_content_tokens
+                                   ]
         cells_content_tokens_int = pd.DataFrame(cells_content_tokens_int).fillna(0).values.astype(np.uint16)
         cells_content_tokens_int_padded = np.zeros((h_cc_tks, w_cc_tks), dtype=np.uint16)
         cells_content_tokens_int_padded[:cells_content_tokens_int.shape[0], :cells_content_tokens_int.shape[1]] = cells_content_tokens_int
@@ -216,7 +209,7 @@ for annotation in annotations:
             input_images = torch.stack(input_images)
             features_maps = fixedEncoder.encode(input_images)
 
-            # start
+            # compute indices in the storage
             start_index = (idx_example - chunk_size + 1) % storage_size
             end_index = (idx_example + 1) % storage_size
             if end_index == 0:
@@ -234,10 +227,7 @@ for annotation in annotations:
         # check if we need to close the current HDF5 storages
         if idx_example % storage_size == 0:
 
-            storage_features_maps.close()
-            storage_structural_tokens.close()
-            storage_triggers.close()
-            storage_cells_content_tokens.close()
+            storage.close()
 
         # check if we have collected enough examples
         if idx_example == num_examples:

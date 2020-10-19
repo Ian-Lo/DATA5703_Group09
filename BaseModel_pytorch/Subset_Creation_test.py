@@ -37,12 +37,12 @@ w_fm = 512
 
 # note: these numbers are the *actual* criteria found in SubsetCriteria/subset_analysis.txt
 # max length of structural tokens
-w_st_tks = 160
+w_st_tks = 1684
 # we add 1 to account for the future addition of the '<end>' token
 w_st_tks += 1
 # max shape of cells content tokens
-h_cc_tks = 30
-w_cc_tks = 100
+h_cc_tks = 810
+w_cc_tks = 2304
 # we add 1 to account for the future addition of the '<end>' token
 w_cc_tks += 1
 
@@ -74,7 +74,7 @@ annotations_filename = Utils.create_abs_path('PubTabNet_2.0.0.jsonl')
 annotations = jsonlines.open(annotations_filename, 'r')
 
 # Filename Prefix
-write_fn = f'train_'
+write_fn = f'test_'
 
 # create the metadata file
 metadata_filename = Utils.create_abs_path(f'Dataset/{write_fn}metadata.jsonl')
@@ -82,8 +82,6 @@ metadata = jsonlines.open(metadata_filename, 'w')
 
 # imgids of examples to use for the creation of the subset
 # criteria are explored in Subset_Criteria_Analysis.py
-subset_imgids = np.load('SubsetCriteria/subset_imgids.npy')
-dev_imgids = np.load('SubsetCriteria/dev_imgids.npy')
 test_imgids = np.load('SubsetCriteria/test_imgids.npy')
 
 for annotation in annotations:
@@ -91,7 +89,7 @@ for annotation in annotations:
     imgid = annotation['imgid']
 
     # only process imgids fulfilling certain criteria
-    if (imgid in subset_imgids) & (imgid not in dev_imgids) & (imgid not in test_imgids):
+    if imgid in test_imgids:
 
         # check if we need to create new H5DF storages
         if idx_example % storage_size == 0:

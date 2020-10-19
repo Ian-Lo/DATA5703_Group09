@@ -30,7 +30,7 @@ class DecoderStructural(torch.nn.Module):
         self.loss_criterion = torch.nn.CrossEntropyLoss()
 
         # softmax function for inference
-        self.softmax = torch.nn.Softmax(dim=1)
+        self.LogSoftmax = torch.nn.LogSoftmax(dim=1)
 
     def initialise(self, batch_size):
 
@@ -107,47 +107,78 @@ class DecoderStructural(torch.nn.Module):
 
         return predictions, loss, storage
 
-    def predict(self, encoded_features_map, structural_target = False):
+    def predict(self, encoded_features_map, structural_target = None):
             ### make list of lists and append to lists
-
             batch_size = encoded_features_map.shape[0]
 
-            num_timesteps = structural_target.size()[-1]
-            predictions = np.zeros((num_timesteps, batch_size, self.vocabulary_size), dtype=np.float32)
-            predictions = torch.from_numpy(predictions)
+            # create list to hold predictions
+            predictions = [ [] for n in range(batch_size)]
+
+            # create list to store hidden state
+            storage = [ [] for n in range(batch_size)]
+
+#            if structural_target:
+                # if
+    #            num_timesteps = structural_target.size()[-1]
+    #            predictions = np.zeros((num_timesteps, batch_size, self.vocabulary_size), dtype=np.float32)
+    #            predictions = torch.from_numpy(predictions)
 
             # TODO: implement more efficiently
-            storage = np.zeros((num_timesteps, 1, batch_size, self.hidden_size), dtype=np.float32)
-            storage = torch.from_numpy(storage)
+            #
+
+#            storage = np.zeros((num_timesteps, 1, batch_size, self.hidden_size), dtype=np.float32)
+#            storage = torch.from_numpy(storage)
 
             # initialisation
             structural_input, structural_hidden_state = self.initialise(batch_size)
 
             loss = 0
 
-            # run the timesteps
-            for t in range(1000):
+            # set maximum number of structural tokens (to avoid while loop)
+            maxT = 1000
+            # run until all examples have predicted stop token
+            continue_decoder = torch.ones(batch_size, dtype = torch.uint8)
 
-#            for t in range(0, num_timesteps):
+            for t in range(maxT):
 
                 prediction, structural_hidden_state = self.timestep(encoded_features_map, structural_input, structural_hidden_state)
 
                 # apply softmax
-                output = self.softmax(prediction)
+                log_p = self.LogSoftmax(prediction)
 
-                # greedy decoder
+                # greedy decoder:
+                _, predict_id = torch.max(log_p, dim = 1 )
 
-                #self.softmax = nn.LogSoftmax(dim=1)
+                takes = []
+                for n, id in enumerate(predict_id):
+                    if id not in [2]: # stop token has index == 2
+                        takes.append(n)
+                        predictions[n].append(id)
+                        storage[n].append(structural_hidden_state)
+                        structural_input[n] = id
+#                print(predictions[0][-1])
+#                    else:
+#                        print("stop")
+#                quit()
+#                print("structural_target.shape")
+#                print(structural_target.shape)
 
                 # stores the predictions
-                predictions[t] = prediction
+
+#                predictions[t] = prediction
 
                 # teacher forcing
-                structural_input = structural_target[:, t]
-                loss += self.loss_criterion(prediction, structural_input)
-                print("teacher")
+#                structural_input = structural_target[:, t]
+                print(structural_target)
+                if structural_target is not None:
+                    pred = torch.gather(prediction, 0,torch.tensor(takes) )
+                    truth = torch.gather(structural_input[t], 0,torch.tensor(takes) )
+                    print(pred)
+                    print(truth)
+                    loss += self.loss_criterion(pred, truth)
+
 
                 # TODO: implement more efficiently
-                storage[t] = structural_hidden_state
-
+#                storage[t] = structural_hidden_state
+#            print(prediction[0])
             return predictions, loss, storage

@@ -9,7 +9,8 @@ from time import perf_counter
 
 structural_token2integer, structural_integer2token = Utils.load_structural_vocabularies()
 cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content_vocabularies()
-
+#print(structural_integer2token)
+#quit()
 suffix = '00'
 
 storage_path = Utils.create_abs_path('Dataset/dataset_' + suffix + '.hdf5')
@@ -87,6 +88,7 @@ LAMBDA = 0.5
 
 
 
+
 for epoch in range(epochs):
     #todo: add for loop for batches
 
@@ -118,22 +120,22 @@ for epoch in range(epochs):
     structural_hidden_state = torch.stack(list2).unsqueeze(0)
     new_cells_content_tokens = torch.stack(list3)
 
-    predictions_cell, loss_cc = decoder_cell_content.forward(new_encoded_features_map, structural_hidden_state, new_cells_content_tokens)
+#    predictions_cell, loss_cc = decoder_cell_content.forward(new_encoded_features_map, structural_hidden_state, new_cells_content_tokens)
 
-    loss = LAMBDA * loss_s + (1.0-LAMBDA) * loss_cc
+#    loss = LAMBDA * loss_s + (1.0-LAMBDA) * loss_cc
 
-    print(loss)
+#    print(loss)
 
     # Back propagation
-    decoder_cell_content_optimizer.zero_grad()
-    decoder_structural_optimizer.zero_grad()
-    encoder_optimizer.zero_grad()
-    loss.backward()
+#    decoder_cell_content_optimizer.zero_grad()#
+#    decoder_structural_optimizer.zero_grad()
+#    encoder_optimizer.zero_grad()
+#    loss.backward()
 
     # Update weights
-    decoder_cell_content_optimizer.step()
-    decoder_structural_optimizer.step()
-    encoder_optimizer.step()
+#    decoder_cell_content_optimizer.step()#
+#    decoder_structural_optimizer.step()
+#    encoder_optimizer.step()
 
     ##### validation #####
     # batch loop for validation set (only one batch, because batches are not implemented)

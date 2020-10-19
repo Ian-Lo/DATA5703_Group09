@@ -1,5 +1,6 @@
 # “Requirements files” are files containing a list of items to be installed using pip install like so:
 # pip install -r requirements.txt 
+# https://pip.pypa.io/en/stable/user_guide/#requirements-files
 h5py>=2.10.0 
 torch
 jsonlines>=1.2.0

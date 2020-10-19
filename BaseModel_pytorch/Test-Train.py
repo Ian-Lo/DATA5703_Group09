@@ -9,25 +9,17 @@ from time import perf_counter
 
 structural_token2integer, structural_integer2token = Utils.load_structural_vocabularies()
 cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content_vocabularies()
-
+#print(structural_integer2token)
+#quit()
 suffix = '00'
 
-storage_features_maps_path = Utils.create_abs_path('Dataset/features_maps_' + suffix + '.hdf5')
-storage_features_maps = h5py.File(storage_features_maps_path, "r")
+storage_path = Utils.create_abs_path('Dataset/dataset_' + suffix + '.hdf5')
+storage = h5py.File(storage_path, "r")
 
-storage_structural_tokens_path = Utils.create_abs_path('Dataset/structural_tokens_' + suffix + '.hdf5')
-storage_structural_tokens = h5py.File(storage_structural_tokens_path, "r")
-
-storage_triggers_path = Utils.create_abs_path('Dataset/triggers_' + suffix + '.hdf5')
-storage_triggers = h5py.File(storage_triggers_path, "r")
-
-storage_cells_content_tokens_path = Utils.create_abs_path('Dataset/cells_content_tokens_' + suffix + '.hdf5')
-storage_cells_content_tokens = h5py.File(storage_cells_content_tokens_path, "r")
-
-features_maps = storage_features_maps['data']
-structural_tokens = storage_structural_tokens['data']
-triggers = storage_triggers['data']
-cells_content_tokens = storage_cells_content_tokens['data']
+features_maps = storage['features maps']
+structural_tokens = storage['structural tokens']
+triggers = storage['triggers']
+cells_content_tokens = storage['cells content tokens']
 
 # batch of examples
 # TODO: you have overridden the storage by renaming!
@@ -41,6 +33,27 @@ triggers = triggers[0:10]
 
 cells_content_tokens = cells_content_tokens[0:10].astype(np.int64)
 cells_content_tokens = torch.from_numpy(cells_content_tokens)
+
+#### validation set import ####
+features_maps_val = storage['features maps']
+structural_tokens_val = storage['structural tokens']
+triggers_val = storage['triggers']
+cells_content_tokens_val = storage['cells content tokens']
+
+# batch of examples
+# TODO: you have overridden the storage by renaming!
+features_map_val = features_maps_val[0:10].astype(np.float32)
+features_map_val = torch.from_numpy(features_map_val)
+
+structural_tokens_val = structural_tokens_val[0:10].astype(np.int64)
+structural_tokens_val = torch.from_numpy(structural_tokens_val)
+
+triggers_val = triggers_val[0:10]
+
+cells_content_tokens_val = cells_content_tokens_val[0:10].astype(np.int64)
+cells_content_tokens_val = torch.from_numpy(cells_content_tokens_val)
+
+####
 
 ###---###
 
@@ -68,11 +81,21 @@ decoder_cell_content_optimizer = torch.optim.Adam(params=filter(lambda p: p.requ
 
 t1_start = perf_counter()
 
-for j in range(5):
+epochs = 5
 
+# Loss(total) = LAMBDA * Loss(structure) + (1-LAMBDA) * Loss(cell)
+LAMBDA = 0.5
+
+
+
+
+for epoch in range(epochs):
+    #todo: add for loop for batches
+
+    ##### training #####
     encoded_features_map = encoder.forward(features_map)
 
-    predictions, loss_s, storage = decoder_structural.forward(encoded_features_map, structural_tokens)
+    predictions, loss_s, storage_hidden = decoder_structural.forward(encoded_features_map, structural_tokens)
 
     ### PROCESSING STORAGE ###
     list1 = []
@@ -80,7 +103,6 @@ for j in range(5):
     list3 = []
 
     for example_num, example_triggers in enumerate(triggers):
-
         cc_tk = cells_content_tokens[example_num]
 
         for cell_num, example_trigger in enumerate(example_triggers):
@@ -88,22 +110,16 @@ for j in range(5):
             if example_trigger != 0:
                 list1.append(encoded_features_map[example_num])
 
-                list2.append(storage[example_trigger, 0, example_num, :])
+                list2.append(storage_hidden[example_trigger, 0, example_num, :])
 
                 list3.append(cc_tk[cell_num])
 
     new_encoded_features_map = torch.stack(list1)
     structural_hidden_state = torch.stack(list2).unsqueeze(0)
     new_cells_content_tokens = torch.stack(list3)
+    predictions_cell, loss_cc = decoder_cell_content.forward(new_encoded_features_map, structural_hidden_state, new_cells_content_tokens)
 
-    print(new_encoded_features_map.size(), structural_hidden_state.size(), cells_content_tokens.size())
-    ###
-
-    predictions, loss_cc = decoder_cell_content.forward(new_encoded_features_map, structural_hidden_state, new_cells_content_tokens)
-
-    loss = loss_s + loss_cc
-
-    print(loss)
+    loss = LAMBDA * loss_s + (1.0-LAMBDA) * loss_cc
 
     # Back propagation
     decoder_cell_content_optimizer.zero_grad()
@@ -112,15 +128,61 @@ for j in range(5):
     loss.backward()
 
     # Update weights
-    decoder_cell_content_optimizer.step()
+    decoder_cell_content_optimizer.step()#
     decoder_structural_optimizer.step()
     encoder_optimizer.step()
 
-t1_stop = perf_counter()
+    ##### validation #####
+    # batch loop for validation set (only one batch, because batches are not implemented)
+
+    encoded_features_map_val = encoder.forward(features_map_val)
+    predictions_val, loss_s_val, storage_hidden_val, td_indices = decoder_structural.predict(encoded_features_map_val, structural_target = structural_tokens_val )
+#    print(predictions_val)
+#    extract only those tokens that are td
+
+    ### PROCESSING STORAGE ###
+    print("epoch", epoch)
+    print("training loss", loss_s)
+    print("validation loss", loss_s_val)
+
+    # merge input for predicted and ground truth
+
+    # compare every predicted set of tokens to ground truth
+
+
+
+    ### PROCESSING STORAGE ###
+    list1 = []
+    list2 = []
+    list3 = []
+
+    for example_num, example_triggers in enumerate(td_indices):
+        print(example_num, example_trigger)
+        # find true predicted tokens for predicted cell
+        ##### this is where I am at ##### reverting to implementing batching.
+
+    for example_num, example_triggers in enumerate(triggers_val):
+
+        cc_tk = cells_content_tokens[example_num]
+
+        for cell_num, example_trigger in enumerate(example_triggers):
+
+            if example_trigger != 0:
+                list1.append(encoded_features_map[example_num])
+
+                list2.append(storage_hidden[example_trigger, 0, example_num, :])
+
+                list3.append(cc_tk[cell_num])
+
+    new_encoded_features_map = torch.stack(list1)
+    structural_hidden_state = torch.stack(list2).unsqueeze(0)
+    new_cells_content_tokens = torch.stack(list3)
+
+    predictions_cell, loss_cc_val = decoder_cell_content.predict(encoded_features_map, storage_hidden_val,cell_content_target =new_cells_content_tokens  )
+    ####### validation end ########
+
+#t1_stop = perf_counter()
 
 print('time: ', t1_stop-t1_start)
 
-storage_features_maps.close()
-storage_structural_tokens.close()
-storage_triggers.close()
-storage_cells_content_tokens.close()
+storage.close()

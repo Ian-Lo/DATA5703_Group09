@@ -117,7 +117,6 @@ for epoch in range(epochs):
 
                 list3.append(cc_tk[cell_num])
 
-
     new_encoded_features_map = torch.stack(list1)
     structural_hidden_state = torch.stack(list2).unsqueeze(0)
     new_cells_content_tokens = torch.stack(list3)
@@ -141,8 +140,8 @@ for epoch in range(epochs):
 
     ##### validation #####
     # batch loop for validation set (only one batch, because batches are not implemented)
-    encoded_features_map_val = encoder.forward(features_map_val) # change features_map to feature_map_val
 
+    encoded_features_map_val = encoder.forward(features_map_val)
     predictions_val, loss_s_val, storage_hidden_val = decoder_structural.predict(encoded_features_map_val, structural_target = structural_tokens_val )
 
     ### PROCESSING STORAGE ###
@@ -152,25 +151,26 @@ for epoch in range(epochs):
     print("epoch", epoch)
     print("training loss", loss_s)
     print("validation loss", loss_s_val)
-    for example_num, example_triggers in enumerate(triggers):
 
-        cc_tk = cells_content_tokens[example_num]
+#    for example_num, example_triggers in enumerate(triggers_val):
+
+#        cc_tk_val = cells_content_tokens[example_num]
 
 #        for cell_num, example_trigger in enumerate(example_triggers):
 
 #            if example_trigger != 0:
-#                list1.append(encoded_features_map[example_num])
+#                list1.append(encoded_features_map_val[example_num])
 
-#                list2.append(storage_hidden[example_trigger, 0, example_num, :])
+#                list2.append(storage_hidden_val[example_trigger, 0, example_num, :])
 
-#                list3.append(cc_tk[cell_num])
+#                list3.append(cc_tk_val[cell_num])
 
 
 #    new_encoded_features_map = torch.stack(list1)
 #    structural_hidden_state = torch.stack(list2).unsqueeze(0)
 #    new_cells_content_tokens = torch.stack(list3)
 
-#    predictions_cell, loss_cc = decoder_cell_content.forward(new_encoded_features_map, structural_hidden_state, new_cells_content_tokens)
+    predictions_cell, loss_cc_val = decoder_cell_content.predict(encoded_features_map, storage_hidden_val,cell_content_target = triggers_val)
     ####### validation end ########
 
 #t1_stop = perf_counter()

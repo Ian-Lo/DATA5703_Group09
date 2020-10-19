@@ -122,7 +122,7 @@ class DecoderStructural(torch.nn.Module):
 
             # create list to td tokens:
 
-            td_indices = [ [] for n in range(batch_size)]
+            pred_triggers = [ [] for n in range(batch_size)]
 
             # create list to store hidden state
             storage = [ [] for n in range(batch_size)]
@@ -157,8 +157,7 @@ class DecoderStructural(torch.nn.Module):
 
                 # greedy decoder:
                 _, predict_id = torch.max(log_p, dim = 1 )
-                print("artificially setting a <td>")
-                predict_id[0] = 5
+
                 # calculate loss when possible
                 if structural_target is not None:
                     truth = structural_target[continue_decoder, t]
@@ -183,8 +182,8 @@ class DecoderStructural(torch.nn.Module):
 #                        print("found td")
                         # keep hidden state
                         storage[index].append(structural_hidden_state[:,n, :])
-                        td_indices[index].append(t)
+                        pred_triggers[index].append(t)
             if structural_target is not None:
-                return predictions, loss, storage, td_indices
+                return predictions, loss, storage, pred_triggers
             else:
-                return predictions, storage, td_indices
+                return predictions, storage, pred_triggers

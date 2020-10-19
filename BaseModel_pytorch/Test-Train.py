@@ -6,61 +6,32 @@ import h5py
 import torch
 import numpy as np
 from time import perf_counter
+from BatchingMechanism import BatchingMechanism
+
 
 structural_token2integer, structural_integer2token = Utils.load_structural_vocabularies()
 cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content_vocabularies()
-#print(structural_integer2token)
-#quit()
-suffix = '00'
 
-storage_path = Utils.create_abs_path('Dataset/dataset_' + suffix + '.hdf5')
-storage = h5py.File(storage_path, "r")
+# instantiate the batching object
+batching = BatchingMechanism(dataset_split='train', number_examples=125, batch_size=8, storage_size=1000)
+batching_val = BatchingMechanism(dataset_split='train', number_examples=125, batch_size=8, storage_size=1000)
 
-features_maps = storage['features maps']
-structural_tokens = storage['structural tokens']
-triggers = storage['triggers']
-cells_content_tokens = storage['cells content tokens']
+# initialise the object
+# here the object works out how many storages and how many examples from every storage are needed
+batching.initialise()
+batching_val.initialise()
 
-# batch of examples
-# TODO: you have overridden the storage by renaming!
-features_map = features_maps[0:10].astype(np.float32)
-features_map = torch.from_numpy(features_map)
-
-structural_tokens = structural_tokens[0:10].astype(np.int64)
-structural_tokens = torch.from_numpy(structural_tokens)
-
-triggers = triggers[0:10]
-
-cells_content_tokens = cells_content_tokens[0:10].astype(np.int64)
-cells_content_tokens = torch.from_numpy(cells_content_tokens)
-
-#### validation set import ####
-features_maps_val = storage['features maps']
-structural_tokens_val = storage['structural tokens']
-triggers_val = storage['triggers']
-cells_content_tokens_val = storage['cells content tokens']
-
-# batch of examples
-# TODO: you have overridden the storage by renaming!
-features_map_val = features_maps_val[0:10].astype(np.float32)
-features_map_val = torch.from_numpy(features_map_val)
-
-structural_tokens_val = structural_tokens_val[0:10].astype(np.int64)
-structural_tokens_val = torch.from_numpy(structural_tokens_val)
-
-triggers_val = triggers_val[0:10]
-
-cells_content_tokens_val = cells_content_tokens_val[0:10].astype(np.int64)
-cells_content_tokens_val = torch.from_numpy(cells_content_tokens_val)
-
-####
-
-###---###
-
-# set up the encoder for the features maps
+# import batch to calculate size of feature maps used in preprocessing
+# this size is required to initialize the encoder.
+batch= batching.build_batches(randomise=True)[0]
+features_map, _, _, _ = batching.get_batch(batch)
 features_map_size = features_map.size()[-1]
-encoder_size = 200
 
+# then reinitialize so we haven't used up batch
+batching.initialise()
+
+# initialize encoder
+encoder_size = 200
 encoder = Encoder(features_map_size, encoder_size)
 encoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder.parameters()))
 
@@ -79,107 +50,80 @@ cell_content_attention_size = 50
 decoder_cell_content = DecoderCellContent(cell_content_token2integer, embedding_size, encoder_size, structural_hidden_size, cell_content_hidden_size, cell_content_attention_size)
 decoder_cell_content_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, decoder_cell_content.parameters()))
 
+
+
 t1_start = perf_counter()
 
-epochs = 5
+# set number of epochs
+epochs = 10
 
-# Loss(total) = LAMBDA * Loss(structure) + (1-LAMBDA) * Loss(cell)
-LAMBDA = 0.5
-
-
-
+# make list of lambdas to use in training
+# We set LAMBDA = 0 for the first five epochs to pretrain the structural decoder.
+lambdas = [0 for _ in range(5)] + [0.5 for _ in range(5)]
 
 for epoch in range(epochs):
-    #todo: add for loop for batches
+    # create random batches of examples
+    # these "batches" are the just information needed to retrieve the actual tensors
+    # batch = (storage number, [list of indices within the storage])
+    batches = batching.build_batches(randomise=True)
 
-    ##### training #####
-    encoded_features_map = encoder.forward(features_map)
+    LAMBDA = lambdas[epoch]
 
-    predictions, loss_s, storage_hidden = decoder_structural.forward(encoded_features_map, structural_tokens)
+    # batch looping for training
+    for batch in batches:
 
-    ### PROCESSING STORAGE ###
-    list1 = []
-    list2 = []
-    list3 = []
+        # call 'get_batch' to actually load the tensors from file
+        features_maps, structural_tokens, triggers, cells_content_tokens = batching.get_batch(batch)
 
-    for example_num, example_triggers in enumerate(triggers):
-        cc_tk = cells_content_tokens[example_num]
+        predictions, loss_s, predictions_cell, loss_cc, loss = train_step(features_maps, structural_tokens, triggers, cells_content_tokens, LAMBDA=LAMBDA)
 
-        for cell_num, example_trigger in enumerate(example_triggers):
+    #create batches for validation set
+    batches_val= batching_val.build_batches(randomise=False)
 
-            if example_trigger != 0:
-                list1.append(encoded_features_map[example_num])
+    # batch looping for validation
+    for batch in batches_val:
+        # call 'get_batch' to actually load the tensors from file
+        features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(batch)
 
-                list2.append(storage_hidden[example_trigger, 0, example_num, :])
+        encoded_features_map_val = encoder.forward(features_map_val)
+        predictions_val, loss_s_val, storage_hidden_val, pred_triggers = decoder_structural.predict(encoded_features_map_val, structural_target = structural_tokens_val )
 
-                list3.append(cc_tk[cell_num])
+        ### PROCESSING STORAGE ###
+        print("epoch", epoch)
+        print("training loss", loss_s)
+        print("validation loss", loss_s_val)
 
-    new_encoded_features_map = torch.stack(list1)
-    structural_hidden_state = torch.stack(list2).unsqueeze(0)
-    new_cells_content_tokens = torch.stack(list3)
-    predictions_cell, loss_cc = decoder_cell_content.forward(new_encoded_features_map, structural_hidden_state, new_cells_content_tokens)
+        # merge input for predicted and ground truth
 
-    loss = LAMBDA * loss_s + (1.0-LAMBDA) * loss_cc
+        ### PROCESSING STORAGE ###
+        list1 = []
+        list2 = []
+        list3 = []
 
-    # Back propagation
-    decoder_cell_content_optimizer.zero_grad()
-    decoder_structural_optimizer.zero_grad()
-    encoder_optimizer.zero_grad()
-    loss.backward()
+        for example_num, example_triggers in enumerate(pred_triggers):
+            print(example_num, example_trigger)
+            # find true predicted tokens for predicted cell
+            ##### this is where I am at ##### reverting to implementing batching.
 
-    # Update weights
-    decoder_cell_content_optimizer.step()#
-    decoder_structural_optimizer.step()
-    encoder_optimizer.step()
+        for example_num, example_triggers in enumerate(triggers_val):
 
-    ##### validation #####
-    # batch loop for validation set (only one batch, because batches are not implemented)
+            cc_tk = cells_content_tokens[example_num]
 
-    encoded_features_map_val = encoder.forward(features_map_val)
-    predictions_val, loss_s_val, storage_hidden_val, td_indices = decoder_structural.predict(encoded_features_map_val, structural_target = structural_tokens_val )
-#    print(predictions_val)
-#    extract only those tokens that are td
+            for cell_num, example_trigger in enumerate(example_triggers):
 
-    ### PROCESSING STORAGE ###
-    print("epoch", epoch)
-    print("training loss", loss_s)
-    print("validation loss", loss_s_val)
+                if example_trigger != 0:
+                    list1.append(encoded_features_map[example_num])
 
-    # merge input for predicted and ground truth
+                    list2.append(storage_hidden[example_trigger, 0, example_num, :])
 
-    # compare every predicted set of tokens to ground truth
+                    list3.append(cc_tk[cell_num])
 
+        new_encoded_features_map = torch.stack(list1)
+        structural_hidden_state = torch.stack(list2).unsqueeze(0)
+        new_cells_content_tokens = torch.stack(list3)
 
-
-    ### PROCESSING STORAGE ###
-    list1 = []
-    list2 = []
-    list3 = []
-
-    for example_num, example_triggers in enumerate(td_indices):
-        print(example_num, example_trigger)
-        # find true predicted tokens for predicted cell
-        ##### this is where I am at ##### reverting to implementing batching.
-
-    for example_num, example_triggers in enumerate(triggers_val):
-
-        cc_tk = cells_content_tokens[example_num]
-
-        for cell_num, example_trigger in enumerate(example_triggers):
-
-            if example_trigger != 0:
-                list1.append(encoded_features_map[example_num])
-
-                list2.append(storage_hidden[example_trigger, 0, example_num, :])
-
-                list3.append(cc_tk[cell_num])
-
-    new_encoded_features_map = torch.stack(list1)
-    structural_hidden_state = torch.stack(list2).unsqueeze(0)
-    new_cells_content_tokens = torch.stack(list3)
-
-    predictions_cell, loss_cc_val = decoder_cell_content.predict(encoded_features_map, storage_hidden_val,cell_content_target =new_cells_content_tokens  )
-    ####### validation end ########
+        predictions_cell, loss_cc_val = decoder_cell_content.predict(encoded_features_map, storage_hidden_val,cell_content_target =new_cells_content_tokens  )
+        ####### validation end ########
 
 #t1_stop = perf_counter()
 

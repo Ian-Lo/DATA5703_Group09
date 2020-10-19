@@ -4,7 +4,7 @@ import os
 # create a path to a location outside iCloud
 def create_abs_path(path):
 
-    path = os.path.abspath(os.path.join('/home/ian/mnt/misc/DATA5703/pubtabnet', path)) # pubtabnet path
+    path = os.path.abspath(os.path.join('/Users/andersborges/Documents/Capstone/code/', path)) # pubtabnet path
 
     return path
 

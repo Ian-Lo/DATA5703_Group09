@@ -1,5 +1,5 @@
 def val_step(features_map_val, structural_tokens_val,triggers_val,cells_content_tokens_val, model, LAMBDA  ):
-
+    # NOT COMPLETED
             encoded_features_map_val = encoder.forward(features_map_val)
             predictions_val, loss_s_val, storage_hidden_val, pred_triggers = decoder_structural.predict(encoded_features_map_val, structural_target = structural_tokens_val )
 

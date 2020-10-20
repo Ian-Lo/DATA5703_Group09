@@ -1,10 +1,13 @@
-def train_step(features_maps, structural_tokens, triggers, cells_content_tokens, LAMBDA=0.5):
+def train_step(features_map, structural_tokens, triggers, cells_content_tokens, model, LAMBDA=0.5,):
 
-    encoded_features_map = encoder.forward(features_map)
-    predictions, loss_s, storage_hidden = decoder_structural.forward(encoded_features_map, structural_tokens)
+    # pass features through encoder
+    encoded_features_map = model.encoder.forward(features_map)
 
-    # only run cell decoder if LAMBDA!=0
-    if LAMBDA:
+    # pass encoded features through structural decoder
+    predictions, loss_s, storage_hidden = model.decoder_structural.forward(encoded_features_map, structural_tokens)
+
+    # run structural decoder only if lambda != 1
+    if abs(LAMBDA-1)>0.001:
         ### PROCESSING STORAGE ###
         list1 = []
         list2 = []
@@ -27,20 +30,31 @@ def train_step(features_maps, structural_tokens, triggers, cells_content_tokens,
         new_cells_content_tokens = torch.stack(list3)
         predictions_cell, loss_cc = decoder_cell_content.forward(new_encoded_features_map, structural_hidden_state, new_cells_content_tokens)
 
-    if lambdas[epoch]:
-        loss = lambdas[epoch] * loss_s + (1.0-lambdas[epoch]) * loss_cc
-    else:
-        loss = lambdas[epoch] * loss_s
+    # calculate loss and update weights
 
-    # Back propagation
-    decoder_cell_content_optimizer.zero_grad()
-    decoder_structural_optimizer.zero_grad()
-    encoder_optimizer.zero_grad()
-    loss.backward()
+    if abs(LAMBDA-1)>0.001:
+        loss = LAMBDA * loss_s + (1.0-LAMBDA) * loss_cc
+        # Back propagation
+        model.decoder_cell_content_optimizer.zero_grad()
+        model.decoder_structural_optimizer.zero_grad()
+        model.encoder_optimizer.zero_grad()
+        loss.backward()
 
-    # Update weights
-    decoder_cell_content_optimizer.step()#
-    decoder_structural_optimizer.step()
-    encoder_optimizer.step()
+        # Update weights
+        model.decoder_cell_content_optimizer.step()#
+        model.decoder_structural_optimizer.step()
+        model.encoder_optimizer.step()
 
-  return predictions, loss_s, predictions_cell, loss_cc, loss
+    if abs(LAMBDA-1.0)<0.001:
+        loss = loss_s
+        # Back propagation
+        model.decoder_structural_optimizer.zero_grad()
+        model.encoder_optimizer.zero_grad()
+        loss.backward()
+        # Update weights
+        model.decoder_structural_optimizer.step()
+        model.encoder_optimizer.step()
+        predictions_cell = None
+        loss_cc = None
+
+    return predictions, loss_s, predictions_cell, loss_cc, loss

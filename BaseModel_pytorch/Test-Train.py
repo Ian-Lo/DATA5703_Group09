@@ -7,7 +7,8 @@ import torch
 import numpy as np
 from time import perf_counter
 from BatchingMechanism import BatchingMechanism
-
+from TrainStep import train_step
+from Model import Model
 
 structural_token2integer, structural_integer2token = Utils.load_structural_vocabularies()
 cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content_vocabularies()
@@ -31,26 +32,28 @@ features_map_size = features_map.size()[-1]
 batching.initialise()
 
 # initialize encoder
-encoder_size = 200
+encoder_size = 144 # this will make the feature maps square
 encoder = Encoder(features_map_size, encoder_size)
 encoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder.parameters()))
 
 # set up the decoder for structural tokens
-embedding_size = 15
-structural_hidden_size = 100
-structural_attention_size = 50
+structural_embedding_size = 16
+structural_hidden_size = 256
+structural_attention_size = 256
 
-decoder_structural = DecoderStructural(structural_token2integer, embedding_size, encoder_size, structural_hidden_size, structural_attention_size)
-decoder_structural_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, decoder_structural.parameters()))
+decoder_structural = DecoderStructural(structural_token2integer, structural_embedding_size, encoder_size, structural_hidden_size, structural_attention_size)
+decoder_structural_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, decoder_structural.parameters(), lr = 0.001))
 
 # set up the decoder for cell content tokens
-cell_content_hidden_size = 100
-cell_content_attention_size = 50
+cell_content_embedding_size = 80
+cell_content_hidden_size = 512
+cell_content_attention_size = 256
 
-decoder_cell_content = DecoderCellContent(cell_content_token2integer, embedding_size, encoder_size, structural_hidden_size, cell_content_hidden_size, cell_content_attention_size)
-decoder_cell_content_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, decoder_cell_content.parameters()))
+decoder_cell_content = DecoderCellContent(cell_content_token2integer, cell_content_embedding_size, encoder_size, structural_hidden_size, cell_content_hidden_size, cell_content_attention_size)
+decoder_cell_content_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, decoder_cell_content.parameters(), lr = 0.001))
 
-
+# initialize model class
+model = Model(encoder, encoder_optimizer, decoder_structural,decoder_structural_optimizer,decoder_cell_content,decoder_cell_content_optimizer,structural_token2integer, structural_integer2token , cell_content_token2integer, cell_content_integer2token )
 
 t1_start = perf_counter()
 
@@ -59,7 +62,8 @@ epochs = 10
 
 # make list of lambdas to use in training
 # We set LAMBDA = 0 for the first five epochs to pretrain the structural decoder.
-lambdas = [0 for _ in range(5)] + [0.5 for _ in range(5)]
+lambdas = [1 for _ in range(13)] + [0.5 for _ in range(5)] + [0.5 for _ in range(12)]
+lrs = [0.001 for _ in range(10)] + [0.0001 for n in range(3)] + [0.001 for _ in range(10) + [0.0001 for _ in range(2)]
 
 for epoch in range(epochs):
     # create random batches of examples
@@ -68,6 +72,14 @@ for epoch in range(epochs):
     batches = batching.build_batches(randomise=True)
 
     LAMBDA = lambdas[epoch]
+    # set learning rate manually for each epoch
+    lr = lrs[epoch]
+    for g in decoder_structural_optimizer.param_groups:
+        g['lr'] = lr
+    for g in decoder_cell_content_optimizer.param_groups:
+        g['lr'] = lr
+    for g in encoder_optimizer.param_groups:
+        g['lr'] = lr
 
     # batch looping for training
     for batch in batches:
@@ -75,7 +87,8 @@ for epoch in range(epochs):
         # call 'get_batch' to actually load the tensors from file
         features_maps, structural_tokens, triggers, cells_content_tokens = batching.get_batch(batch)
 
-        predictions, loss_s, predictions_cell, loss_cc, loss = train_step(features_maps, structural_tokens, triggers, cells_content_tokens, LAMBDA=LAMBDA)
+        # send to training function for forward pass, backpropagation and weight updates
+        predictions, loss_s, predictions_cell, loss_cc, loss = train_step(features_maps, structural_tokens, triggers, cells_content_tokens, model,LAMBDA=LAMBDA)
 
     #create batches for validation set
     batches_val= batching_val.build_batches(randomise=False)
@@ -118,8 +131,8 @@ for epoch in range(epochs):
 
                     list3.append(cc_tk[cell_num])
 
-        new_encoded_features_map = torch.stack(list1)
-        structural_hidden_state = torch.stack(list2).unsqueeze(0)
+#        new_encoded_features_map = torch.stack(list1)
+#        structural_hidden_state = torch.stack(list2).unsqueeze(0)
         new_cells_content_tokens = torch.stack(list3)
 
         predictions_cell, loss_cc_val = decoder_cell_content.predict(encoded_features_map, storage_hidden_val,cell_content_target =new_cells_content_tokens  )

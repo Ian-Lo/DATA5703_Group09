@@ -10,13 +10,22 @@ from BatchingMechanism import BatchingMechanism
 from TrainStep import train_step
 from Model import Model
 from CheckPoint import CheckPoint
+import sys
+
+if len(sys.argv) < 4:
+    print(f"{sys.argv[0]} needs 3 parameters. 'number of examples(int), number of examples for eval(int), 'relative path to HDF5 files(str)")
+    quit()
+
+relative_path = str(sys.argv[3])
+Utils.DatasetPath.set_relative_path(relative_path) # '../../../../../../ianlo/Downloads/COMP5703_temp/Dataset'
+print(Utils.DatasetPath.relative_path)
 
 structural_token2integer, structural_integer2token = Utils.load_structural_vocabularies()
 cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content_vocabularies()
 
 # instantiate the batching object
-number_examples = 100
-number_examples_val = 100 # not implemented
+number_examples = int(sys.argv[1]) 
+number_examples_val = int(sys.argv[2]) # not implemented
 batching = BatchingMechanism(dataset_split='train', number_examples=number_examples, batch_size=10, storage_size=1000)
 batching_val = BatchingMechanism(dataset_split='train', number_examples=number_examples_val, batch_size=10, storage_size=1000)
 
@@ -101,7 +110,7 @@ for epoch in range(epochs):
         predictions, loss_s, predictions_cell, loss_cc, loss = train_step(features_maps, structural_tokens, triggers, cells_content_tokens, model,LAMBDA=LAMBDA)
 
     checkpoint.save_checkpoint(epoch, encoder, decoder_structural, decoder_cell_content,
-                              encoder_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer)
+                              encoder_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer, loss, loss_s, loss_cc)
     checkpoint.archive_checkpoint()
 
     ##### the section for the validation loss is commented out because we are not done with it

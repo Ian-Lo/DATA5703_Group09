@@ -9,6 +9,8 @@ from time import perf_counter
 from BatchingMechanism import BatchingMechanism
 from TrainStep import train_step
 from Model import Model
+from CheckPoint import CheckPoint
+
 
 structural_token2integer, structural_integer2token = Utils.load_structural_vocabularies()
 cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content_vocabularies()
@@ -42,7 +44,7 @@ structural_hidden_size = 256
 structural_attention_size = 256
 
 decoder_structural = DecoderStructural(structural_token2integer, structural_embedding_size, encoder_size, structural_hidden_size, structural_attention_size)
-decoder_structural_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, decoder_structural.parameters(), lr = 0.001))
+decoder_structural_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, decoder_structural.parameters()))
 
 # set up the decoder for cell content tokens
 cell_content_embedding_size = 80
@@ -50,7 +52,7 @@ cell_content_hidden_size = 512
 cell_content_attention_size = 256
 
 decoder_cell_content = DecoderCellContent(cell_content_token2integer, cell_content_embedding_size, encoder_size, structural_hidden_size, cell_content_hidden_size, cell_content_attention_size)
-decoder_cell_content_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, decoder_cell_content.parameters(), lr = 0.001))
+decoder_cell_content_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, decoder_cell_content.parameters()))
 
 # initialize model class
 model = Model(encoder, encoder_optimizer, decoder_structural,decoder_structural_optimizer,decoder_cell_content,decoder_cell_content_optimizer,structural_token2integer, structural_integer2token , cell_content_token2integer, cell_content_integer2token )
@@ -58,12 +60,17 @@ model = Model(encoder, encoder_optimizer, decoder_structural,decoder_structural_
 t1_start = perf_counter()
 
 # set number of epochs
-epochs = 10
+epochs = 25
 
 # make list of lambdas to use in training
-# We set LAMBDA = 0 for the first five epochs to pretrain the structural decoder.
-lambdas = [1 for _ in range(13)] + [0.5 for _ in range(5)] + [0.5 for _ in range(12)]
-lrs = [0.001 for _ in range(10)] + [0.0001 for n in range(3)] + [0.001 for _ in range(10) + [0.0001 for _ in range(2)]
+# this is the same strategy as Zhong et al.
+lambdas = [1 for _ in range(10)] + [1 for _ in range(3)]+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
+lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
+
+assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and lambdas are inconsistent"
+
+# construct checkpoint
+checkpoint = CheckPoint("BaselineModel_checkpoints")
 
 for epoch in range(epochs):
     # create random batches of examples
@@ -72,7 +79,7 @@ for epoch in range(epochs):
     batches = batching.build_batches(randomise=True)
 
     LAMBDA = lambdas[epoch]
-    # set learning rate manually for each epoch
+    # update learning rates manually for each epoch
     lr = lrs[epoch]
     for g in decoder_structural_optimizer.param_groups:
         g['lr'] = lr
@@ -137,6 +144,9 @@ for epoch in range(epochs):
 
         predictions_cell, loss_cc_val = decoder_cell_content.predict(encoded_features_map, storage_hidden_val,cell_content_target =new_cells_content_tokens  )
         ####### validation end ########
+    # save checkpoint after every epoch
+    checkpoint.save_checkpoint(3, encoder, decoder_structural, decoder_cell_content,
+                              encoder_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer)
 
 #t1_stop = perf_counter()
 

@@ -97,4 +97,50 @@ class DecoderCellContent(torch.nn.Module):
             # compute loss
             loss += self.loss_criterion(prediction, cell_content_input)
 
+        # normalize
+        loss = loss/num_timesteps/batch_size
+
+        return predictions, loss
+
+    def predict(self, encoded_features_map, structural_hidden_state, cell_content_target=None, maxT = 500):
+
+        batch_size = encoded_features_map.shape[0]
+
+        # create list to hold predictions since we sometimes don't know the size
+        predictions = [ [] for n in range(batch_size)]
+
+        # initialisation
+        cell_content_input, cell_content_hidden_state = self.initialise(batch_size)
+
+        loss = 0
+
+        # set maximum number of cell tokens
+        if cell_content_target is not None:
+            maxT = cell_content_target.shape[1]
+
+        # define tensor to contain batch indices run through timestep.
+        continue_decoder = torch.tensor(range(batch_size))
+
+        # run the timesteps
+        for t in range(maxT):
+
+            # slice out only those in continue_decoder
+            encoded_features_map_in = encoded_features_map[continue_decoder, :,:]
+
+            structural_hidden_state_in = structural_hidden_state[:, continue_decoder, :]
+
+            structural_input_in = structural_input[continue_decoder]
+
+
+            prediction, init_cell_content_hidden_state = self.timestep(encoded_features_map, structural_hidden_state, cell_content_input, cell_content_hidden_state)
+
+            # stores the predictions
+            predictions[t] = prediction
+
+            # teacher forcing
+            cell_content_input = cell_content_target[:, t]
+
+            # compute loss
+            loss += self.loss_criterion(prediction, cell_content_input)
+
         return predictions, loss

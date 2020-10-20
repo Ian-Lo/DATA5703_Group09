@@ -100,10 +100,14 @@ class DecoderStructural(torch.nn.Module):
 
             # teacher forcing
             structural_input = structural_target[:, t]
+
             loss += self.loss_criterion(prediction, structural_input)
 
             # TODO: implement more efficiently
             storage[t] = structural_hidden_state
+
+        # normalize by the number of timesteps and examples to allow comparison
+        loss = loss/num_timesteps/batch_size
 
         return predictions, loss, storage
 

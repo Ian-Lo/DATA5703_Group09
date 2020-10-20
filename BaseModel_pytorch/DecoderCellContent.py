@@ -97,6 +97,9 @@ class DecoderCellContent(torch.nn.Module):
             # compute loss
             loss += self.loss_criterion(prediction, cell_content_input)
 
+        # normalize
+        loss = loss/num_timesteps/batch_size
+
         return predictions, loss
 
     def predict(self, encoded_features_map, structural_hidden_state, cell_content_target=None, maxT = 500):

@@ -79,6 +79,7 @@ for epoch in range(epochs):
     batches = batching.build_batches(randomise=True)
 
     LAMBDA = lambdas[epoch]
+
     # update learning rates manually for each epoch
     lr = lrs[epoch]
     for g in decoder_structural_optimizer.param_groups:
@@ -97,6 +98,10 @@ for epoch in range(epochs):
         # send to training function for forward pass, backpropagation and weight updates
         predictions, loss_s, predictions_cell, loss_cc, loss = train_step(features_maps, structural_tokens, triggers, cells_content_tokens, model,LAMBDA=LAMBDA)
 
+    checkpoint.save_checkpoint(epoch, encoder, decoder_structural, decoder_cell_content,
+                              encoder_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer)
+    checkpoint.archive_checkpoint()
+    quit()
     #create batches for validation set
     batches_val= batching_val.build_batches(randomise=False)
 
@@ -105,45 +110,7 @@ for epoch in range(epochs):
         # call 'get_batch' to actually load the tensors from file
         features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(batch)
 
-        encoded_features_map_val = encoder.forward(features_map_val)
-        predictions_val, loss_s_val, storage_hidden_val, pred_triggers = decoder_structural.predict(encoded_features_map_val, structural_target = structural_tokens_val )
 
-        ### PROCESSING STORAGE ###
-        print("epoch", epoch)
-        print("training loss", loss_s)
-        print("validation loss", loss_s_val)
-
-        # merge input for predicted and ground truth
-
-        ### PROCESSING STORAGE ###
-        list1 = []
-        list2 = []
-        list3 = []
-
-        for example_num, example_triggers in enumerate(pred_triggers):
-            print(example_num, example_trigger)
-            # find true predicted tokens for predicted cell
-            ##### this is where I am at ##### reverting to implementing batching.
-
-        for example_num, example_triggers in enumerate(triggers_val):
-
-            cc_tk = cells_content_tokens[example_num]
-
-            for cell_num, example_trigger in enumerate(example_triggers):
-
-                if example_trigger != 0:
-                    list1.append(encoded_features_map[example_num])
-
-                    list2.append(storage_hidden[example_trigger, 0, example_num, :])
-
-                    list3.append(cc_tk[cell_num])
-
-#        new_encoded_features_map = torch.stack(list1)
-#        structural_hidden_state = torch.stack(list2).unsqueeze(0)
-        new_cells_content_tokens = torch.stack(list3)
-
-        predictions_cell, loss_cc_val = decoder_cell_content.predict(encoded_features_map, storage_hidden_val,cell_content_target =new_cells_content_tokens  )
-        ####### validation end ########
     # save checkpoint after every epoch
     checkpoint.save_checkpoint(3, encoder, decoder_structural, decoder_cell_content,
                               encoder_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer)

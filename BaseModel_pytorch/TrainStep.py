@@ -1,3 +1,5 @@
+import torch
+
 def train_step(features_map, structural_tokens, triggers, cells_content_tokens, model, LAMBDA=0.5,):
 
     # pass features through encoder
@@ -28,7 +30,7 @@ def train_step(features_map, structural_tokens, triggers, cells_content_tokens, 
         new_encoded_features_map = torch.stack(list1)
         structural_hidden_state = torch.stack(list2).unsqueeze(0)
         new_cells_content_tokens = torch.stack(list3)
-        predictions_cell, loss_cc = decoder_cell_content.forward(new_encoded_features_map, structural_hidden_state, new_cells_content_tokens)
+        predictions_cell, loss_cc = model.decoder_cell_content.forward(new_encoded_features_map, structural_hidden_state, new_cells_content_tokens)
 
     # calculate loss and update weights
 

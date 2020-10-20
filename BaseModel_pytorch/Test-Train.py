@@ -5,12 +5,11 @@ from DecoderCellContent import DecoderCellContent
 import h5py
 import torch
 import numpy as np
-from time import perf_counter
+from time import perf_counter, time
 from BatchingMechanism import BatchingMechanism
 from TrainStep import train_step
 from Model import Model
 from CheckPoint import CheckPoint
-
 
 structural_token2integer, structural_integer2token = Utils.load_structural_vocabularies()
 cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content_vocabularies()
@@ -59,7 +58,6 @@ decoder_cell_content_optimizer = torch.optim.Adam(params=filter(lambda p: p.requ
 # initialize model class
 model = Model(encoder, encoder_optimizer, decoder_structural,decoder_structural_optimizer,decoder_cell_content,decoder_cell_content_optimizer,structural_token2integer, structural_integer2token , cell_content_token2integer, cell_content_integer2token )
 
-t1_start = perf_counter()
 
 # set number of epochs
 epochs = 25
@@ -75,6 +73,8 @@ assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and 
 checkpoint = CheckPoint("BaselineModel_checkpoints")
 
 for epoch in range(epochs):
+    t1_start = perf_counter()
+
     # create random batches of examples
     # these "batches" are the just information needed to retrieve the actual tensors
     # batch = (storage number, [list of indices within the storage])
@@ -117,6 +117,6 @@ for epoch in range(epochs):
 
     t1_stop = perf_counter()
 
-    print('time: ', t1_stop-t1_start)
-    print('time for 100k examples' , t1_stop-t1_start)
+    print('epoch: %d \tLAMBDA: %.2f\tlr:%.5f\ttime: %.2f'%(epoch,LAMBDA, lr, t1_stop-t1_start))
+    print('time for 100k examples:' , "%.2f hours"%((t1_stop-t1_start)/number_examples*100000/3600))
     print(loss)

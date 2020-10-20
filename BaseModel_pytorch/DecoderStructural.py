@@ -112,82 +112,89 @@ class DecoderStructural(torch.nn.Module):
         return predictions, loss, storage
 
     def predict(self, encoded_features_map, structural_target = None, maxT = 1000):
-            ''' For use on validation set and test set.
-            structural target: None or tensor of shape (timesteps, batch_size)
-                Targets for prediction. If None: loss function is not calculated
-                and returned.
-            maxT: Integer. The maximum number of timesteps that is attempted to
-                find <end> if structural target is not supplied.  '''
+        ''' For use on validation set and test set.
+        structural target: None or tensor of shape (timesteps, batch_size)
+            Targets for prediction. If None: loss function is not calculated
+            and returned.
+        maxT: Integer. The maximum number of timesteps that is attempted to
+            find <end> if structural target is not supplied.  '''
 
-            batch_size = encoded_features_map.shape[0]
+        batch_size = encoded_features_map.shape[0]
 
-            # create list to hold predictions since we sometimes don't know the size
-            predictions = [ [] for n in range(batch_size)]
+        # create list to hold predictions since we sometimes don't know the size
+        predictions = [ [] for n in range(batch_size)]
+        prediction_propbs = [ [] for n in range(batch_size) ]
+        # create list to td tokens:
 
-            # create list to td tokens:
+        pred_triggers = [ [] for n in range(batch_size)]
 
-            pred_triggers = [ [] for n in range(batch_size)]
+        # create list to store hidden state
+        storage = [ [] for n in range(batch_size)]
 
-            # create list to store hidden state
-            storage = [ [] for n in range(batch_size)]
+        # initialisation
+        structural_input, structural_hidden_state = self.initialise(batch_size)
 
-            # initialisation
-            structural_input, structural_hidden_state = self.initialise(batch_size)
+        loss = 0
 
-            loss = 0
+        # set maximum number of structural tokens
+        if structural_target is not None:
+            maxT = structural_target.shape[1]
+        else:
+            maxT = 1000
 
-            # set maximum number of structural tokens
+        # define tensor to contain batch indices run through timestep.
+        continue_decoder = torch.tensor(range(batch_size))
+
+        for t in range(maxT):
+
+            # slice out only those in continue_decoder
+            encoded_features_map_in = encoded_features_map[continue_decoder,:,:]
+            structural_input_in = structural_input[continue_decoder]
+            structural_hidden_state_in = structural_hidden_state[:, continue_decoder, :]
+
+            # run through rnn
+            prediction, structural_hidden_state = self.timestep(encoded_features_map_in, structural_input_in, structural_hidden_state_in)
+
+            # apply logsoftmax
+            log_p = self.LogSoftmax(prediction)
+
+            # greedy decoder:
+            _, predict_id = torch.max(log_p, dim = 1 )
+
+            # calculate loss when possible
             if structural_target is not None:
-                maxT = structural_target.shape[1]
-            else:
-                maxT = 1000
+                # what if length of different?
+                truth = structural_target[continue_decoder, t]
+                loss += self.loss_criterion(prediction, truth)/continue_decoder.shape[0] # normalize
 
-            # define tensor to contain batch indices run through timestep.
-            continue_decoder = torch.tensor(range(batch_size))
+            # loop through predictions
+            for n, id in enumerate(predict_id):
+                # if stop:
+                if id in [self.structural_token2integer["<end>"]]:
+                    #remove element from continue_decoder
+                    continue_decoder = continue_decoder[continue_decoder!=n]
+                    # do not save prediction or hidden state
+                    continue
+                #if not stop
+                else:
+                    # get correct index
+                    index = continue_decoder[n]
+                    # save prediction
+                    predictions[index].append(id)
+                    prediction_propbs[index].append(prediction[n,:])
+                # if <td> or >:
+                if id in [self.structural_token2integer["<td>"], self.structural_token2integer[">"]]:
+                    # keep hidden state
+                    storage[index].append(structural_hidden_state[:,n, :])
+                    pred_triggers[index].append(t)
 
 
-            for t in range(maxT):
+        if structural_target is not None:
+            collapsed_predictions = [ torch.stack(l) for l in prediction_propbs ]
+            padded_prediction_probs = torch.nn.utils.rnn.pad_sequence(collapsed_predictions, batch_first=True, padding_value=0)
+            # insert Luca's function to calculate loss
+            loss = loss/t
 
-                # slice out only those in continue_decoder
-                encoded_features_map_in = encoded_features_map[continue_decoder,:,:]
-                structural_input_in = structural_input[continue_decoder]
-                structural_hidden_state_in = structural_hidden_state[:, continue_decoder, :]
-
-                # run through rnn
-                prediction, structural_hidden_state = self.timestep(encoded_features_map_in, structural_input_in, structural_hidden_state_in)
-
-                # apply logsoftmax
-                log_p = self.LogSoftmax(prediction)
-
-                # greedy decoder:
-                _, predict_id = torch.max(log_p, dim = 1 )
-
-                # calculate loss when possible
-                if structural_target is not None:
-                    truth = structural_target[continue_decoder, t]
-                    loss += self.loss_criterion(prediction, truth)
-
-                # loop through predictions
-                for n, id in enumerate(predict_id):
-                    # if stop:
-                    if id in [2]:
-                        #remove element from continue_decoder
-                        continue_decoder = continue_decoder[continue_decoder!=n]
-                        # do not save prediction or hidden state
-                        continue
-                    #if not stop
-                    else:
-                        # get correct index
-                        index = continue_decoder[n]
-                        # save prediction
-                        predictions[index].append(id)
-                    # if <td> or >:
-                    if id in [5, 9]:
-#                        print("found td")
-                        # keep hidden state
-                        storage[index].append(structural_hidden_state[:,n, :])
-                        pred_triggers[index].append(t)
-            if structural_target is not None:
-                return predictions, loss, storage, pred_triggers
-            else:
-                return predictions, storage, pred_triggers
+            return predictions, loss, storage, pred_triggers
+        else:
+            return predictions, storage, pred_triggers

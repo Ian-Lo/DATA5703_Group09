@@ -8,8 +8,12 @@ import numpy as np
 from time import perf_counter, time
 from BatchingMechanism import BatchingMechanism
 from TrainStep import train_step
+from ValStep import val_step
 from Model import Model
 from CheckPoint import CheckPoint
+
+# set relative path to load data from
+Utils.DatasetPath.set_relative_path("../../Dataset")
 
 structural_token2integer, structural_integer2token = Utils.load_structural_vocabularies()
 cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content_vocabularies()
@@ -101,18 +105,19 @@ for epoch in range(epochs):
         predictions, loss_s, predictions_cell, loss_cc, loss = train_step(features_maps, structural_tokens, triggers, cells_content_tokens, model,LAMBDA=LAMBDA)
 
     checkpoint.save_checkpoint(epoch, encoder, decoder_structural, decoder_cell_content,
-                              encoder_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer)
+                              encoder_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer, loss, loss_s, loss_cc)
     checkpoint.archive_checkpoint()
 
     ##### the section for the validation loss is commented out because we are not done with it
     #create batches for validation set
-#    batches_val= batching_val.build_batches(randomise=False)
+    batches_val= batching_val.build_batches(randomise=False)
 
-    # batch looping for validation
-#    for batch in batches_val:
+    #batch looping for validation
+    for batch in batches_val:
+
         # call 'get_batch' to actually load the tensors from file
-#        features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(batch)
-
+        features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(batch)
+        predictions_val, loss_s_val, predictions_cell_val, loss_cc_val, loss_val = val_step(features_maps_val, structural_tokens_val,triggers_val,cells_content_tokens_val, model, LAMBDA  )
     ######################
 
     t1_stop = perf_counter()

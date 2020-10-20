@@ -101,22 +101,20 @@ for epoch in range(epochs):
     checkpoint.save_checkpoint(epoch, encoder, decoder_structural, decoder_cell_content,
                               encoder_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer)
     checkpoint.archive_checkpoint()
-    quit()
+
+    ##### the section for the validation loss is commented out because we are not done with it
     #create batches for validation set
-    batches_val= batching_val.build_batches(randomise=False)
+#    batches_val= batching_val.build_batches(randomise=False)
 
     # batch looping for validation
-    for batch in batches_val:
+#    for batch in batches_val:
         # call 'get_batch' to actually load the tensors from file
-        features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(batch)
+#        features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(batch)
 
+    ######################
 
-    # save checkpoint after every epoch
-    checkpoint.save_checkpoint(3, encoder, decoder_structural, decoder_cell_content,
-                              encoder_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer)
+    t1_stop = perf_counter()
 
-#t1_stop = perf_counter()
-
-print('time: ', t1_stop-t1_start)
+    print('time: ', t1_stop-t1_start)
 
 storage.close()

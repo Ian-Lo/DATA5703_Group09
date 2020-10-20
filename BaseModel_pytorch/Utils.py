@@ -1,12 +1,26 @@
 import os
 
 
-# create a path to a location outside iCloud
-def create_abs_path(path):
+# class to manage the path of the dataset
+# note: everything is declared at class level
+# so that we do not need to instantiate any object
+# note: this class acts as a functional global variable
+class DatasetPath:
 
-    path = os.path.abspath(os.path.join('/Users/andersborges/Documents/Capstone/code/', path)) # pubtabnet path
+    # the relative path of the location with the HDF5 files
+    relative_path = ''
 
-    return path
+    @classmethod
+    def set_relative_path(cls, relative_path):
+
+        cls.relative_path = relative_path
+
+    @classmethod
+    def create_abs_path(cls, path):
+
+        path = os.path.abspath(os.path.join(os.path.dirname(__file__), cls.relative_path, path))
+
+        return path
 
 
 # load the vocabulary of structural tokens

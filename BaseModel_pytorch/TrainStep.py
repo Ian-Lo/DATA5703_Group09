@@ -32,7 +32,7 @@ def train_step(features_map, structural_tokens, triggers, cells_content_tokens, 
 
     # calculate loss and update weights
 
-    if abs(LAMBDA-1)>0.001:
+    if abs(LAMBDA-1.0)>=0.001:
         loss = LAMBDA * loss_s + (1.0-LAMBDA) * loss_cc
         # Back propagation
         model.decoder_cell_content_optimizer.zero_grad()

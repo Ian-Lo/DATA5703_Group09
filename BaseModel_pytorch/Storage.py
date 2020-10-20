@@ -23,7 +23,7 @@ class Storage:
         # connect to the HFD5 file
         suffix = '{:0>3}'.format(self.storage_number)
         storage_filename = self.dataset_split + '_dataset_' + suffix + '.hdf5'
-        storage_path = Utils.create_abs_path('Dataset/' + storage_filename)
+        storage_path = Utils.DatasetPath.create_abs_path(storage_filename)
         self.storage = h5py.File(storage_path, "r")
 
         # set up dataset objects

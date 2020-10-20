@@ -16,8 +16,10 @@ structural_token2integer, structural_integer2token = Utils.load_structural_vocab
 cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content_vocabularies()
 
 # instantiate the batching object
-batching = BatchingMechanism(dataset_split='train', number_examples=125, batch_size=8, storage_size=1000)
-batching_val = BatchingMechanism(dataset_split='train', number_examples=125, batch_size=8, storage_size=1000)
+number_examples = 100
+number_examples_val = 100
+batching = BatchingMechanism(dataset_split='train', number_examples=number_examples, batch_size=10, storage_size=1000)
+batching_val = BatchingMechanism(dataset_split='train', number_examples=number_examples_val, batch_size=10, storage_size=1000)
 
 # initialise the object
 # here the object works out how many storages and how many examples from every storage are needed
@@ -116,5 +118,5 @@ for epoch in range(epochs):
     t1_stop = perf_counter()
 
     print('time: ', t1_stop-t1_start)
-
-storage.close()
+    print('time for 100k examples' , t1_stop-t1_start)
+    print(loss)

@@ -17,8 +17,7 @@ if len(sys.argv) < 4:
     quit()
 
 relative_path = str(sys.argv[3])
-Utils.DatasetPath.set_relative_path(relative_path) # '../../../../../../ianlo/Downloads/COMP5703_temp/Dataset'
-print(Utils.DatasetPath.relative_path)
+Utils.DatasetPath.set_relative_path(relative_path)
 
 structural_token2integer, structural_integer2token = Utils.load_structural_vocabularies()
 cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content_vocabularies()

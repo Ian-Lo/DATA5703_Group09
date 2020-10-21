@@ -125,8 +125,8 @@ class DecoderStructural(torch.nn.Module):
         # create list to hold predictions since we sometimes don't know the size
         predictions = [ [] for n in range(batch_size)]
         prediction_propbs = [ [] for n in range(batch_size) ]
-        # create list to td tokens:
 
+        # create list for timesteps when td tokens are called:
         pred_triggers = [ [] for n in range(batch_size)]
 
         # create list to store hidden state
@@ -144,9 +144,10 @@ class DecoderStructural(torch.nn.Module):
         else:
             maxT = 1000
 
-        # define tensor to contain batch indices run through timestep.
+        # define tensor to contain batch indices to run through timestep.
         continue_decoder = torch.tensor(range(batch_size))
 
+        #run the timesteps
         for t in range(maxT):
 
             # slice out only those in continue_decoder
@@ -165,7 +166,9 @@ class DecoderStructural(torch.nn.Module):
 
             # calculate loss when possible
             if structural_target is not None:
-                # what if length of different?
+                # Luca: move calculation of loss to the end like we talked about
+                # below only works if padded ground truth have more cell tokens than
+                # prediction
                 truth = structural_target[continue_decoder, t]
                 loss += self.loss_criterion(prediction, truth)/continue_decoder.shape[0] # normalize
 
@@ -191,11 +194,14 @@ class DecoderStructural(torch.nn.Module):
                     pred_triggers[index].append(t)
 
 
-        if structural_target is not None:
-            collapsed_predictions = [ torch.stack(l) for l in prediction_propbs ]
-            padded_prediction_probs = torch.nn.utils.rnn.pad_sequence(collapsed_predictions, batch_first=True, padding_value=0)
-            # insert Luca's function to calculate loss
-            loss = loss/t
+        if 0:  # we need to get this way of calculating loss to work.
+            if structural_target is not None:
+                # this is where the new calculation of loss goes
+                collapsed_predictions = [ torch.stack(l) for l in prediction_propbs ]
+                padded_prediction_probs = torch.nn.utils.rnn.pad_sequence(collapsed_predictions, batch_first=True, padding_value=0)
+                # insert Luca's function to calculate loss
+    #            loss = XXXXX
+                loss = loss/t
 
             return predictions, loss, storage, pred_triggers
         else:

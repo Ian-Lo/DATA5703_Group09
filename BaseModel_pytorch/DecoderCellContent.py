@@ -104,12 +104,13 @@ class DecoderCellContent(torch.nn.Module):
         return predictions, loss
 
     def predict(self, encoded_features_map, structural_hidden_state, cell_content_target=None, maxT = 500):
+        ''' For use on validation set and test set.'''
 
-        quit()
         batch_size = encoded_features_map.shape[0]
 
         # create list to hold predictions since we sometimes don't know the size
         predictions = [ [] for n in range(batch_size)]
+        prediction_propbs = [ [] for n in range(batch_size) ]
 
         # initialisation
         cell_content_input, cell_content_hidden_state = self.initialise(batch_size)
@@ -121,29 +122,63 @@ class DecoderCellContent(torch.nn.Module):
             # LUCA: add your solution here:
             maxT = cell_content_target.shape[1]
 
-        # define tensor to contain batch indices run through timestep.
+        # define tensor to contain batch indices to run through timestep.
         continue_decoder = torch.tensor(range(batch_size))
 
         # run the timesteps
         for t in range(maxT):
 
+            cell_content_input, cell_content_hidden_state
+
             # slice out only those in continue_decoder
-            encoded_features_map_in = encoded_features_map[continue_decoder, :,:]
-
-            structural_hidden_state_in = structural_hidden_state[:, continue_decoder, :]
-
+            encoded_features_map_in = encoded_features_map[continue_decoder,:,:]
             structural_input_in = structural_input[continue_decoder]
+            structural_hidden_state_in = structural_hidden_state[:, continue_decoder, :]
+            cell_content_input_in = cell_content_input[continue_decoder]
+            cell_content_hidden_state_in = cell_content_hidden_state[:, continue_decoder, :]
 
+            # run through rnn
+            prediction, cell_content_hidden_state = self.timestep(encoded_features_map_in, structural_hidden_state_in, cell_content_input_in, cell_content_hidden_state_in)
 
-            prediction, init_cell_content_hidden_state = self.timestep(encoded_features_map, structural_hidden_state, cell_content_input, cell_content_hidden_state)
+            # apply logsoftmax
+            log_p = self.LogSoftmax(prediction)
 
-            # stores the predictions
-            predictions[t] = prediction
+            # greedy decoder:
+            _, predict_id = torch.max(log_p, dim = 1 )
 
-            # teacher forcing
-            cell_content_input = cell_content_target[:, t]
+            # calculate loss when possible
+            if cell_content_target is not None:
+                # what if length different?
+                truth = structural_target[continue_decoder, t]
+                loss += self.loss_criterion(prediction, truth)/continue_decoder.shape[0] # normalize
 
-            # compute loss
-            loss += self.loss_criterion(prediction, cell_content_input)
+            # loop through predictions
+            for n, id in enumerate(predict_id):
+                # if stop:
+                if id in [self.cell_content_token2integer["<end>"]]:
+                    #remove element from continue_decoder
+                    continue_decoder = continue_decoder[continue_decoder!=n]
+                    # do not save prediction or hidden state
+                    continue
+                #if not stop
+                else:
+                    # get correct index
+                    index = continue_decoder[n]
+                    # save prediction
+                    predictions[index].append(id)
+                    prediction_propbs[index].append(prediction[n,:])
 
-        return predictions, loss
+        if 0:  # we need to get this way of calculating loss to work.
+            if structural_target is not None:
+                # this is where the new calculation of loss goes
+                collapsed_predictions = [ torch.stack(l) for l in prediction_propbs ]
+                padded_prediction_probs = torch.nn.utils.rnn.pad_sequence(collapsed_predictions, batch_first=True, padding_value=0)
+                # insert Luca's function to calculate loss
+    #            loss = XXXXX
+                loss = loss/t
+
+        if structural_target is not None:
+            return predictions, loss
+
+        else:
+            return predictions

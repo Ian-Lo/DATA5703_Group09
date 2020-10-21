@@ -43,24 +43,7 @@ def val_step(features_map_val, structural_tokens_val,triggers_val,cells_content_
         print("indices_in_truth")
         print(indices_in_truth)
         new_cells_content_tokens[n,indices_in_pred,:] = cells_content_tokens_val[n, indices_in_truth, :]
-        ##### this is where I am at ##### reverting to implementing batching.
-    quit()
-#    for example_num, example_triggers in enumerate(triggers_val):
 
-#        cc_tk = cells_content_tokens[example_num]
-
-#        for cell_num, example_trigger in enumerate(example_triggers):
-
-#            if example_trigger != 0:
-#                list1.append(encoded_features_map[example_num])
-
-        #        list2.append(storage_hidden[example_trigger, 0, example_num, :])
-
-#                list3.append(cc_tk[cell_num])
-
-#        new_encoded_features_map = torch.stack(list1)
-#        structural_hidden_state = torch.stack(list2).unsqueeze(0)
-#    new_cells_content_tokens = torch.stack(list3)
-
-#    predictions_cell, loss_cc_val = decoder_cell_content.predict(encoded_features_map, storage_hidden_val,cell_content_target =new_cells_content_tokens  )
+    # call cell decoder
+    predictions_cell, loss_cc_val = model.decoder_cell_content.predict(encoded_features_map_val, storage_hidden_val,cell_content_target =new_cells_content_tokens  )
     ####### validation end ########

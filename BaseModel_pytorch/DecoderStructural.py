@@ -138,6 +138,7 @@ class DecoderStructural(torch.nn.Module):
         loss = 0
 
         # set maximum number of structural tokens
+        # LUCA: edit your solution here
         if structural_target is not None:
             maxT = structural_target.shape[1]
         else:

@@ -105,6 +105,7 @@ class DecoderCellContent(torch.nn.Module):
 
     def predict(self, encoded_features_map, structural_hidden_state, cell_content_target=None, maxT = 500):
 
+        quit()
         batch_size = encoded_features_map.shape[0]
 
         # create list to hold predictions since we sometimes don't know the size
@@ -117,6 +118,7 @@ class DecoderCellContent(torch.nn.Module):
 
         # set maximum number of cell tokens
         if cell_content_target is not None:
+            # LUCA: add your solution here:
             maxT = cell_content_target.shape[1]
 
         # define tensor to contain batch indices run through timestep.

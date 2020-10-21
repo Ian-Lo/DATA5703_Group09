@@ -33,7 +33,7 @@ class DecoderCellContent(torch.nn.Module):
 
         # initialise structural input
         init_cell_content_input = np.repeat(self.cell_content_token2integer['<start>'], batch_size).astype(np.int64)
-        init_cell_content_input = torch.from_numpy()
+        init_cell_content_input = torch.from_numpy(init_cell_content_input)
 
         # initialise structural hidden state
         init_cell_content_hidden_state = np.zeros((batch_size, self.hidden_size), dtype=np.float32)
@@ -132,7 +132,11 @@ class DecoderCellContent(torch.nn.Module):
 
             # slice out only those in continue_decoder
             encoded_features_map_in = encoded_features_map[continue_decoder,:,:]
-            structural_input_in = structural_input[continue_decoder]
+            # Anders: figure out how to collape the hidden states of this timestep
+            # so it can be processed through rnn.
+            print("structural_hidden_state")
+            print(structural_hidden_state[t])
+            quit()
             structural_hidden_state_in = structural_hidden_state[:, continue_decoder, :]
             cell_content_input_in = cell_content_input[continue_decoder]
             cell_content_hidden_state_in = cell_content_hidden_state[:, continue_decoder, :]

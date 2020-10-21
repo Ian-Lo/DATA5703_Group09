@@ -193,6 +193,8 @@ class DecoderStructural(torch.nn.Module):
                     storage[index].append(structural_hidden_state[:,n, :])
                     pred_triggers[index].append(t)
 
+#        # hidden states is a list of list of tensors (number_examples)
+#        structural_hidden_states = [ torch.stack(l) for l in storage ]
 
         if 0:  # we need to get this way of calculating loss to work.
             if structural_target is not None:
@@ -203,6 +205,7 @@ class DecoderStructural(torch.nn.Module):
     #            loss = XXXXX
                 loss = loss/t
 
+        if structural_target is not None:
             return predictions, loss, storage, pred_triggers
         else:
             return predictions, storage, pred_triggers

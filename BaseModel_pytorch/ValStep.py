@@ -31,17 +31,17 @@ def val_step(features_map_val, structural_tokens_val,triggers_val,cells_content_
         # remove trailing pads: below is the stupidest line of code I have ever written, but I can't find a way to unpad.
         triggers_example_val2 = [trigger for n, trigger in enumerate(triggers_example_val) if trigger not in [0] or n ==0 ]
         # get indices in the structural predictions that have a ground truth
-        print("example_triggers")
-        print(example_triggers)
-        print("triggers_example_val")
-        print(triggers_example_val)
+#        print("example_triggers")
+#        print(example_triggers)
+#        print("triggers_example_val")
+#        print(triggers_example_val)
         both = set(example_triggers).intersection(triggers_example_val2)
         indices_in_pred = [example_triggers.index(x) for x in sorted(both)]
         indices_in_truth = [triggers_example_val2.index(x) for x in sorted(both)]
-        print("indices_in_pred")
-        print(indices_in_pred)
-        print("indices_in_truth")
-        print(indices_in_truth)
+#        print("indices_in_pred")#
+#        print(indices_in_pred)
+#        print("indices_in_truth")
+#        print(indices_in_truth)
         new_cells_content_tokens[n,indices_in_pred,:] = cells_content_tokens_val[n, indices_in_truth, :]
 
     # call cell decoder

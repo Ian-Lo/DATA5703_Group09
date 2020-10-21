@@ -32,7 +32,8 @@ class DecoderCellContent(torch.nn.Module):
     def initialise(self, batch_size):
 
         # initialise structural input
-        init_cell_content_input = torch.from_numpy(np.repeat(self.cell_content_token2integer['<start>'], batch_size))
+        init_cell_content_input = np.repeat(self.cell_content_token2integer['<start>'], batch_size).astype(np.int64)
+        init_cell_content_input = torch.from_numpy()
 
         # initialise structural hidden state
         init_cell_content_hidden_state = np.zeros((batch_size, self.hidden_size), dtype=np.float32)

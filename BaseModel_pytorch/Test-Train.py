@@ -118,6 +118,7 @@ for epoch in range(epochs):
         # call 'get_batch' to actually load the tensors from file
         features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(batch)
         predictions_val, loss_s_val, predictions_cell_val, loss_cc_val, loss_val = val_step(features_maps_val, structural_tokens_val,triggers_val,cells_content_tokens_val, model, LAMBDA  )
+        print("ok")
     ######################
 
     t1_stop = perf_counter()

@@ -35,7 +35,8 @@ class DecoderStructural(torch.nn.Module):
     def initialise(self, batch_size):
 
         # initialise structural input
-        init_structural_input = torch.from_numpy(np.repeat(self.structural_token2integer['<start>'], batch_size))
+        init_structural_input = np.repeat(self.structural_token2integer['<start>'], batch_size).astype(np.int64)
+        init_structural_input = torch.from_numpy(init_structural_input)
 
         # initialise structural hidden state
         init_structural_hidden_state = np.zeros((batch_size, self.hidden_size), dtype=np.float32)

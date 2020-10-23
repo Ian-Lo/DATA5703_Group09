@@ -1,5 +1,6 @@
 import torch
 import os
+from datetime import datetime, timezone
 
 
 class CheckPoint:
@@ -17,7 +18,8 @@ class CheckPoint:
     # note: the previous checkpoint is over-written
     def save_checkpoint(self, epoch,
                               encoder, decoder_structural, decoder_cell_content,
-                              encoder_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer):
+                              encoder_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer,
+                              loss, loss_s, loss_cc):
 
         # assemble the state of the model
         state = {'model_tag': self.model_tag,
@@ -27,7 +29,11 @@ class CheckPoint:
                  'decoder_cell_content': decoder_cell_content,
                  'encoder_optimizer': encoder_optimizer,
                  'decoder_structural_optimizer': decoder_structural_optimizer,
-                 'decoder_cell_content_optimizer': decoder_cell_content_optimizer}
+                 'decoder_cell_content_optimizer': decoder_cell_content_optimizer,
+                 'loss': loss,
+                 'loss_s': loss_s,
+                 'loss_cc': loss_cc,
+                 'time': datetime.now(timezone.utc).strftime('%Y-%m-%d %H-%M-%S UTC')}
 
         self.state = state
 

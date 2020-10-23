@@ -31,6 +31,6 @@ tar xvf Dataset_dev.tar.gz
 # Call training
 # Pass path and n iters as command line parameters to training command
 # Paths needs to be relative
-Test-Train.py arg1 arg2 arg3
+Test-Train.py 100000 100000 ../../dataset
 
 echo 'DID YOU REMEMBER TO UNCOMMENT THE LINES YOU NEED TO EXECUTE???'

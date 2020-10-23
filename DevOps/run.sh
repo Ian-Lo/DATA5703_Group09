@@ -28,6 +28,8 @@ tar xvf Dataset_train_100k.tar.gz
 tar xvf Dataset_test.tar.gz
 tar xvf Dataset_dev.tar.gz
 
+mv Dataset_train_100k/* Dataset
+
 # Call training
 # Pass path and n iters as command line parameters to training command
 # Path needs to be relative

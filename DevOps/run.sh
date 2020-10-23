@@ -7,7 +7,7 @@ git config user.email "email"
 git config user.name "user"
 git pull https://3b93b47605174bb4a2305d0d1bc6f5a72d708130:x-oauth-basic@github.com/Ian-Lo/DATA5703_Group09 main
 
-pip install -r 'DATA5703_Group09/DevOps/requirements.txt'
+pip install -r 'DevOps/requirements.txt'
 
 # Download Dataset
 echo 'Download GDriveDL and make executable'
@@ -31,7 +31,8 @@ tar xvf Dataset_dev.tar.gz
 # Call training
 # Pass path and n iters as command line parameters to training command
 # Path needs to be relative
+chmod +x BaseModel_pytorch/*
+cd BaseModel_pytorch
+python3 Test-Train.py 100000 100000 ../Dataset
 
-DATA5703_Group09/BaseModel_pytorch/Test-Train.py 100000 100000 ../../dataset
-
-echo 'DID YOU REMEMBER TO UNCOMMENT THE LINES YOU NEED TO EXECUTE???'
+# echo 'DID YOU REMEMBER TO UNCOMMENT THE LINES YOU NEED TO EXECUTE???'

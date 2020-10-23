@@ -7,7 +7,9 @@ git config user.email "email"
 git config user.name "user"
 git pull https://3b93b47605174bb4a2305d0d1bc6f5a72d708130:x-oauth-basic@github.com/Ian-Lo/DATA5703_Group09 main
 
+
 python3.8 -m pip install -r 'DevOps/requirements.txt'
+
 
 # Download Dataset
 echo 'Download GDriveDL and make executable'

@@ -33,6 +33,6 @@ tar xvf Dataset_dev.tar.gz
 # Path needs to be relative
 chmod +x BaseModel_pytorch/*
 cd BaseModel_pytorch
-python3 Test-Train.py 100000 100000 ../Dataset
+python3 Test-Train.py 100000 10000 ../Dataset
 
 # echo 'DID YOU REMEMBER TO UNCOMMENT THE LINES YOU NEED TO EXECUTE???'

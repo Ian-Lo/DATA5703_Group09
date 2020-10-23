@@ -30,7 +30,8 @@ tar xvf Dataset_dev.tar.gz
 
 # Call training
 # Pass path and n iters as command line parameters to training command
-# Paths needs to be relative
+# Path needs to be relative
+
 DATA5703_Group09/BaseModel_pytorch/Test-Train.py 100000 100000 ../../dataset
 
 echo 'DID YOU REMEMBER TO UNCOMMENT THE LINES YOU NEED TO EXECUTE???'

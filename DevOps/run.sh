@@ -7,7 +7,9 @@ git config user.email "email"
 git config user.name "user"
 git pull https://3b93b47605174bb4a2305d0d1bc6f5a72d708130:x-oauth-basic@github.com/Ian-Lo/DATA5703_Group09 main
 
-python3 -m pip install -r 'DevOps/requirements.txt'
+
+python3.8 -m pip install -r 'DevOps/requirements.txt'
+
 
 # Download Dataset
 echo 'Download GDriveDL and make executable'
@@ -35,6 +37,6 @@ mv Dataset_train_100k/* Dataset
 # Path needs to be relative
 chmod +x BaseModel_pytorch/*
 cd BaseModel_pytorch
-python3 Test-Train.py 100000 10000 ../Dataset
+python3.8 Test-Train.py 100000 10000 ../Dataset
 
 # echo 'DID YOU REMEMBER TO UNCOMMENT THE LINES YOU NEED TO EXECUTE???'

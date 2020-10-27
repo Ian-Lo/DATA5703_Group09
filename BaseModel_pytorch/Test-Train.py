@@ -68,7 +68,7 @@ epochs = 25
 
 # make list of lambdas to use in training
 # this is the same strategy as Zhong et al.
-lambdas = [1 for _ in range(10)] + [1 for _ in range(3)]+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
+lambdas =  [0 for _ in range(10)] + [1 for _ in range(3)]+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
 lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 
 assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and lambdas are inconsistent"
@@ -117,6 +117,7 @@ for epoch in range(epochs):
         total_loss+= loss
         if loss_cc:
             total_loss_cc+=loss_cc
+    total_loss_s/=len(batches)
 
     checkpoint.save_checkpoint(epoch, encoder, decoder_structural, decoder_cell_content,
                               encoder_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer, total_loss, total_loss_s, total_loss_cc)
@@ -134,10 +135,12 @@ for epoch in range(epochs):
 
             total_loss_s_val+= loss_s_val
 
+        total_loss_s_val/=len(batches)
+
         print("Truth")
-        print([structural_integer2token[p.item()] for p in structural_tokens_val[0][:5]])
+        print([structural_integer2token[p.item()] for p in structural_tokens_val[0][:10]])
         print("Prediction")
-        print([structural_integer2token[p.item()] for p in predictions_val[0][:5]])
+        print([structural_integer2token[p.item()] for p in predictions_val[0][:10]])
     ######################
 
     t1_stop = perf_counter()

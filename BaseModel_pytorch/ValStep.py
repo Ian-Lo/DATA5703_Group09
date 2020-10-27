@@ -9,6 +9,11 @@ def val_step(features_map_val, structural_tokens_val,triggers_val,cells_content_
     max_struc_token_pred = max([ len(t) for t in pred_triggers])
     max_cell_tokens_true = cells_content_tokens_val.shape[2]
 
+
+    ### PROCESSING STORAGE ###
+    list_features_map = []
+
+
     # create new array
     new_cells_content_tokens = torch.zeros(num_examples , max_struc_token_pred , max_cell_tokens_true, dtype = cells_content_tokens_val.dtype)
 
@@ -16,8 +21,10 @@ def val_step(features_map_val, structural_tokens_val,triggers_val,cells_content_
     # prediction
 
     for n, example_triggers in enumerate(pred_triggers):#
+
         # convert to list
         triggers_example_val = triggers_val[n].tolist()
+
         # remove trailing pads: below is the stupidest line of code I have ever written, but I can't find a way to unpad.
         triggers_example_val2 = [trigger for n, trigger in enumerate(triggers_example_val) if trigger not in [0] or n ==0 ]
 
@@ -27,10 +34,15 @@ def val_step(features_map_val, structural_tokens_val,triggers_val,cells_content_
         indices_in_truth = [triggers_example_val2.index(x) for x in sorted(both)]
         new_cells_content_tokens[n,indices_in_pred,:] = cells_content_tokens_val[n, indices_in_truth, :]
 
+    # run structural decoder only if lambda != 1
+#    if abs(LAMBDA-1)>0.001:
+        # collect input in lists:
+
+
 
     # call cell decoder
     ######## COMMENTING OUT CELL DECODER BECAUSE IT IS NOT DONE #######
-#    predictions_cell_val, loss_cc_val = model.decoder_cell_content.predict(encoded_features_map_val, storage_hidden_val,cell_content_target =new_cells_content_tokens  )
+    predictions_cell_val, loss_cc_val = model.decoder_cell_content.predict(encoded_features_map_val, storage_hidden_val,cell_content_target =new_cells_content_tokens  )
 
     loss_cc_val = 0
     predictions_cell_val = None

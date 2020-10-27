@@ -7,7 +7,6 @@ def train_step(features_map, structural_tokens, triggers, cells_content_tokens, 
 
     # pass encoded features through structural decoder
     predictions, loss_s, storage_hidden = model.decoder_structural.forward(encoded_features_map, structural_tokens)
-
     # run structural decoder only if lambda != 1
     if abs(LAMBDA-1)>0.001:
         ### PROCESSING STORAGE ###

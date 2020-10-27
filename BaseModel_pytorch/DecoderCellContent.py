@@ -86,7 +86,7 @@ class DecoderCellContent(torch.nn.Module):
 
         # run the timesteps
         for t in range(0, num_timesteps):
-
+            # Luca: shouldn't this be cell_content_hidden_state instead of init_cell_content_hidden_state
             prediction, init_cell_content_hidden_state = self.timestep(encoded_features_map, structural_hidden_state, cell_content_input, cell_content_hidden_state)
 
             # stores the predictions
@@ -103,12 +103,11 @@ class DecoderCellContent(torch.nn.Module):
 
         return predictions, loss
 
-    def predict(self, encoded_features_map, structural_hidden_state, cell_content_target=None, maxT = 500):
-
+    def predict(self, encoded_features_map, structural_hidden_state, cell_content_target=None, maxT = 2000):
         ''' For use on validation set and test set.
         encoded_features_map: tensor of shape (num_examples,encoder_size,encoder_size)
         structural_hidden_state: list of list of tensors (num_examples, num_struc_token, hidden_dim)
-        cell_content_target:
+        cell_content_target: tensor of shape (num_examples,  max_struc_token_pred , max_cell_tokens_true)
         maxT: integer, maximum number of time steps
         '''
 
@@ -119,44 +118,34 @@ class DecoderCellContent(torch.nn.Module):
         print("cell_content_target")
         print(cell_content_target.shape)
 
-        batch_size = encoded_features_map.shape[0]
+        batch_size =encoded_features_map.shape[0] #number of triggers for each example. Will vary from image to image
 
         # create list to hold predictions since we sometimes don't know the size
-        predictions = [ [] for n in range(batch_size)]
-        prediction_propbs = [ [] for n in range(batch_size) ]
+        predictions = [ [ []  ] for n in range(batch_size)  ]
+        prediction_propbs = [ [ [] ] for n in range(batch_size) ]
 
         # initialisation
         cell_content_input, cell_content_hidden_state = self.initialise(batch_size)
 
         loss = 0
+        # loop over images/example
+        for batch_index in range(batch_size):
+            # define tensor to contain outer indices to run through timestep.
+            outer_indices_to_keep = torch.tensor([n for n in range(len(structural_hidden_state[batch_index])) if len(structural_hidden_state[batch_index])!=0] , dtype = torch.long)
+            # indices to keep within for loop
+            indices_to_keep = torch.tensor(range(batch_size), dtype = torch.long)
 
-
-        # define tensor to contain batch indices to run through timestep.
-
-        batch_indices_to_keep = torch.tensor([n for n in range(batch_size) if len(structural_hidden_state[n])!=0] , dtype = torch.long)
-
-        # indices to keep within for loop
-        indices_to_keep = torch.tensor(range(batch_size), dtype = torch.long)
-
-        #update indices to remove empty lists
-        preremove = [n for n in range(batch_size) if len(structural_hidden_state)==0]
-        for element in preremove[::-1]:
-            batch_indices_to_keep = batch_indices_to_keep[batch_indices_to_keep!=element]
-
-
-        # run the timesteps
-        for t in range(maxT):
-            # break condition for inference
-            if batch_indices_to_keep.numel()==0:
-                break
-
-            # slice out only elements that are required
-            encoded_features_map_in = encoded_features_map[batch_indices_to_keep, :, :]
-            cell_content_input_in = cell_content_input[batch_indices_to_keep]
-            # get hidden state
-            hidden_states_t =torch.stack([ h[t] for n, h in enumerate(structural_hidden_state) if n in batch_indices_to_keep])
-            hidden_states_t.reshape(batch_indices_to_keep.numel(), -1, )
-            cell_content_hidden_state_in = cell_content_hidden_state[:, continue_decoder, :]
+            encoded_features_map_in = encoded_features_map.repeat(outer_indices_to_keep.shape[0],1,1 )
+            print(encoded_featurs_map_in.shape)
+#            quit()
+            for t in range(max_T):
+                # slice out only elements that are required
+                encoded_features_map_in = encoded_features_map[batch_indices_to_keep, :, :]
+                cell_content_input_in = cell_content_input[batch_indices_to_keep]
+                # get hidden state
+                hidden_states_t =torch.stack([ h[t] for n, h in enumerate(structural_hidden_state) if n in batch_indices_to_keep])
+                hidden_states_t.reshape(batch_indices_to_keep.numel(), -1, )
+                cell_content_hidden_state_in = cell_content_hidden_state[:, continue_decoder, :]
 
             # Anders: figure out how to collape the hidden states of this timestep
             # so it can be processed through rnn.

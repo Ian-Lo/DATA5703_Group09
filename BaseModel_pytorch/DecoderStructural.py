@@ -115,6 +115,11 @@ class DecoderStructural(torch.nn.Module):
         return predictions, loss, storage
 
     def calc_loss_struc(self,targets, prediction_probs):
+        """ Calculate loss for predictions from targets.
+        targets: tensor of shape num_examples, max_length. Contains "true" token indices.
+        prediction_probs: list of lists of tensors. Outer list: num_examples. Inner list:
+            triggers. Tensors of shape num_tokens.
+        """
 
         batch_size = targets.size()[0]
         loss =0
@@ -153,7 +158,6 @@ class DecoderStructural(torch.nn.Module):
 #                print('pad prob', compatible_target.size(), compatible_prediction_prob.size())
 
             loss+= self.loss_criterion(compatible_prediction_prob, compatible_target)/num_predictions
-
         return loss
 
 

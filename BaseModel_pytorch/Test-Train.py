@@ -13,18 +13,26 @@ from CheckPoint import CheckPoint
 import sys
 
 if len(sys.argv) < 4:
-    print(f"{sys.argv[0]} needs 3 parameters. 'number of examples(int), number of examples for eval(int), 'relative path to HDF5 files(str)")
+    print(f'{sys.argv[0]} needs 4 parameters. number of examples(int), number of examples for eval(int), relative path to HDF5 files(str), tag for archiving checkpoints(str)')
     quit()
 
+# number of training examples
+number_examples = int(sys.argv[1])
+# number of validation examples
+number_examples_val = int(sys.argv[2])
+# relative path of Dataset folder
 relative_path = str(sys.argv[3])
+# tag to create a Checkpoints sub-folder
+model_tag = str(sys.argv[4])
+
+# set up path of dataset
 Utils.DatasetPath.set_relative_path(relative_path)
 
+# load dictionaries
 structural_token2integer, structural_integer2token = Utils.load_structural_vocabularies()
 cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content_vocabularies()
 
 # instantiate the batching object
-number_examples = int(sys.argv[1]) 
-number_examples_val = int(sys.argv[2]) # not implemented
 batching = BatchingMechanism(dataset_split='train', number_examples=number_examples, batch_size=10, storage_size=1000)
 batching_val = BatchingMechanism(dataset_split='train', number_examples=number_examples_val, batch_size=10, storage_size=1000)
 
@@ -77,8 +85,8 @@ lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in 
 
 assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and lambdas are inconsistent"
 
-# construct checkpoint
-checkpoint = CheckPoint("BaselineModel_checkpoints")
+# instantiate checkpoint
+checkpoint = CheckPoint(model_tag)
 
 for epoch in range(epochs):
     t1_start = perf_counter()

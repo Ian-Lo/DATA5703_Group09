@@ -1,9 +1,24 @@
+import Utils
 import torch
 import os
 from datetime import datetime, timezone
 
 
 class CheckPoint:
+
+    # load the current checkpoint
+    # note: there is no need to instantiate an object
+    # call as: CheckPoint.load_checkpoint()
+    @classmethod
+    def load_checkpoint(cls):
+
+        # load the latest checkpoint
+        # this local checkpoint is over-witten
+        # every time a new checkpoint is saved
+        file_path = Utils.absolute_path('', 'checkpoint.pth.tar')
+        state = torch.load(file_path)
+
+        return state
 
     def __init__(self, model_tag):
 
@@ -24,12 +39,12 @@ class CheckPoint:
         # assemble the state of the model
         state = {'model_tag': self.model_tag,
                  'epoch': epoch,
-                 'encoder': encoder,
-                 'decoder_structural': decoder_structural,
-                 'decoder_cell_content': decoder_cell_content,
-                 'encoder_optimizer': encoder_optimizer,
-                 'decoder_structural_optimizer': decoder_structural_optimizer,
-                 'decoder_cell_content_optimizer': decoder_cell_content_optimizer,
+                 'encoder': encoder.state_dict(),
+                 'decoder_structural': decoder_structural.state_dict(),
+                 'decoder_cell_content': decoder_cell_content.state_dict(),
+                 'encoder_optimizer': encoder_optimizer.state_dict(),
+                 'decoder_structural_optimizer': decoder_structural_optimizer.state_dict(),
+                 'decoder_cell_content_optimizer': decoder_cell_content_optimizer.state_dict(),
                  'loss': loss,
                  'loss_s': loss_s,
                  'loss_cc': loss_cc,
@@ -40,25 +55,24 @@ class CheckPoint:
         # store the checkpoint
         # this local checkpoint is over-witten
         # every time a new checkpoint is saved
-        filename = 'checkpoint.pth.tar'
-        torch.save(state, filename)
+        file_path = Utils.absolute_path('', 'checkpoint.pth.tar')
+        torch.save(self.state, file_path)
 
     # archive the checkpoint into a sub-folder of 'Checkpoints/'
     def archive_checkpoint(self):
 
         # create archive folder if it does not exist
-        path = f'Checkpoints/{self.model_tag}'
-        path = os.path.abspath(path)
-        if not os.path.isdir(path):
-            os.makedirs(path)
+        folder_name = Utils.absolute_path(f'Checkpoints/{self.model_tag}', '')
+        if not os.path.isdir(folder_name):
+            os.makedirs(folder_name)
 
         # create filename
         epoch = self.state['epoch']
         suffix = '{:0>3}'.format(epoch)
-        filename = f'checkpoint_{suffix}.pth.tar'
+        file_path = Utils.absolute_path(folder_name, f'checkpoint_{suffix}.pth.tar')
 
         # archive the checkpoint
-        torch.save(self.state, os.path.join(path, filename))
+        torch.save(self.state, file_path)
 
     # archive the checkpoint, and label it as best_checkpoint,
     # if the evaluation metric is better than the last best evaluation metric
@@ -68,27 +82,12 @@ class CheckPoint:
         if evaluation_metric > self.best_evaluation_metric:
 
             # create archive folder if it does not exist
-            path = f'Checkpoints/{self.model_tag}'
-            path = os.path.abspath(path)
-            if not os.path.isdir(path):
-                os.makedirs(path)
+            folder_name = Utils.absolute_path(f'Checkpoints/{self.model_tag}', '')
+            if not os.path.isdir(folder_name):
+                os.makedirs(folder_name)
 
             # create filename
-            filename = 'best_checkpoint.pth.tar'
+            file_path = Utils.absolute_path(folder_name, 'best_checkpoint.pth.tar')
 
             # store the best checkpoint
-            torch.save(self.state, os.path.join(path, filename))
-
-    # load the current checkpoint
-    # note: this is always the local (most recent) checkpoint
-    # not any of the archived (including best) ones
-    @staticmethod
-    def load_checkpoint():
-
-        # load the checkpoint
-        # this local checkpoint is over-witten
-        # every time a new checkpoint is saved
-        filename = 'checkpoint.pth.tar'
-        state = torch.load(filename)
-
-        return state
+            torch.save(self.state, file_path)

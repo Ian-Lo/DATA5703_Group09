@@ -1,6 +1,12 @@
 import os
 
 
+# create absolute path from local path of the "main" file
+def absolute_path(folder_name, file_name):
+
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), folder_name, file_name))
+
+
 # class to manage the path of the dataset
 # note: everything is declared at class level
 # so that we do not need to instantiate any object
@@ -18,7 +24,7 @@ class DatasetPath:
     @classmethod
     def create_abs_path(cls, path):
 
-        path = os.path.abspath(os.path.join(os.path.dirname(__file__), cls.relative_path, path))
+        path = absolute_path(cls.relative_path, path)
 
         return path
 
@@ -28,7 +34,8 @@ class DatasetPath:
 def load_structural_vocabularies():
 
     structural_token2integer = {}
-    with open('Vocabularies/structural_token2integer.csv', 'r') as f:
+    file_path = absolute_path('Vocabularies', 'structural_token2integer.csv')
+    with open(file_path, 'r') as f:
         lines = f.readlines()
         for line in lines:
             item = line.strip('\n').split(sep=',')
@@ -37,7 +44,8 @@ def load_structural_vocabularies():
             structural_token2integer[token] = integer
 
     structural_integer2token = {}
-    with open('Vocabularies/structural_integer2token.csv', 'r') as f:
+    file_path = absolute_path('Vocabularies', 'structural_integer2token.csv')
+    with open(file_path, 'r') as f:
         lines = f.readlines()
         for line in lines:
             item = line.strip('\n').split(sep=',')
@@ -53,7 +61,8 @@ def load_structural_vocabularies():
 def load_cell_content_vocabularies():
 
     cell_content_token2integer = {}
-    with open('Vocabularies/cell_content_token2integer.tsv', 'r') as f:
+    file_path = absolute_path('Vocabularies', 'cell_content_token2integer.tsv')
+    with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
         for line in lines:
             item = line.strip('\n').split(sep='\t')
@@ -62,7 +71,8 @@ def load_cell_content_vocabularies():
             cell_content_token2integer[token] = integer
 
     cell_content_integer2token = {}
-    with open('Vocabularies/cell_content_integer2token.tsv', 'r') as f:
+    file_path = absolute_path('Vocabularies', 'cell_content_integer2token.tsv')
+    with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
         for line in lines:
             item = line.strip('\n').split(sep='\t')

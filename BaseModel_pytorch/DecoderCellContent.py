@@ -103,6 +103,52 @@ class DecoderCellContent(torch.nn.Module):
 
         return predictions, loss
 
+    def calc_loss_cell(self,targets, prediction_probs):
+        """ Calculate loss for predictions from targets.
+        targets: tensor of shape num_examples, max_length. Contains "true" token indices.
+        prediction_probs: list of lists of tensors. Outer list: num_examples. Inner list:
+            triggers. Tensors of shape num_tokens.
+        """
+
+        batch_size = targets.size()[0]
+        loss =0
+
+        for example_idx in range(batch_size):
+            # get all target tokens
+            target = targets[example_idx]
+
+            # remove trailing zeros (='<pad>') to only get the actual tokens
+            unpadded_target = target[target.nonzero()].squeeze(1)
+            unpadded_target_size = unpadded_target.size()[0]
+
+            # stack all probability predictions
+            prediction_prob = torch.stack(prediction_probs[example_idx])
+            num_predictions, num_probs = prediction_prob.size()
+
+            if unpadded_target_size < num_predictions:
+
+                # pad the target tokens to reach the the number of predictions
+                padded_target = torch.zeros(num_predictions, dtype=torch.int64)
+                padded_target[0:unpadded_target_size] = unpadded_target
+
+                # the tensors have compatible lengths
+                compatible_target = padded_target
+                compatible_prediction_prob = prediction_prob
+
+            else:
+
+                # pad the probability predictions to reach the number of target tokens
+                padded_prediction_prob = torch.zeros((unpadded_target_size, num_probs))
+                padded_prediction_prob[0:num_predictions, :] = prediction_prob
+
+                compatible_target = unpadded_target
+                compatible_prediction_prob = padded_prediction_prob
+
+#                print('pad prob', compatible_target.size(), compatible_prediction_prob.size())
+
+            loss+= self.loss_criterion(compatible_prediction_prob, compatible_target)/num_predictions
+        return loss
+
     def predict(self, encoded_features_map, structural_hidden_state, cell_content_target=None, maxT = 2000):
         ''' For use on validation set and test set.
         encoded_features_map: tensor of shape (num_examples,encoder_size,encoder_size)
@@ -124,78 +170,79 @@ class DecoderCellContent(torch.nn.Module):
         predictions = [ [ []  ] for n in range(batch_size)  ]
         prediction_propbs = [ [ [] ] for n in range(batch_size) ]
 
-        # initialisation
-        cell_content_input, cell_content_hidden_state = self.initialise(batch_size)
 
         loss = 0
+
         # loop over images/example
         for batch_index in range(batch_size):
+
             # define tensor to contain outer indices to run through timestep.
             outer_indices_to_keep = torch.tensor([n for n in range(len(structural_hidden_state[batch_index])) if len(structural_hidden_state[batch_index])!=0] , dtype = torch.long)
+
             # indices to keep within for loop
             indices_to_keep = torch.tensor(range(batch_size), dtype = torch.long)
 
-            encoded_features_map_in = encoded_features_map.repeat(outer_indices_to_keep.shape[0],1,1 )
-            print(encoded_featurs_map_in.shape)
-#            quit()
+            # initialisation
+            cell_content_input, cell_content_hidden_state = self.initialise(outer_indices_to_keep.shape[0])
+
+            encoded_features_map_example = encoded_features_map[batch_index].repeat(outer_indices_to_keep.shape[0],1,1 )
+            strucural_hidden_state_example = torch.stack(structural_hidden_state[batch_index])
+
+            # loop over timesteps
             for t in range(max_T):
-                # slice out only elements that are required
-                encoded_features_map_in = encoded_features_map[batch_indices_to_keep, :, :]
-                cell_content_input_in = cell_content_input[batch_indices_to_keep]
-                # get hidden state
-                hidden_states_t =torch.stack([ h[t] for n, h in enumerate(structural_hidden_state) if n in batch_indices_to_keep])
-                hidden_states_t.reshape(batch_indices_to_keep.numel(), -1, )
-                cell_content_hidden_state_in = cell_content_hidden_state[:, continue_decoder, :]
 
-            # Anders: figure out how to collape the hidden states of this timestep
-            # so it can be processed through rnn.
-            print("structural_hidden_state")
-            print(structural_hidden_state[t])
-            structural_hidden_state_in = structural_hidden_state[:, continue_decoder, :]
+                # keep only those examples that have not predicted and <end> token
+                encoded_features_map_in = encoded_features_map_example[outer_indices_to_keep, :, :]
+                structural_hidden_states_in = structural_hidden_state_example[outer_indices_to_keep]
 
-            # run through rnn
-            prediction, cell_content_hidden_state = self.timestep(encoded_features_map_in, structural_hidden_state_in, cell_content_input_in, cell_content_hidden_state_in)
+                # keep only those examples that have not predicted and <end> token
+                cell_content_input_in = cell_content_input[indices_to_keep]
+                cell_content_hidden_state_in = cell_content_hidden_state[:, indices_to_keep, :]
 
-            # apply logsoftmax
-            log_p = self.LogSoftmax(prediction)
+                # run through rnn
+                prediction, cell_content_hidden_state = self.timestep(encoded_features_map_in, structural_hidden_state_in, cell_content_input_in, cell_content_hidden_state_in)
 
-            # greedy decoder:
-            _, predict_id = torch.max(log_p, dim = 1 )
+                # apply logsoftmax
+                log_p = self.LogSoftmax(prediction)
 
-            # calculate loss when possible
-            if cell_content_target is not None:
-                # what if length different?
-                truth = structural_target[continue_decoder, t]
-                loss += self.loss_criterion(prediction, truth)/continue_decoder.shape[0] # normalize
+                # greedy decoder:
+                _, predict_id = torch.max(log_p, dim = 1 )
 
-            # loop through predictions
-            for n, id in enumerate(predict_id):
-                # if stop:
-                if id in [self.cell_content_token2integer["<end>"]]:
-                    #remove element from continue_decoder
-                    continue_decoder = continue_decoder[continue_decoder!=n]
-                    # do not save prediction or hidden state
-                    continue
-                #if not stop
-                else:
-                    # get correct index
-                    index = continue_decoder[n]
-                    # save prediction
-                    predictions[index].append(id)
-                    prediction_propbs[index].append(prediction[n,:])
+                removes = []
+                keeps = []
 
-        if 0:  # we need to get this way of calculating loss to work.
-            if structural_target is not None:
-                # this is where the new calculation of loss goes
-                collapsed_predictions = [ torch.stack(l) for l in prediction_propbs ]
-                padded_prediction_probs = torch.nn.utils.rnn.pad_sequence(collapsed_predictions, batch_first=True, padding_value=0)
-                # insert Luca's function to calculate loss
-    #            loss = XXXXX
-                loss = loss/t
+                # loop through predictions
+                for n, id in enumerate(predict_id):
+                    outer_index = outer_indices_to_keep[n]
 
-        if cell_content_target is not None:
-            loss = self.calc_loss_struc(cell_content_target, prediction_props )
-            return predictions, loss
+                    # if stop:
+                    if id in [self.cell_content_token2integer["<end>"],self.cell_content_token2integer["<pad>"]]:
+                        #remove element from outer_index_to_keep
+                        removes.append(outer_index)
+                        # do not save prediction or hidden state
+                        predictions[batch_index][outer_index].append(id)
+                        prediction_props[batch_index][outer_index].append(prediction[n,:])
+                        continue
+                    #if not stop
+                    else:
+                        keeps.append(n)
+                        # get correct index
+                        predictions[batch_index][outer_index].append(id)
+                        prediction_props[batch_index][outer_index].append(prediction[n,:])
+
+                if len(keeps)==0:
+                    break
+
+                #update indices to keep track
+                indices_to_keep = torch.tensor(keeps, dtype =torch.long)
+                for element in removes[::-1]:
+                    outer_indices_to_keep = batch_indices_to_keep[outer_indices_to_keep!=element]
+
+        if cell_content_target  is not None:
+            loss_batch = 0
+            for batch_index in range(batch_size):
+                loss_batch += self.calc_loss_cell(cell_content_target[batch_index], prediction_props[batch_index] )
+            return predictions, loss, storage, pred_triggers
 
         else:
             return predictions

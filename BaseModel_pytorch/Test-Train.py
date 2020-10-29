@@ -19,8 +19,8 @@ structural_token2integer, structural_integer2token = Utils.load_structural_vocab
 cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content_vocabularies()
 
 # instantiate the batching object
-number_examples = 100
-number_examples_val = 100 # not implemented
+number_examples =20
+number_examples_val = 20 # not implemented
 batching = BatchingMechanism(dataset_split='train', number_examples=number_examples, batch_size=10, storage_size=1000)
 batching_val = BatchingMechanism(dataset_split='train', number_examples=number_examples_val, batch_size=10, storage_size=1000)
 

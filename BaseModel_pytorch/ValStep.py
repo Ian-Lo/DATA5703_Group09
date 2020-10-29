@@ -13,7 +13,6 @@ def val_step(features_map_val, structural_tokens_val,triggers_val,cells_content_
     ### PROCESSING STORAGE ###
     list_features_map = []
 
-
     # create new array
     new_cells_content_tokens = torch.zeros(num_examples , max_struc_token_pred , max_cell_tokens_true, dtype = cells_content_tokens_val.dtype)
 

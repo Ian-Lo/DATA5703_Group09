@@ -29,6 +29,10 @@ class DecoderCellContent(torch.nn.Module):
         # the loss criterion
         self.loss_criterion = torch.nn.CrossEntropyLoss()
 
+        # softmax function for inference
+        self.LogSoftmax = torch.nn.LogSoftmax(dim=1)
+
+
     def initialise(self, batch_size):
 
         # initialise structural input
@@ -43,15 +47,35 @@ class DecoderCellContent(torch.nn.Module):
         return init_cell_content_input, init_cell_content_hidden_state
 
     def timestep(self, encoded_features_map, structural_hidden_state, cell_content_input, cell_content_hidden_state):
+        """ What are the shapes of the objects??
+        encoded_features_map :  torch.tensor of shape (num_examples, encoder_size, encoder_size)
+        structural_hidden_state : torch.tensor of shape (1, num_examples, structural_hidden_size)
+        cell_content_input: torch.tensor of shape (number_examples)
+        cell_content_hidden_state : torch.tensor of shape (1, num_examples, structural_hidden_size + structural_attention_size )
+        """
+        # print("inside timestep")
+        # print("encoded_features_map.shape")
+        # print(encoded_features_map.shape)
+        # print("structural_hidden_state")
+        # print(structural_hidden_state.shape)
+        # print("cell_content_hidden_state")
+        # print(cell_content_hidden_state.shape)
 
         # compute the context vector
         # context_vector: (batch_size, encoder_size)
         context_vector = self.cell_content_attention.forward(encoded_features_map, structural_hidden_state, cell_content_hidden_state)
 
+        # print("context_vector")
+        # print(context_vector.shape)
+
         # embed the input
         # embedded_structural_input: (batch size, embedding_size)
+        # print("cell_content_input")
+        # print(cell_content_input.shape)
         embedded_structural_input = self.embedding(cell_content_input)
 
+        # print("embedded_structural_input")
+        # print(embedded_structural_input.shape)
         # concatenate
         concatenated_input = torch.cat([context_vector, embedded_structural_input], 1)
         # the GRU requires an initial extra dimensions (num GRU layers = 1)
@@ -157,47 +181,66 @@ class DecoderCellContent(torch.nn.Module):
         maxT: integer, maximum number of time steps
         '''
 
-        print("encoded_features_map")
-        print(encoded_features_map.shape)
-        print("structural_hidden_state")
-        print(len(structural_hidden_state))
-        print("cell_content_target")
-        print(cell_content_target.shape)
+        # print("encoded_features_map")
+        # print(encoded_features_map.shape)
+        # print("structural_hidden_state")
+        # print(len(structural_hidden_state))
+        # print("cell_content_target")
+        # print(cell_content_target.shape)
 
         batch_size =encoded_features_map.shape[0] #number of triggers for each example. Will vary from image to image
 
-        # create list to hold predictions since we sometimes don't know the size
-        predictions = [ [ []  ] for n in range(batch_size)  ]
-        prediction_propbs = [ [ [] ] for n in range(batch_size) ]
-
+        # create list to hold predictions since we sometimes dont know the size
+        predictions =[]
+        prediction_probs = []
+        for n in range(batch_size):
+            predictions.append([])
+            prediction_probs.append([])
+            for m in range(len(structural_hidden_state[n])):
+                predictions[n].append([])
+                prediction_probs[n].append([])
 
         loss = 0
 
         # loop over images/example
         for batch_index in range(batch_size):
 
+            # continue if no td is predicted for image
+            if len(structural_hidden_state[batch_index])==0:
+                continue
+
             # define tensor to contain outer indices to run through timestep.
             outer_indices_to_keep = torch.tensor([n for n in range(len(structural_hidden_state[batch_index])) if len(structural_hidden_state[batch_index])!=0] , dtype = torch.long)
 
             # indices to keep within for loop
-            indices_to_keep = torch.tensor(range(batch_size), dtype = torch.long)
+            indices_to_keep = torch.tensor(range(len(structural_hidden_state[batch_index])), dtype = torch.long)
 
             # initialisation
             cell_content_input, cell_content_hidden_state = self.initialise(outer_indices_to_keep.shape[0])
 
             encoded_features_map_example = encoded_features_map[batch_index].repeat(outer_indices_to_keep.shape[0],1,1 )
-            strucural_hidden_state_example = torch.stack(structural_hidden_state[batch_index])
+            structural_hidden_state_example = torch.stack(structural_hidden_state[batch_index]).reshape(1, len(structural_hidden_state[batch_index]), -1)
 
             # loop over timesteps
-            for t in range(max_T):
-
+            for t in range(maxT):
+                print( "t", t)
                 # keep only those examples that have not predicted and <end> token
                 encoded_features_map_in = encoded_features_map_example[outer_indices_to_keep, :, :]
-                structural_hidden_states_in = structural_hidden_state_example[outer_indices_to_keep]
+                # dimensions ()
+                structural_hidden_state_in = structural_hidden_state_example[:, outer_indices_to_keep, :]
 
                 # keep only those examples that have not predicted and <end> token
                 cell_content_input_in = cell_content_input[indices_to_keep]
                 cell_content_hidden_state_in = cell_content_hidden_state[:, indices_to_keep, :]
+                print("outside ")
+                print("encoded_features_map_in")
+                print(encoded_features_map_in.shape)
+                print("structural_hidden_states_in.shape")
+                print(structural_hidden_state_in.shape)
+                print("cell_content_input_in")
+                print(cell_content_input_in.shape)
+                print("cell_content_hidden_state_in")
+                print(cell_content_hidden_state_in.shape)
 
                 # run through rnn
                 prediction, cell_content_hidden_state = self.timestep(encoded_features_map_in, structural_hidden_state_in, cell_content_input_in, cell_content_hidden_state_in)
@@ -221,14 +264,14 @@ class DecoderCellContent(torch.nn.Module):
                         removes.append(outer_index)
                         # do not save prediction or hidden state
                         predictions[batch_index][outer_index].append(id)
-                        prediction_props[batch_index][outer_index].append(prediction[n,:])
+                        prediction_probs[batch_index][outer_index].append(prediction[n,:])
                         continue
                     #if not stop
                     else:
                         keeps.append(n)
                         # get correct index
                         predictions[batch_index][outer_index].append(id)
-                        prediction_props[batch_index][outer_index].append(prediction[n,:])
+                        prediction_probs[batch_index][outer_index].append(prediction[n,:])
 
                 if len(keeps)==0:
                     break
@@ -241,8 +284,8 @@ class DecoderCellContent(torch.nn.Module):
         if cell_content_target  is not None:
             loss_batch = 0
             for batch_index in range(batch_size):
-                loss_batch += self.calc_loss_cell(cell_content_target[batch_index], prediction_props[batch_index] )
-            return predictions, loss, storage, pred_triggers
+                loss_batch += self.calc_loss_cell(cell_content_target[batch_index], prediction_probs[batch_index] )
+            return predictions, loss
 
         else:
             return predictions

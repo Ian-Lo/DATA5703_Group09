@@ -19,8 +19,8 @@ structural_token2integer, structural_integer2token = Utils.load_structural_vocab
 cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content_vocabularies()
 
 # instantiate the batching object
-number_examples =20
-number_examples_val = 20 # not implemented
+number_examples =30
+number_examples_val = 30 # not implemented
 batching = BatchingMechanism(dataset_split='train', number_examples=number_examples, batch_size=10, storage_size=1000)
 batching_val = BatchingMechanism(dataset_split='train', number_examples=number_examples_val, batch_size=10, storage_size=1000)
 
@@ -68,7 +68,7 @@ epochs = 25
 
 # make list of lambdas to use in training
 # this is the same strategy as Zhong et al.
-lambdas =  [0 for _ in range(10)] + [1 for _ in range(3)]+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
+lambdas =  [1, 1 ] + [0.5 for _ in range(8)] + [1 for _ in range(3)]+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
 lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 
 assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and lambdas are inconsistent"
@@ -86,8 +86,8 @@ for epoch in range(epochs):
     total_loss_s = 0
     total_loss_cc = 0
     total_loss = 0
-
     total_loss_s_val = 0
+    total_loss_cc_val = 0
 
     # create random batches of examples
     # these "batches" are the just information needed to retrieve the actual tensors

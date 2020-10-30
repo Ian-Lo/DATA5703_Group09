@@ -129,15 +129,23 @@ class DecoderCellContent(torch.nn.Module):
 
     def calc_loss_cell(self,targets, prediction_probs):
         """ Calculate loss for predictions from targets.
-        targets: tensor of shape num_examples, max_length. Contains "true" token indices.
+        targets: tensor of shape (num_examples, max_length). Contains "true" token indices.
         prediction_probs: list of lists of tensors. Outer list: num_examples. Inner list:
             triggers. Tensors of shape num_tokens.
         """
+        # print("targets.shape")
+        # print(targets.shape)
+        # print("len(prediction_probs)")
+        # print(len(prediction_probs))
+        # print("len(prediction_probs[0])")
+        # print(len(prediction_probs[0]))
 
-        batch_size = targets.size()[0]
+        batch_size = len(prediction_probs) #number of predicted triggers   #targets.size()[0]
+#        print("batch_size", batch_size)
         loss =0
 
         for example_idx in range(batch_size):
+#            print("example_idx", example_idx)
             # get all target tokens
             target = targets[example_idx]
 
@@ -223,7 +231,6 @@ class DecoderCellContent(torch.nn.Module):
 
             # loop over timesteps
             for t in range(maxT):
-                print( "t", t)
                 # keep only those examples that have not predicted and <end> token
                 encoded_features_map_in = encoded_features_map_example[outer_indices_to_keep, :, :]
                 # dimensions ()
@@ -232,15 +239,15 @@ class DecoderCellContent(torch.nn.Module):
                 # keep only those examples that have not predicted and <end> token
                 cell_content_input_in = cell_content_input[indices_to_keep]
                 cell_content_hidden_state_in = cell_content_hidden_state[:, indices_to_keep, :]
-                print("outside ")
-                print("encoded_features_map_in")
-                print(encoded_features_map_in.shape)
-                print("structural_hidden_states_in.shape")
-                print(structural_hidden_state_in.shape)
-                print("cell_content_input_in")
-                print(cell_content_input_in.shape)
-                print("cell_content_hidden_state_in")
-                print(cell_content_hidden_state_in.shape)
+                # print("outside ")
+                # print("encoded_features_map_in")
+                # print(encoded_features_map_in.shape)
+                # print("structural_hidden_states_in.shape")
+                # print(structural_hidden_state_in.shape)
+                # print("cell_content_input_in")
+                # print(cell_content_input_in.shape)
+                # print("cell_content_hidden_state_in")
+                # print(cell_content_hidden_state_in.shape)
 
                 # run through rnn
                 prediction, cell_content_hidden_state = self.timestep(encoded_features_map_in, structural_hidden_state_in, cell_content_input_in, cell_content_hidden_state_in)
@@ -257,7 +264,6 @@ class DecoderCellContent(torch.nn.Module):
                 # loop through predictions
                 for n, id in enumerate(predict_id):
                     outer_index = outer_indices_to_keep[n]
-
                     # if stop:
                     if id in [self.cell_content_token2integer["<end>"],self.cell_content_token2integer["<pad>"]]:
                         #remove element from outer_index_to_keep
@@ -279,12 +285,19 @@ class DecoderCellContent(torch.nn.Module):
                 #update indices to keep track
                 indices_to_keep = torch.tensor(keeps, dtype =torch.long)
                 for element in removes[::-1]:
-                    outer_indices_to_keep = batch_indices_to_keep[outer_indices_to_keep!=element]
+                    outer_indices_to_keep = outer_indices_to_keep[outer_indices_to_keep!=element]
 
-        if cell_content_target  is not None:
+        if cell_content_target is not None:
             loss_batch = 0
+
+            # loop over images/examples
             for batch_index in range(batch_size):
-                loss_batch += self.calc_loss_cell(cell_content_target[batch_index], prediction_probs[batch_index] )
+                # continue if no td is predicted for image
+                if len(structural_hidden_state[batch_index])==0:
+                    continue
+#                print(cell_content_target[batch_index].shape)
+#                print(prediction_probs[batch_index])
+                loss_batch += self.calc_loss_cell(cell_content_target[batch_index, :, :], prediction_probs[batch_index] )
             return predictions, loss
 
         else:

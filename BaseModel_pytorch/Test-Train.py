@@ -20,7 +20,7 @@ cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content
 
 # instantiate the batching object
 number_examples =30
-number_examples_val = 30 # not implemented
+number_examples_val = 30
 batching = BatchingMechanism(dataset_split='train', number_examples=number_examples, batch_size=10, storage_size=1000)
 batching_val = BatchingMechanism(dataset_split='train', number_examples=number_examples_val, batch_size=10, storage_size=1000)
 
@@ -68,7 +68,7 @@ epochs = 25
 
 # make list of lambdas to use in training
 # this is the same strategy as Zhong et al.
-lambdas =  [1, 1 ] + [0.5 for _ in range(8)] + [1 for _ in range(3)]+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
+lambdas =  [1.0 for _ in range(10)] + [1 for _ in range(3)]+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
 lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 
 assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and lambdas are inconsistent"
@@ -131,16 +131,22 @@ for epoch in range(epochs):
         for batch in batches_val:
             # call 'get_batch' to actually load the tensors from file
             features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(batch)
-            predictions_val, loss_s_val, predictions_cell_val, loss_cc_val, loss_val = val_step(features_maps_val, structural_tokens_val,triggers_val,cells_content_tokens_val, model, LAMBDA  )
+            predictions_val, loss_s_val, predictions_cell_val, loss_cc_val, loss_val = val_step(features_maps_val, structural_tokens_val,triggers_val, cells_content_tokens_val, model, LAMBDA )
 
             total_loss_s_val+= loss_s_val
 
         total_loss_s_val/=len(batches)
-
+        print("-- structural decoder:---")
         print("Truth")
         print([structural_integer2token[p.item()] for p in structural_tokens_val[0][:10]])
         print("Prediction")
         print([structural_integer2token[p.item()] for p in predictions_val[0][:10]])
+        if abs(LAMBDA-1.0) > 0.01:
+            print("-- cell decoder:---")
+            print("Truth")
+            print([cell_content_integer2token[p.item()] for p in cells_content_tokens_val[0][:10]])
+            print("Prediction")
+            print([cell_content_integer2token[p.item()] for p in predictions_cell_val[0][:10]])
     ######################
 
     t1_stop = perf_counter()

@@ -163,6 +163,7 @@ class DecoderStructural(torch.nn.Module):
 
     def predict(self, encoded_features_map, structural_target = None, maxT = 2000):
         ''' For use on validation set and test set.
+        encoded_features_map: torch.tensor of shape (num_examples, encoder_size, encoder_size)
         structural target: None or tensor of shape (timesteps, batch_size)
             Targets for prediction. If None: loss function is not calculated
             and returned.

@@ -110,8 +110,8 @@ class DecoderCellContent(torch.nn.Module):
 
         # run the timesteps
         for t in range(0, num_timesteps):
-            # Luca: shouldn't this be cell_content_hidden_state instead of init_cell_content_hidden_state
-            prediction, init_cell_content_hidden_state = self.timestep(encoded_features_map, structural_hidden_state, cell_content_input, cell_content_hidden_state)
+
+            prediction, cell_content_hidden_state = self.timestep(encoded_features_map, structural_hidden_state, cell_content_input, cell_content_hidden_state)
 
             # stores the predictions
             predictions[t] = prediction

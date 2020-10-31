@@ -29,20 +29,25 @@ class DecoderCellContent(torch.nn.Module):
         # the loss criterion
         self.loss_criterion = torch.nn.CrossEntropyLoss()
 
+
         # softmax function for inference
         self.LogSoftmax = torch.nn.LogSoftmax(dim=1)
+        # the device we are running on
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
     def initialise(self, batch_size):
 
         # initialise structural input
-        init_cell_content_input = np.repeat(self.cell_content_token2integer['<start>'], batch_size).astype(np.int64)
-        init_cell_content_input = torch.from_numpy(init_cell_content_input)
+
+        init_cell_content_input = torch.from_numpy(np.repeat(self.cell_content_token2integer['<start>'], batch_size))
+        init_cell_content_input = init_cell_content_input.type(torch.int64).to(self.device)
+
 
         # initialise structural hidden state
         init_cell_content_hidden_state = np.zeros((batch_size, self.hidden_size), dtype=np.float32)
         init_cell_content_hidden_state = torch.from_numpy(init_cell_content_hidden_state)
-        init_cell_content_hidden_state = init_cell_content_hidden_state.unsqueeze(0)
+        init_cell_content_hidden_state = init_cell_content_hidden_state.unsqueeze(0).to(self.device)
 
         return init_cell_content_input, init_cell_content_hidden_state
 
@@ -101,7 +106,7 @@ class DecoderCellContent(torch.nn.Module):
         num_timesteps = cell_content_target.size()[-1]
         batch_size = encoded_features_map.shape[0]
         predictions = np.zeros((num_timesteps, batch_size, self.vocabulary_size), dtype=np.float32)
-        predictions = torch.from_numpy(predictions)
+        predictions = torch.from_numpy(predictions).to(self.device)
 
         # initialisation
         cell_content_input, cell_content_hidden_state = self.initialise(batch_size)

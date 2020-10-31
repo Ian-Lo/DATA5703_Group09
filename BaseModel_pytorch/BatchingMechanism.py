@@ -17,6 +17,8 @@ class BatchingMechanism:
 
         self.storage = Storage(dataset_split)
 
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     # based on the required number of examples and on the storage size
     # compute how many storages and how many examples per storage are needed
     # storages are considered sequentially (0, 1, 2...)
@@ -172,21 +174,21 @@ class BatchingMechanism:
 
         # get the features maps from the HDF5 file
         features_maps = np.array(list(map(self.storage.features_maps.__getitem__, indices))).astype(np.float32)
-        features_maps = torch.from_numpy(features_maps)
+        features_maps = torch.from_numpy(features_maps).to(self.device)
 
         # get the structural tokens from the HDF5 file
         structural_tokens = np.array(list(map(self.storage.structural_tokens.__getitem__, indices))).astype(np.int64)
         structural_tokens = self._trim_structural_tokens(structural_tokens)
-        structural_tokens = torch.from_numpy(structural_tokens)
+        structural_tokens = torch.from_numpy(structural_tokens).to(self.device)
 
         # get the triggers from the HDF5 file
         triggers = np.array(list(map(self.storage.triggers.__getitem__, indices))).astype(np.int64)
-        triggers = torch.from_numpy(triggers)
+        triggers = torch.from_numpy(triggers).to(self.device)
 
         # get the cell content from the HDF5 file
         cells_content_tokens = np.array(list(map(self.storage.cells_content_tokens.__getitem__, indices))).astype(np.int64)
         cells_content_tokens = self._trim_cells_content_tokens(cells_content_tokens)
-        cells_content_tokens = torch.from_numpy(cells_content_tokens)
+        cells_content_tokens = torch.from_numpy(cells_content_tokens).to(self.device)
 
         # close the storage
         self.storage.close()

@@ -34,16 +34,20 @@ class DecoderStructural(torch.nn.Module):
         # softmax function for inference
         self.LogSoftmax = torch.nn.LogSoftmax(dim=1)
 
+        # the device we are running on
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     def initialise(self, batch_size):
 
         # initialise structural input
-        init_structural_input = np.repeat(self.structural_token2integer['<start>'], batch_size).astype(np.int64)
-        init_structural_input = torch.from_numpy(init_structural_input)
+
+        init_structural_input = torch.from_numpy(np.repeat(self.structural_token2integer['<start>'], batch_size))
+        init_structural_input = init_structural_input.type(torch.int64).to(self.device)
 
         # initialise structural hidden state
         init_structural_hidden_state = np.zeros((batch_size, self.hidden_size), dtype=np.float32)
         init_structural_hidden_state = torch.from_numpy(init_structural_hidden_state)
-        init_structural_hidden_state = init_structural_hidden_state.unsqueeze(0)
+        init_structural_hidden_state = init_structural_hidden_state.unsqueeze(0).to(self.device)
 
         return init_structural_input, init_structural_hidden_state
 
@@ -82,11 +86,11 @@ class DecoderStructural(torch.nn.Module):
         num_timesteps = structural_target.size()[-1]
         batch_size = encoded_features_map.shape[0]
         predictions = np.zeros((num_timesteps, batch_size, self.vocabulary_size), dtype=np.float32)
-        predictions = torch.from_numpy(predictions)
+        predictions = torch.from_numpy(predictions).to(self.device)
 
         # TODO: implement more efficiently
         storage = np.zeros((num_timesteps, 1, batch_size, self.hidden_size), dtype=np.float32)
-        storage = torch.from_numpy(storage)
+        storage = torch.from_numpy(storage).to(self.device)
 
         # initialisation
         structural_input, structural_hidden_state = self.initialise(batch_size)

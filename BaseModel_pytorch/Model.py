@@ -15,3 +15,11 @@ class Model:
         self.structural_integer2token = structural_integer2token
         self.cell_content_token2integer = cell_content_token2integer
         self.cell_content_integer2token = cell_content_integer2token
+
+    def set_eval(self):
+        self.decoder_structural = self.decoder_structural.eval()
+        self.decoder_cell_content = self.decoder_cell_content.eval()
+
+    def set_train(self):
+        self.decoder_structural = self.decoder_structural.train()
+        self.decoder_cell_content = self.decoder_cell_content.train()

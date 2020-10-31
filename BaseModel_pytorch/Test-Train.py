@@ -8,9 +8,11 @@ import numpy as np
 from time import perf_counter, time
 from BatchingMechanism import BatchingMechanism
 from TrainStep import train_step
+from ValStep import val_step
 from Model import Model
 from CheckPoint import CheckPoint
 import sys
+
 
 if len(sys.argv) < 4:
     print(f'{sys.argv[0]} needs 4 parameters. number of examples(int), number of examples for eval(int), relative path to HDF5 files(str), tag for archiving checkpoints(str)')
@@ -33,6 +35,7 @@ structural_token2integer, structural_integer2token = Utils.load_structural_vocab
 cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content_vocabularies()
 
 # instantiate the batching object
+
 batching = BatchingMechanism(dataset_split='train', number_examples=number_examples, batch_size=10, storage_size=1000)
 batching_val = BatchingMechanism(dataset_split='train', number_examples=number_examples_val, batch_size=10, storage_size=1000)
 
@@ -80,7 +83,7 @@ epochs = 25
 
 # make list of lambdas to use in training
 # this is the same strategy as Zhong et al.
-lambdas = [1 for _ in range(10)] + [1 for _ in range(3)]+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
+lambdas =  [1 for _ in range(10)] + [1 for _ in range(3)]+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
 lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 
 assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and lambdas are inconsistent"
@@ -88,8 +91,19 @@ assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and 
 # instantiate checkpoint
 checkpoint = CheckPoint(model_tag)
 
+
 for epoch in range(epochs):
+    # change mode to training
+    model.set_train()
+
     t1_start = perf_counter()
+
+    # reset total loss across epoch
+    total_loss_s = 0
+    total_loss_cc = 0
+    total_loss = 0
+    total_loss_s_val = 0
+    total_loss_cc_val = 0
 
     # create random batches of examples
     # these "batches" are the just information needed to retrieve the actual tensors
@@ -112,27 +126,52 @@ for epoch in range(epochs):
 
         # call 'get_batch' to actually load the tensors from file
         features_maps, structural_tokens, triggers, cells_content_tokens = batching.get_batch(batch)
-
         # send to training function for forward pass, backpropagation and weight updates
         predictions, loss_s, predictions_cell, loss_cc, loss = train_step(features_maps, structural_tokens, triggers, cells_content_tokens, model,LAMBDA=LAMBDA)
+        total_loss_s+=loss_s
+        total_loss+= loss
+        if loss_cc:
+            total_loss_cc+=loss_cc
+    total_loss_s/=len(batches)
 
     checkpoint.save_checkpoint(epoch, encoder, decoder_structural, decoder_cell_content,
-                              encoder_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer, loss, loss_s, loss_cc)
+                              encoder_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer, total_loss, total_loss_s, total_loss_cc)
+
     checkpoint.archive_checkpoint()
 
-    ##### the section for the validation loss is commented out because we are not done with it
-    #create batches for validation set
-#    batches_val= batching_val.build_batches(randomise=False)
+    #batch loop for validation
+    with torch.no_grad():
+        model.set_eval()
 
-    # batch looping for validation
-#    for batch in batches_val:
-        # call 'get_batch' to actually load the tensors from file
-#        features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(batch)
+        batches_val= batching_val.build_batches(randomise=False)
 
+        #batch looping for validation
+        for batch in batches_val:
+            # call 'get_batch' to actually load the tensors from file
+            features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(batch)
+            predictions_val, loss_s_val, predictions_cell_val, loss_cc_val, loss_val = val_step(features_maps_val, structural_tokens_val,triggers_val, cells_content_tokens_val, model, LAMBDA )
+
+            total_loss_s_val+= loss_s_val
+
+        total_loss_s_val/=len(batches)
+        print("-- structural decoder:---")
+        print("Truth")
+        print([structural_integer2token[p.item()] for p in structural_tokens_val[0]])
+        print("Prediction")
+        print([structural_integer2token[p.item()] for p in predictions_val[0]])
+        if abs(LAMBDA-1.0) > 0.01:
+            print("-- cell decoder:---")
+            print("Truth")
+            print([cell_content_integer2token[p.item()] for p in cells_content_tokens_val[0][0]])
+            print("Prediction")
+            print([cell_content_integer2token[p.item()] for p in predictions_cell_val[0][0]])
     ######################
 
     t1_stop = perf_counter()
-
+    print("----------------------")
     print('epoch: %d \tLAMBDA: %.2f\tlr:%.5f\ttime: %.2f'%(epoch,LAMBDA, lr, t1_stop-t1_start))
+    print('Total loss: %.5f'%total_loss)
+    print('Struct. decod. loss: %.5f'%total_loss_s)
+    print("Cell dec. loss:", total_loss_cc)
+    print('Validation struct. decod. loss: %.5f'%loss_s_val)
     print('time for 100k examples:' , "%.2f hours"%((t1_stop-t1_start)/number_examples*100000/3600))
-    print(loss)

@@ -68,7 +68,7 @@ epochs = 25
 
 # make list of lambdas to use in training
 # this is the same strategy as Zhong et al.
-lambdas =  [1.0 for _ in range(10)] + [1 for _ in range(3)]+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
+lambdas =  [0.5 for _ in range(10)] + [1 for _ in range(3)]+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
 lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 
 assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and lambdas are inconsistent"
@@ -76,9 +76,9 @@ assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and 
 # construct checkpoint
 checkpoint = CheckPoint("BaselineModel_checkpoints")
 
-
-
-
+state = torch.load("Checkpoints/BaselineModel_checkpoints/checkpoint_024.pth.tar")
+model.load_state_dict(state['model_state_dict'])
+quit()
 for epoch in range(epochs):
     t1_start = perf_counter()
 
@@ -144,9 +144,9 @@ for epoch in range(epochs):
         if abs(LAMBDA-1.0) > 0.01:
             print("-- cell decoder:---")
             print("Truth")
-            print([cell_content_integer2token[p.item()] for p in cells_content_tokens_val[0][:10]])
+            print([cell_content_integer2token[p.item()] for p in cells_content_tokens_val[0][0][:10]])
             print("Prediction")
-            print([cell_content_integer2token[p.item()] for p in predictions_cell_val[0][:10]])
+            print([cell_content_integer2token[p.item()] for p in predictions_cell_val[0][0][:10]])
     ######################
 
     t1_stop = perf_counter()

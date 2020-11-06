@@ -83,14 +83,6 @@ class Model:
 
         assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and lambdas are inconsistent"
 
-        # Enumerate folders in folder
-        if drive:
-          folders = drive.ListFile(
-            {'q': f"'{checkpoint_temp_id}' in parents  \
-            and trashed = false \
-            and mimeType contains 'vnd.google-apps.folder' \
-            "}).GetList()
-
         # instantiate the batching object
         batching = BatchingMechanism(dataset_split='train', number_examples=number_examples, batch_size=batch_size, storage_size=storage_size)
         batching_val = BatchingMechanism(dataset_split='val', number_examples=number_examples_val, batch_size=10, storage_size=storage_size)
@@ -101,7 +93,7 @@ class Model:
         batching_val.initialise()
 
         # instantiate checkpoint
-        checkpoint = CheckPoint(self.model_tag)
+        checkpoint = CheckPoint(self.model_tag , drive = drive, checkpoint_temp_id = checkpoint_temp_id )
 
 
         # then reinitialize so we haven't used up batch

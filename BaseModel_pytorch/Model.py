@@ -6,7 +6,6 @@ class Model:
     def __init__(self,relative_path,model_tag, encoder_size = 144, structural_embedding_size = 16, structural_hidden_size = 256, structural_attention_size = 256, cell_content_embedding_size = 80, cell_content_hidden_size = 512, cell_content_attention_size = 256  ):
 
         # import required directories
-
         import Utils
         from Encoder import Encoder
         from DecoderStructural import DecoderStructural
@@ -20,8 +19,10 @@ class Model:
         from ValStep import val_step
         from CheckPoint import CheckPoint
 
+        # set device
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # sets device for model and PyTorch tensors
 
+        # set model tag to be used to identify checkpoint files
         self.model_tag = model_tag
 
         # set up path of dataset
@@ -73,11 +74,19 @@ class Model:
         self.decoder_cell_content = self.decoder_cell_content.train()
         self.encoder = self.encoder.train()
 
-    def train_model(self, drive, epochs = 25, lambdas = [1], lrs = [0.001], number_examples = 100, number_examples_val = 100,encoder_size = 144,structural_embedding_size = 16,structural_hidden_size = 256, structural_attention_size = 256, cell_content_embedding_size = 80, cell_content_hidden_size = 512,cell_content_attention_size = 256 ):
+    def train(self, drive=None, epochs = 1, lambdas = [1], lrs = [0.001], number_examples = 100, number_examples_val = 100, batch_size=10, storage_size = 1000 ):
+        from BatchingMechanism import BatchingMechanism
+        from CheckPoint import CheckPoint
+        from time import perf_counter, time
+        from TrainStep import train_step
+        from ValStep import val_step
+
+        assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and lambdas are inconsistent"
+
 
         # instantiate the batching object
-        batching = BatchingMechanism(dataset_split='train', number_examples=number_examples, batch_size=10, storage_size=1000)
-        batching_val = BatchingMechanism(dataset_split='val', number_examples=number_examples_val, batch_size=10, storage_size=1000)
+        batching = BatchingMechanism(dataset_split='train', number_examples=number_examples, batch_size=batch_size, storage_size=storage_size)
+        batching_val = BatchingMechanism(dataset_split='val', number_examples=number_examples_val, batch_size=10, storage_size=storage_size)
 
         # initialise the object
         # here the object works out how many storages and how many examples from every storage are needed
@@ -114,11 +123,11 @@ class Model:
 
             # update learning rates manually for each epoch
             lr = lrs[epoch]
-            for g in decoder_structural_optimizer.param_groups:
+            for g in self.decoder_structural_optimizer.param_groups:
                 g['lr'] = lr
-            for g in decoder_cell_content_optimizer.param_groups:
+            for g in self.decoder_cell_content_optimizer.param_groups:
                 g['lr'] = lr
-            for g in encoder_optimizer.param_groups:
+            for g in self.encoder_optimizer.param_groups:
                 g['lr'] = lr
 
             # batch looping for training
@@ -134,15 +143,15 @@ class Model:
                     total_loss_cc+=loss_cc
             total_loss_s/=len(batches)
 
-            checkpoint.save_checkpoint(epoch, encoder, decoder_structural, decoder_cell_content,
-                                      encoder_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer, total_loss, total_loss_s, total_loss_cc)
+            checkpoint.save_checkpoint(epoch, self.encoder, self.decoder_structural, self.decoder_cell_content,
+                                      self.encoder_optimizer, self.decoder_structural_optimizer, self.decoder_cell_content_optimizer, total_loss, total_loss_s, total_loss_cc)
 
             checkpoint.archive_checkpoint()
 
             #batch loop for validation
             with torch.no_grad():
-                # change to decoders to .eval
-                model.set_eval()
+                # change state of encoder and decoders to .eval
+                self.set_eval()
 
                 batches_val= batching_val.build_batches(randomise=False)
 
@@ -150,23 +159,24 @@ class Model:
                 for batch in batches_val:
                     # call 'get_batch' to actually load the tensors from file
                     features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(batch)
-                    predictions_val, loss_s_val, predictions_cell_val, loss_cc_val, loss_val = val_step(features_maps_val, structural_tokens_val,triggers_val, cells_content_tokens_val, model, LAMBDA )
+                    predictions_val, loss_s_val, predictions_cell_val, loss_cc_val, loss_val = val_step(features_maps_val, structural_tokens_val,triggers_val, cells_content_tokens_val, self, LAMBDA )
 
                     total_loss_s_val+= loss_s_val
-                    total_loss_cc_val += loss_cc_val
+                    if loss_cc_val:
+                        total_loss_cc_val += loss_cc_val
                 total_loss_s_val/=len(batches)
                 total_loss_cc_val/=len(batches)
                 print("-- structural decoder:---")
                 print("Truth")
-                print([structural_integer2token[p.item()] for p in structural_tokens_val[0]])
+                print([self.structural_integer2token[p.item()] for p in structural_tokens_val[0]])
                 print("Prediction")
-                print([structural_integer2token[p.item()] for p in predictions_val[0]])
+                print([self.structural_integer2token[p.item()] for p in predictions_val[0]])
                 if abs(LAMBDA-1.0) > 0.01:
                     print("-- cell decoder:---")
                     print("Truth")
-                    print([cell_content_integer2token[p.item()] for p in cells_content_tokens_val[0][0]])
+                    print([self.cell_content_integer2token[p.item()] for p in cells_content_tokens_val[0][0]])
                     print("Prediction")
-                    print([cell_content_integer2token[p.item()] for p in predictions_cell_val[0][0]])
+                    print([self.cell_content_integer2token[p.item()] for p in predictions_cell_val[0][0]])
             ######################
 
             t1_stop = perf_counter()
@@ -177,7 +187,8 @@ class Model:
             print("Cell dec. loss:", total_loss_cc)
 
             print('Validation struct. decod. loss: %.5f'%total_loss_s_val)
-            print('Validation cell decoder. loss: %.5f'%loss_cc_val)
+            if loss_cc_val:
+                print('Validation cell decoder. loss: %.5f'%loss_cc_val)
             print('time for 100k examples:' , "%.2f hours"%((t1_stop-t1_start)/number_examples*100000/3600))
 
 
@@ -185,14 +196,3 @@ class Model:
 
 
 #        return
-
-# initialize model class
-model = Model("../../Dataset/" , "test_run", encoder_size = 144, structural_embedding_size = 16, structural_hidden_size = 256, structural_attention_size = 256, cell_content_embedding_size = 80, cell_content_hidden_size = 512, cell_content_attention_size = 256 )
-
-# set number of epochs
-epochs = 25
-
-# make list of lambdas to use in training
-# this is the same strategy as Zhong et al.
-lambdas =  [1 for _ in range(10)] + [1 for _ in range(3)]+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
-lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]

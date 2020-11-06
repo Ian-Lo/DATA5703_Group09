@@ -175,7 +175,7 @@ for epoch in range(epochs):
     print('Total loss: %.5f'%total_loss)
     print('Struct. decod. loss: %.5f'%total_loss_s)
     print("Cell dec. loss:", total_loss_cc)
-    
+
     print('Validation struct. decod. loss: %.5f'%total_loss_s_val)
     print('Validation cell decoder. loss: %.5f'%loss_cc_val)
     print('time for 100k examples:' , "%.2f hours"%((t1_stop-t1_start)/number_examples*100000/3600))

@@ -19,7 +19,9 @@ class Model:
     def set_eval(self):
         self.decoder_structural = self.decoder_structural.eval()
         self.decoder_cell_content = self.decoder_cell_content.eval()
+        self.encoder = self.encoder.eval()
 
     def set_train(self):
         self.decoder_structural = self.decoder_structural.train()
         self.decoder_cell_content = self.decoder_cell_content.train()
+        self.encoder = self.encoder.train()

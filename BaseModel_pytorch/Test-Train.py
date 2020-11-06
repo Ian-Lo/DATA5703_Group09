@@ -37,7 +37,7 @@ cell_content_token2integer, cell_content_integer2token = Utils.load_cell_content
 # instantiate the batching object
 
 batching = BatchingMechanism(dataset_split='train', number_examples=number_examples, batch_size=10, storage_size=1000)
-batching_val = BatchingMechanism(dataset_split='train', number_examples=number_examples_val, batch_size=10, storage_size=1000)
+batching_val = BatchingMechanism(dataset_split='val', number_examples=number_examples_val, batch_size=10, storage_size=1000)
 
 # initialise the object
 # here the object works out how many storages and how many examples from every storage are needed
@@ -141,6 +141,7 @@ for epoch in range(epochs):
 
     #batch loop for validation
     with torch.no_grad():
+        # change to decoders to .eval
         model.set_eval()
 
         batches_val= batching_val.build_batches(randomise=False)
@@ -152,8 +153,9 @@ for epoch in range(epochs):
             predictions_val, loss_s_val, predictions_cell_val, loss_cc_val, loss_val = val_step(features_maps_val, structural_tokens_val,triggers_val, cells_content_tokens_val, model, LAMBDA )
 
             total_loss_s_val+= loss_s_val
-
+            total_loss_cc_val += loss_cc_val
         total_loss_s_val/=len(batches)
+        total_loss_cc_val/=len(batches)
         print("-- structural decoder:---")
         print("Truth")
         print([structural_integer2token[p.item()] for p in structural_tokens_val[0]])
@@ -173,5 +175,7 @@ for epoch in range(epochs):
     print('Total loss: %.5f'%total_loss)
     print('Struct. decod. loss: %.5f'%total_loss_s)
     print("Cell dec. loss:", total_loss_cc)
-    print('Validation struct. decod. loss: %.5f'%loss_s_val)
+    
+    print('Validation struct. decod. loss: %.5f'%total_loss_s_val)
+    print('Validation cell decoder. loss: %.5f'%loss_cc_val)
     print('time for 100k examples:' , "%.2f hours"%((t1_stop-t1_start)/number_examples*100000/3600))

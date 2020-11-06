@@ -74,7 +74,7 @@ class Model:
         self.decoder_cell_content = self.decoder_cell_content.train()
         self.encoder = self.encoder.train()
 
-    def train(self, drive=None, epochs = 1, lambdas = [1], lrs = [0.001], number_examples = 100, number_examples_val = 100, batch_size=10, storage_size = 1000 ):
+    def train(self, drive=None,checkpoint_temp_id = None,  epochs = 1, lambdas = [1], lrs = [0.001], number_examples = 100, number_examples_val = 100, batch_size=10, storage_size = 1000 ):
         from BatchingMechanism import BatchingMechanism
         from CheckPoint import CheckPoint
         from time import perf_counter, time
@@ -83,6 +83,13 @@ class Model:
 
         assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and lambdas are inconsistent"
 
+        # Enumerate folders in folder
+        if drive:
+          folders = drive.ListFile(
+            {'q': f"'{checkpoint_temp_id}' in parents  \
+            and trashed = false \
+            and mimeType contains 'vnd.google-apps.folder' \
+            "}).GetList()
 
         # instantiate the batching object
         batching = BatchingMechanism(dataset_split='train', number_examples=number_examples, batch_size=batch_size, storage_size=storage_size)

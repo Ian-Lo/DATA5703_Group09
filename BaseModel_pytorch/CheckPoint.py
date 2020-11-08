@@ -31,6 +31,7 @@ class CheckPoint:
         # code below is for uploading to Google Drive
         self.drive = drive
         self.checkpoint_temp_id = checkpoint_temp_id
+
         if self.drive:
             self.folders = drive.ListFile(
                         {'q': f"'{checkpoint_temp_id}' in parents  \
@@ -102,16 +103,20 @@ class CheckPoint:
             # store the best checkpoint
             torch.save(self.state, file_path)
 
-    def copy_checkpoint(self ):
+    def copy_checkpoint(self):
+
         folder_title = [folder['title'] for i, folder in enumerate(self.folders)]
         subfolder_count = folder_title.count(self.model_tag)
-        if subfolder_count > 0 :
-          folder_index = folder_title.index(model)
-          model_folder_id = folders[folder_index]['id']
+
+        if subfolder_count > 0:
+
+            folder_index = folder_title.index(self.model_tag)
+            model_folder_id = self.folders[folder_index]['id']
 
         else:
+
             # create subfolder for model
-            model_folder = drive.CreateFile()
+            model_folder = self.drive.CreateFile()
             model_folder['title'] = self.model_tag
             model_folder['parents'] = [{'id': self.checkpoint_temp_id}] # assign parent folder
             model_folder['mimeType'] = 'application/vnd.google-apps.folder' # specify object as folder
@@ -123,7 +128,7 @@ class CheckPoint:
         suffix = '{:0>3}'.format(epoch)
         fn =  f'checkpoint_{suffix}.pth.tar'
 
-        checkpoint_gdrive = drive.CreateFile()
+        checkpoint_gdrive = self.drive.CreateFile()
         checkpoint_gdrive['title'] = os.path.basename(fn)
         checkpoint_gdrive['parents'] = [{'id': model_folder_id}]
         checkpoint_gdrive.Upload()

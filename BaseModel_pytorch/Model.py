@@ -73,7 +73,7 @@ class Model:
         self.decoder_cell_content = self.decoder_cell_content.train()
         self.encoder = self.encoder.train()
 
-    def train(self, drive=None, checkpoint_temp_id = None,  epochs = 1, lambdas = [1], lrs = [0.001], number_examples = 100, number_examples_val = 100, batch_size=10, storage_size = 1000 ):
+    def train(self, drive=None, checkpoint_temp_id=None, epochs=1, lambdas=[1], lrs=[0.001], number_examples=100, number_examples_val=100, batch_size=10, storage_size=1000 ):
 
         assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and lambdas are inconsistent"
 

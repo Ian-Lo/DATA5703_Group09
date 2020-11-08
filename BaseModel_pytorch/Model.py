@@ -1,23 +1,22 @@
+import Utils
+
+from Encoder import Encoder
+from DecoderStructural import DecoderStructural
+from DecoderCellContent import DecoderCellContent
+
+from BatchingMechanism import BatchingMechanism
+from CheckPoint import CheckPoint
+from TrainStep import train_step
+from ValStep import val_step
+
 import torch
+from time import perf_counter, time
+
 
 class Model:
     """Combined class for encoder, structural decoder and cell decoder."""
 
-    def __init__(self,relative_path,model_tag, encoder_size = 144, structural_embedding_size = 16, structural_hidden_size = 256, structural_attention_size = 256, cell_content_embedding_size = 80, cell_content_hidden_size = 512, cell_content_attention_size = 256  ):
-
-        # import required directories
-        import Utils
-        from Encoder import Encoder
-        from DecoderStructural import DecoderStructural
-        from DecoderCellContent import DecoderCellContent
-        import h5py
-        import torch
-        import numpy as np
-        from time import perf_counter, time
-        from BatchingMechanism import BatchingMechanism
-        from TrainStep import train_step
-        from ValStep import val_step
-        from CheckPoint import CheckPoint
+    def __init__(self, relative_path, model_tag, encoder_size=144, structural_embedding_size=16, structural_hidden_size=256, structural_attention_size=256, cell_content_embedding_size=80, cell_content_hidden_size=512, cell_content_attention_size=256):
 
         # set device
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # sets device for model and PyTorch tensors
@@ -74,22 +73,9 @@ class Model:
         self.decoder_cell_content = self.decoder_cell_content.train()
         self.encoder = self.encoder.train()
 
-    def train(self, drive=None,checkpoint_temp_id = None,  epochs = 1, lambdas = [1], lrs = [0.001], number_examples = 100, number_examples_val = 100, batch_size=10, storage_size = 1000 ):
-        from BatchingMechanism import BatchingMechanism
-        from CheckPoint import CheckPoint
-        from time import perf_counter, time
-        from TrainStep import train_step
-        from ValStep import val_step
+    def train(self, drive=None, checkpoint_temp_id = None,  epochs = 1, lambdas = [1], lrs = [0.001], number_examples = 100, number_examples_val = 100, batch_size=10, storage_size = 1000 ):
 
         assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and lambdas are inconsistent"
-
-        # Enumerate folders in folder
-        if drive:
-          folders = drive.ListFile(
-            {'q': f"'{checkpoint_temp_id}' in parents  \
-            and trashed = false \
-            and mimeType contains 'vnd.google-apps.folder' \
-            "}).GetList()
 
         # instantiate the batching object
         batching = BatchingMechanism(dataset_split='train', number_examples=number_examples, batch_size=batch_size, storage_size=storage_size)
@@ -101,8 +87,7 @@ class Model:
         batching_val.initialise()
 
         # instantiate checkpoint
-        checkpoint = CheckPoint(self.model_tag)
-
+        checkpoint = CheckPoint(self.model_tag, drive=drive, checkpoint_temp_id=checkpoint_temp_id)
 
         # then reinitialize so we haven't used up batch
         batching.initialise()
@@ -144,23 +129,26 @@ class Model:
                 features_maps, structural_tokens, triggers, cells_content_tokens = batching.get_batch(batch)
                 # send to training function for forward pass, backpropagation and weight updates
                 predictions, loss_s, predictions_cell, loss_cc, loss = train_step(features_maps, structural_tokens, triggers, cells_content_tokens, self, LAMBDA=LAMBDA)
-                total_loss_s+=loss_s
-                total_loss+= loss
+                total_loss_s += loss_s
+                total_loss += loss
                 if loss_cc:
                     total_loss_cc+=loss_cc
-            total_loss_s/=len(batches)
+
+            total_loss_s /= len(batches)
 
             checkpoint.save_checkpoint(epoch, self.encoder, self.decoder_structural, self.decoder_cell_content,
                                       self.encoder_optimizer, self.decoder_structural_optimizer, self.decoder_cell_content_optimizer, total_loss, total_loss_s, total_loss_cc)
 
             checkpoint.archive_checkpoint()
 
+            checkpoint.copy_checkpoint()
+
             #batch loop for validation
             with torch.no_grad():
                 # change state of encoder and decoders to .eval
                 self.set_eval()
 
-                batches_val= batching_val.build_batches(randomise=False)
+                batches_val = batching_val.build_batches(randomise=False)
 
                 #batch looping for validation
                 for batch in batches_val:
@@ -197,9 +185,3 @@ class Model:
             if loss_cc_val:
                 print('Validation cell decoder. loss: %.5f'%loss_cc_val)
             print('time for 100k examples:' , "%.2f hours"%((t1_stop-t1_start)/number_examples*100000/3600))
-
-
-
-
-
-#        return

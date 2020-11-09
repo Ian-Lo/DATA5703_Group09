@@ -13,7 +13,8 @@ class Encoder(torch.nn.Module):
     def forward(self, features_map):
 
         # encoded_features_map: (batch_size, n*n, encoder_size)
+
         encoded_features_map = self.relu(self.fc(features_map))
+        features_maps = np.swapaxes(features_maps, 1, 2)
 
         return encoded_features_map
-

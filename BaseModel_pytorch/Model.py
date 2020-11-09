@@ -16,7 +16,7 @@ from time import perf_counter, time
 class Model:
     """Combined class for encoder, structural decoder and cell decoder."""
 
-    def __init__(self, relative_path, model_tag, encoder_size=144, structural_embedding_size=16, structural_hidden_size=256, structural_attention_size=256, cell_content_embedding_size=80, cell_content_hidden_size=512, cell_content_attention_size=256):
+    def __init__(self, relative_path, model_tag, encoder_size=12, structural_embedding_size=16, structural_hidden_size=256, structural_attention_size=256, cell_content_embedding_size=80, cell_content_hidden_size=512, cell_content_attention_size=256):
 
         # set device
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # sets device for model and PyTorch tensors
@@ -35,7 +35,7 @@ class Model:
         self.cell_content_token2integer = cell_content_token2integer
         self.cell_content_integer2token = cell_content_integer2token
 
-        features_map_size = 512
+        #features_map_size = 512
         # the above could also be inferred:
 #        batch= batching.build_batches(randomise=True)[0]
 #        features_map, _, _, _ = batching.get_batch(batch)
@@ -43,10 +43,10 @@ class Model:
 
 
         # initialize encoder
-        encoder = Encoder(features_map_size, encoder_size)
-        encoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder.parameters()))
-        self.encoder = encoder.to(self.device)
-        self.encoder_optimizer = encoder_optimizer
+        #encoder = Encoder(features_map_size, encoder_size)
+        #encoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder.parameters()))
+        #self.encoder = encoder.to(self.device)
+        #self.encoder_optimizer = encoder_optimizer
 
         # set up the decoder for structural tokens
         decoder_structural = DecoderStructural(structural_token2integer, structural_embedding_size, encoder_size, structural_hidden_size, structural_attention_size)
@@ -65,13 +65,13 @@ class Model:
         '''Change to evaluation state.'''
         self.decoder_structural = self.decoder_structural.eval()
         self.decoder_cell_content = self.decoder_cell_content.eval()
-        self.encoder = self.encoder.eval()
+        #self.encoder = self.encoder.eval()
 
     def set_train(self):
         ''' Change to training state'''
         self.decoder_structural = self.decoder_structural.train()
         self.decoder_cell_content = self.decoder_cell_content.train()
-        self.encoder = self.encoder.train()
+        #self.encoder = self.encoder.train()
 
     def train(self, drive=None, checkpoint_temp_id=None, epochs=1, lambdas=[1], lrs=[0.001], number_examples=100, number_examples_val=100, batch_size=10, storage_size=1000,val = None ):
 
@@ -96,7 +96,7 @@ class Model:
         batching.initialise()
 
         for epoch in range(epochs):
-
+            print(epoch)
             # change model to training
             self.set_train()
 
@@ -122,8 +122,8 @@ class Model:
                 g['lr'] = lr
             for g in self.decoder_cell_content_optimizer.param_groups:
                 g['lr'] = lr
-            for g in self.encoder_optimizer.param_groups:
-                g['lr'] = lr
+#            for g in self.encoder_optimizer.param_groups:
+#                g['lr'] = lr
 
             # batch looping for training
             for batch in batches:
@@ -139,12 +139,17 @@ class Model:
 
             total_loss_s /= len(batches)
 
-            checkpoint.save_checkpoint(epoch, self.encoder, self.decoder_structural, self.decoder_cell_content,
-                                      self.encoder_optimizer, self.decoder_structural_optimizer, self.decoder_cell_content_optimizer, total_loss, total_loss_s, total_loss_cc)
+#            checkpoint.save_checkpoint(epoch, self.encoder, self.decoder_structural, self.decoder_cell_content,
+#                                      self.encoder_optimizer, self.decoder_structural_optimizer, self.decoder_cell_content_optimizer, total_loss, total_loss_s, total_loss_cc)
+
+            checkpoint.save_checkpoint(epoch, self.decoder_structural, self.decoder_cell_content,
+                                       self.decoder_structural_optimizer, self.decoder_cell_content_optimizer, total_loss, total_loss_s, total_loss_cc)
 
             checkpoint.archive_checkpoint()
 
-            checkpoint.copy_checkpoint()
+            if drive:
+                checkpoint.copy_checkpoint()
+
 
             #batch loop for validation
             if val:

@@ -25,7 +25,7 @@ def dl_by_id(file_id, filename, path):
 # NOTE this may cause unexpected results if there are >1 files with the same name in google drive
 
 
-def dl_by_name(filename, path):
+def dl_by_name(filename, path, my_drive):
     target = path + filename
     # print(target)
     if os.path.exists(target) is True:

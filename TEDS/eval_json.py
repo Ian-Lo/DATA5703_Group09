@@ -228,12 +228,12 @@ def w2gdrive_folder(filename, path, folder_id):
     print(f"{filename} uploaded")
 
 def dl_by_listfile(list_file, path):
-    create_folder(work_dir + path)
+    create_folder(path)
     for i in list_file:
         # print(i['title'], i['id'])
         filename = i['title']
         file_id = i['id']
-        target = work_dir + path + filename
+        target =path + filename
         # print(target)
     
     if os.path.exists(target)==True:

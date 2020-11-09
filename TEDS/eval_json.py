@@ -242,5 +242,5 @@ def dl_by_listfile(list_file, path):
         file = my_drive.CreateFile({'id': file_id})
         file.GetContentFile(target) 
         print(f"filename saved to {target}")
-    return (work_dir + path)
+    return (path)
 

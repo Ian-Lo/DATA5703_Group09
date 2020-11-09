@@ -95,12 +95,12 @@ def fill_html_structure(html_structure, cells_information):
 
 # Take filename HTML string as input and test against GT
 def test_pred_html(img_name, pred_html, gt_file):
-    sys.path.append(work_dir + metric_path)
     from metric import TEDS
     start_t = datetime.datetime.now()
     reader = jsonlines.open(f'{gt_file}', 'r')
     count = 0
 
+    # Loop through GT file 
     while count < max_count:
         count += 1
         if count % 10000 == 1:
@@ -116,6 +116,7 @@ def test_pred_html(img_name, pred_html, gt_file):
                 last file processed {annotation['filename']}"
                 )
 
+        # Check for match of gt filename with img name
         if annotation['filename'] == img_name:
             img_filename = annotation['filename']
             img_struct = annotation['html']['structure']['tokens']

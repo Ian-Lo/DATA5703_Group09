@@ -96,7 +96,7 @@ def fill_html_structure(html_structure, cells_information):
 # Take filename HTML string as input and test against GT
 def test_pred_html(img_name, pred_html, gt_file, root_path = '/content/TEDS'):
     print(os.getcwd())
-    from metric import TEDS
+    from TEDS.metric import TEDS
     start_t = datetime.datetime.now()
     reader = jsonlines.open(f'{gt_file}', 'r')
     count = 0

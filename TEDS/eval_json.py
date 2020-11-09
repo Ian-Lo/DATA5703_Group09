@@ -237,11 +237,11 @@ def dl_by_listfile(list_file, path, my_drive):
         target =path + filename
         # print(target)
     
-    if os.path.exists(target):
-        print(f"'{target}' already exists")
-    else:
-        file = my_drive.CreateFile({'id': file_id})
-        file.GetContentFile(target) 
-        print(f"filename saved to {target}")
+        if os.path.exists(target):
+            print(f"'{target}' already exists")
+        else:
+            file = my_drive.CreateFile({'id': file_id})
+            file.GetContentFile(target) 
+            print(f"filename saved to {target}")
     return (path)
 

@@ -14,7 +14,7 @@ from apted import APTED, Config
 from apted.helpers import Tree
 from lxml import etree, html
 from collections import deque
-from TED.parallel import parallel_process
+from TEDS.parallel import parallel_process
 from tqdm import tqdm
 
 class TableTree(Tree):

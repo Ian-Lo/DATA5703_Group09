@@ -20,7 +20,7 @@ class CheckPoint:
 
         return state
 
-    def __init__(self, model_tag, drive = None, checkpoint_temp_id = None):
+    def __init__(self, model_tag, drive=None, checkpoint_temp_id=None):
 
         self.model_tag = model_tag
 

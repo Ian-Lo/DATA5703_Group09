@@ -227,7 +227,6 @@ def w2gdrive_folder(filename, path, folder_id):
     pydr_writer.Upload()
     print(f"{filename} uploaded")
 
-
 def dl_by_listfile(list_file, path, my_drive):
     create_folder(path)
     for i in list_file:

@@ -15,7 +15,7 @@ def create_folder(path):
         print(f"'{path}' exists")
 
 
-def dl_by_id(file_id, filename, path):
+def dl_by_id(file_id, filename, path, my_drive):
     target = path + filename
     file = my_drive.CreateFile({'id': file_id})
     file.GetContentFile(target)
@@ -35,7 +35,7 @@ def dl_by_name(filename, path, my_drive):
             {'q': f'title="{filename}" and trashed = false'}).GetList()
         print(f'{len(file_list)} file(s) matching this name on Google Drive')
         file_id = file_list[0]['id']
-        dl_by_id(file_id, filename, path)
+        dl_by_id(file_id, filename, path, my_drive)
 
 
 def build_html_structure(structure_information):

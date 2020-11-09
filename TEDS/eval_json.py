@@ -143,7 +143,7 @@ def test_pred_html(img_name, pred_html, gt_file):
 
 
 # Take prediction and GT JSON to calculate TEDS score
-def TEDS_json(TEDS_pred, TEDS_gt):
+def TEDS_json(TEDS_pred, TEDS_gt, max_count = 600000):
   import sys
   start_t = datetime.datetime.now()
   print(f'START: {start_t}')
@@ -190,8 +190,8 @@ def TEDS_json(TEDS_pred, TEDS_gt):
         \n\tEND: {end_t} \
         \n\tDELTA: {(str(end_t - start_t))} \
         ")
-  r = {'TEDS_score':pred_score, 'pred_file':TEDS_pred}
-  return r
+  return_dict = {'TEDS_score':pred_score, 'pred_file':TEDS_pred}
+  return return_dict
 
 # Consider making this multi threaded
 # Currently single threaded

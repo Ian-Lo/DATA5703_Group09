@@ -94,7 +94,7 @@ def fill_html_structure(html_structure, cells_information):
 
 
 # Take filename HTML string as input and test against GT
-def test_pred_html(img_name, pred_html, gt_file, root_path = '/content/TEDS'):
+def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
     print(os.getcwd())
     from TEDS.metric import TEDS
     start_t = datetime.datetime.now()
@@ -180,7 +180,7 @@ def TEDS_json(TEDS_pred, TEDS_gt, max_count = 600000):
           html_string = fill_html_structure(html_structure, img_cell)
 
           # Test current prediction against Ground Truth
-          score, delta_t = test_pred_html(img_filename, html_string, TEDS_gt)
+          score, delta_t = test_pred_html(img_filename, html_string, TEDS_gt, max_count)
           pred_score[img_filename] = {'proc_time':delta_t, 'score':score}
           print(f'Main Cell score = {score} \n')
           

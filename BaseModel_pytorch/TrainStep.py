@@ -3,7 +3,8 @@ import torch
 def train_step(features_map, structural_tokens, triggers, cells_content_tokens, model, LAMBDA=0.5,):
 
     # pass features through encoder
-    encoded_features_map = model.encoder.forward(features_map)
+    #encoded_features_map = model.encoder.forward(features_map)
+    encoded_features_map = features_map
 
     # pass encoded features through structural decoder
     predictions, loss_s, storage_hidden = model.decoder_structural.forward(encoded_features_map, structural_tokens)

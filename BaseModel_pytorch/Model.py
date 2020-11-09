@@ -73,18 +73,21 @@ class Model:
         self.decoder_cell_content = self.decoder_cell_content.train()
         self.encoder = self.encoder.train()
 
-    def train(self, drive=None, checkpoint_temp_id=None, epochs=1, lambdas=[1], lrs=[0.001], number_examples=100, number_examples_val=100, batch_size=10, storage_size=1000 ):
+    def train(self, drive=None, checkpoint_temp_id=None, epochs=1, lambdas=[1], lrs=[0.001], number_examples=100, number_examples_val=100, batch_size=10, storage_size=1000,val = None ):
 
         assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and lambdas are inconsistent"
 
         # instantiate the batching object
         batching = BatchingMechanism(dataset_split='train', number_examples=number_examples, batch_size=batch_size, storage_size=storage_size)
-        batching_val = BatchingMechanism(dataset_split='val', number_examples=number_examples_val, batch_size=10, storage_size=storage_size)
+
 
         # initialise the object
         # here the object works out how many storages and how many examples from every storage are needed
         batching.initialise()
-        batching_val.initialise()
+
+        if val:
+            batching_val = BatchingMechanism(dataset_split='val', number_examples=number_examples_val, batch_size=10, storage_size=storage_size)
+            batching_val.initialise()
 
         # instantiate checkpoint
         checkpoint = CheckPoint(self.model_tag, drive=drive, checkpoint_temp_id=checkpoint_temp_id)
@@ -144,7 +147,7 @@ class Model:
             checkpoint.copy_checkpoint()
 
             #batch loop for validation
-            with torch.no_grad():
+            if val:
                 # change state of encoder and decoders to .eval
                 self.set_eval()
 
@@ -181,7 +184,7 @@ class Model:
             print('Struct. decod. loss: %.5f'%total_loss_s)
             print("Cell dec. loss:", total_loss_cc)
 
-            print('Validation struct. decod. loss: %.5f'%total_loss_s_val)
-            if loss_cc_val:
-                print('Validation cell decoder. loss: %.5f'%loss_cc_val)
+#            print('Validation struct. decod. loss: %.5f'%total_loss_s_val)
+#            if loss_cc_val:
+#                print('Validation cell decoder. loss: %.5f'%loss_cc_val)
             print('time for 100k examples:' , "%.2f hours"%((t1_stop-t1_start)/number_examples*100000/3600))

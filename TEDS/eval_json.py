@@ -134,14 +134,13 @@ def test_pred_html(img_name, pred_html, gt_file):
             # print(f'test_pred_html() score = {test_pred_score}')
             break
 
+    print(f"test_pred_html() exit count: {count}")
+    end_t = datetime.datetime.now()
+    delta_t = (end_t - start_t).total_seconds()
+    print(f'{img_filename}: {str(delta_t)} sec(s)')
 
+    return test_pred_score, delta_t
 
-  print(f"test_pred_html() exit count: {count}")
-  end_t = datetime.datetime.now()
-  delta_t = (end_t - start_t).total_seconds()
-  print(f'{img_filename}: {str(delta_t)} sec(s)')
-
-  return test_pred_score, delta_t
 
 # Take prediction and GT JSON to calculate TEDS score
 def TEDS_json(TEDS_pred, TEDS_gt):
@@ -215,33 +214,33 @@ def TEDS_score2json(TEDS_score):
 
 # write scores to folder in google drive
 def w2gdrive_folder(filename, path, folder_id):
-  # Refresh auth/my_drive in case the above code 
-  # is long running and the auth times out
-  auth.authenticate_user()
-  gauth = GoogleAuth()
-  gauth.credentials = GoogleCredentials.get_application_default()
-  my_drive = GoogleDrive(gauth)
+    # Refresh auth/my_drive in case the above code 
+    # is long running and the auth times out
+    auth.authenticate_user()
+    gauth = GoogleAuth()
+    gauth.credentials = GoogleCredentials.get_application_default()
+    my_drive = GoogleDrive(gauth)
 
-  pydr_writer = my_drive.CreateFile({'parents': [{'id': folder_id}], 
+    pydr_writer = my_drive.CreateFile({'parents': [{'id': folder_id}], 
                                     'title': filename})
-  pydr_writer.SetContentFile(f'{path}{filename}')
-  pydr_writer.Upload()
-  print(f"{filename} uploaded")
+    pydr_writer.SetContentFile(f'{path}{filename}')
+    pydr_writer.Upload()
+    print(f"{filename} uploaded")
 
 def dl_by_listfile(list_file, path):
-  create_folder(work_dir + path)
-  for i in list_file:
-    # print(i['title'], i['id'])
-    filename = i['title']
-    file_id = i['id']
-    target = work_dir + path + filename
-    # print(target)
+    create_folder(work_dir + path)
+    for i in list_file:
+        # print(i['title'], i['id'])
+        filename = i['title']
+        file_id = i['id']
+        target = work_dir + path + filename
+        # print(target)
     
     if os.path.exists(target)==True:
-      print(f"'{target}' already exists")
+        print(f"'{target}' already exists")
     else:
-      file = my_drive.CreateFile({'id': file_id})
-      file.GetContentFile(target) 
-      print(f"filename saved to {target}")
-  return (work_dir + path)
+        file = my_drive.CreateFile({'id': file_id})
+        file.GetContentFile(target) 
+        print(f"filename saved to {target}")
+    return (work_dir + path)
 

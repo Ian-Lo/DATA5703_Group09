@@ -72,21 +72,21 @@ def fill_html_structure(html_structure, cells_information):
 
     import re
     from bs4 import BeautifulSoup as bs
-    
+
     # initial compatibility assessment
     cell_nodes = list(re.finditer(r'(<td[^<>]*>)(</td>)', html_structure))
     assert len(cell_nodes) == len(cells_information), 'Number of cells defined in tags does not match the length of cells'
-    
+
     # create a list with each cell content compacted into a single string
     cells = [''.join(cell['tokens']) for cell in cells_information]
-    
+
     # sequentially fill the HTML structure with the cells content at the appropriate spots
     offset = 0
     html_string = html_structure
     for n, cell in zip(cell_nodes, cells):
         html_string = html_string[:n.end(1) + offset] + cell + html_string[n.start(2) + offset:]
         offset += len(cell)
-        
+
     # prettify the html
     soup = bs(html_string)
     html_string = soup.prettify()
@@ -103,36 +103,36 @@ def test_pred_html(img_name, pred_html, gt_file):
 
     while count < max_count:
         count += 1
-      if count % 10000 == 1:
-          print(f'test_pred_html() count: {count}')
-      try:
-          annotation = next(reader.iter())
-      except StopIteration:
-          print("Oops!", sys.exc_info()[0], "occurred.")
-          break
-      except:
-          print(
-              f"{sys.exc_info()[0]} \
-              last file processed {annotation['filename']}"
-              )
+        if count % 10000 == 1:
+            print(f'test_pred_html() count: {count}')
+        try:
+            annotation = next(reader.iter())
+        except StopIteration:
+            print("Oops!", sys.exc_info()[0], "occurred.")
+            break
+        except:
+            print(
+                f"{sys.exc_info()[0]} \
+                last file processed {annotation['filename']}"
+                )
 
-      if annotation['filename'] == img_name:
-          img_filename = annotation['filename']
-          img_struct = annotation['html']['structure']['tokens']
-          img_cell = annotation['html']['cells']
+        if annotation['filename'] == img_name:
+            img_filename = annotation['filename']
+            img_struct = annotation['html']['structure']['tokens']
+            img_cell = annotation['html']['cells']
 
-          # Create valid HTML from structural tokens
-          html_structure = build_html_structure(img_struct)
-          # Merge structural and cell tokens
-          true_html = fill_html_structure(html_structure, img_cell)
+            # Create valid HTML from structural tokens
+            html_structure = build_html_structure(img_struct)
+            # Merge structural and cell tokens
+            true_html = fill_html_structure(html_structure, img_cell)
 
-          # Test current prediction against Ground Truth
-          # Import TEDS
-          
-          teds = TEDS()
-          test_pred_score = teds.evaluate( pred_html, true_html )
-          # print(f'test_pred_html() score = {test_pred_score}')
-          break
+            # Test current prediction against Ground Truth
+            # Import TEDS
+
+            teds = TEDS()
+            test_pred_score = teds.evaluate(pred_html, true_html)
+            # print(f'test_pred_html() score = {test_pred_score}')
+            break
 
 
 

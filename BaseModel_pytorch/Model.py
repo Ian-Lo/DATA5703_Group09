@@ -96,7 +96,7 @@ class Model:
         batching.initialise()
 
         for epoch in range(epochs):
-
+            print(epoch)
             # change model to training
             self.set_train()
 
@@ -122,8 +122,8 @@ class Model:
                 g['lr'] = lr
             for g in self.decoder_cell_content_optimizer.param_groups:
                 g['lr'] = lr
-            for g in self.encoder_optimizer.param_groups:
-                g['lr'] = lr
+#            for g in self.encoder_optimizer.param_groups:
+#                g['lr'] = lr
 
             # batch looping for training
             for batch in batches:
@@ -147,7 +147,9 @@ class Model:
 
             checkpoint.archive_checkpoint()
 
-            checkpoint.copy_checkpoint()
+            if drive:
+                checkpoint.copy_checkpoint()
+
 
             #batch loop for validation
             if val:

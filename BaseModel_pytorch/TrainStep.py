@@ -39,23 +39,23 @@ def train_step(features_map, structural_tokens, triggers, cells_content_tokens, 
         # Back propagation
         model.decoder_cell_content_optimizer.zero_grad()
         model.decoder_structural_optimizer.zero_grad()
-        model.encoder_optimizer.zero_grad()
+    #    model.encoder_optimizer.zero_grad()
         loss.backward()
 
         # Update weights
         model.decoder_cell_content_optimizer.step()#
         model.decoder_structural_optimizer.step()
-        model.encoder_optimizer.step()
+    #    model.encoder_optimizer.step()
 
     if abs(LAMBDA-1.0)<0.001:
         loss = loss_s
         # Back propagation
         model.decoder_structural_optimizer.zero_grad()
-        model.encoder_optimizer.zero_grad()
+#        model.encoder_optimizer.zero_grad()
         loss.backward()
         # Update weights
         model.decoder_structural_optimizer.step()
-        model.encoder_optimizer.step()
+#        model.encoder_optimizer.step()
         predictions_cell = None
         loss_cc = None
 

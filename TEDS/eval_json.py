@@ -222,12 +222,12 @@ def w2gdrive_folder(filename, path, folder_id):
     my_drive = GoogleDrive(gauth)
 
     pydr_writer = my_drive.CreateFile({'parents': [{'id': folder_id}], 
-                                    'title': filename})
+                                       'title': filename})
     pydr_writer.SetContentFile(f'{path}{filename}')
     pydr_writer.Upload()
     print(f"{filename} uploaded")
 
-def dl_by_listfile(list_file, path):
+def dl_by_listfile(list_file, path, my_drive):
     create_folder(path)
     for i in list_file:
         # print(i['title'], i['id'])
@@ -236,7 +236,7 @@ def dl_by_listfile(list_file, path):
         target =path + filename
         # print(target)
     
-    if os.path.exists(target)==True:
+    if os.path.exists(target):
         print(f"'{target}' already exists")
     else:
         file = my_drive.CreateFile({'id': file_id})

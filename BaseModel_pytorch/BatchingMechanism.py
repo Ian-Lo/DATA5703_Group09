@@ -1,6 +1,7 @@
 from Storage import Storage
 import torch
 import numpy as np
+import math
 import random
 
 
@@ -174,7 +175,18 @@ class BatchingMechanism:
 
         # get the features maps from the HDF5 file
         features_maps = np.array(list(map(self.storage.features_maps.__getitem__, indices))).astype(np.float32)
-        features_maps = torch.from_numpy(features_maps).to(self.device)
+        features_maps = torch.from_numpy(features_maps)
+        # transformation back to the original tensor
+        features_maps = features_maps.permute(0, 2, 1)
+        dims = features_maps.size()
+        num_examples = dims[0]
+        num_layers = dims[1]
+        layer_dim = int(math.sqrt(dims[2]))
+        features_maps = torch.reshape(features_maps, (num_examples, num_layers, layer_dim, -1))
+        # stacking the layers vertically
+        features_maps = torch.reshape(features_maps, (num_examples, num_layers * layer_dim, -1))
+        # moving to device
+        features_maps = features_maps.to(self.device)
 
         # get the structural tokens from the HDF5 file
         structural_tokens = np.array(list(map(self.storage.structural_tokens.__getitem__, indices))).astype(np.int64)

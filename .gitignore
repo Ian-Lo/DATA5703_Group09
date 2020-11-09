@@ -143,3 +143,6 @@ dmypy.json
 cython_debug/
 *.tar
 *.tar
+TEDS/pubtabnet1000_pretty.jsonl
+TEDS/pubtabnet1000.jsonl
+.vscode/settings.json

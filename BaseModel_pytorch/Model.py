@@ -131,14 +131,15 @@ class Model:
                 # send to training function for forward pass, backpropagation and weight updates
                 predictions, loss_s, predictions_cell, loss_cc, loss = train_step(features_maps, structural_tokens, triggers, cells_content_tokens, self, LAMBDA=LAMBDA)
                 # apply logsoftmax
-                print(predictions.shape)
                 log_p = torch.nn.LogSoftmax(dim=2)(predictions)
 
-                # greedy decoder:
+                # greedy decoder to check prediction WITH teacher forcing
                 _, predict_id = torch.max(log_p, dim = 2 )
-                print(structural_tokens)
-                print("truth", [self.structural_integer2token[p.item()] for p in structural_tokens[0].detach().numpy()] )
-                print("test", [self.structural_integer2token[p.item()] for p in predict_id.detach().numpy()])
+                print("Ground truth:")
+                print([self.structural_integer2token[p.item()] for p in structural_tokens[0].detach().numpy()] )
+                print("Prediction WITH teacher forcing (1 example):")
+                print( [self.structural_integer2token[p.item()] for p in predict_id.detach().numpy()])
+                print("Accuracy WITH teacher forcing (1 example):")
                 print(np.sum(structural_tokens[0].detach().numpy()==predict_id.detach().numpy()[:,0])/structural_tokens[0].detach().numpy().shape[0])
                 total_loss_s += loss_s
                 total_loss += loss
@@ -174,10 +175,11 @@ class Model:
                         total_loss_cc_val += loss_cc_val
                 total_loss_s_val/=len(batches)
                 total_loss_cc_val/=len(batches)
+                print("-------------Validation loss:---------------")
                 print("-- structural decoder:---")
-                print("Truth")
+                print("Truth (1 example)")
                 print([self.structural_integer2token[p.item()] for p in structural_tokens_val[0]])
-                print("Prediction")
+                print("Prediction (1 example)")
                 print([self.structural_integer2token[p.item()] for p in predictions_val[0]])
                 if abs(LAMBDA-1.0) > 0.01:
                     print("-- cell decoder:---")

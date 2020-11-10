@@ -1,9 +1,9 @@
 
-# model_tag is the name of the folder that the checkpoints folders will be saved in
-model_tag = "baseline_min"
-
 # the relative path of the folder containing the dataset
 relative_path = "../../Dataset/"
+
+# model_tag is the name of the folder that the checkpoints folders will be saved in
+model_tag = "baseline_min"
 
 # tunable parameters
 out_channels = 64 # number of channels

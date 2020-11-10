@@ -13,8 +13,10 @@ torchvision
 tdqm
 
 INSTRUCTIONS ON HOW TO RUN THE MODEL
-Run the script run.sh (in the DevOps folder) in bash terminal.
-This script will 
+Run the script run.sh (in the DevOps folder) in a bash terminal.
+Then edit the file Test_Model.py: in the first line, edit the folder string to point it to the folder where the Dataset folder is on 
+the local machine.
+Finally, run: python Test_Model.py from the directory base
 
 THE MODEL: ENCODER-DECODER
 This is the structure of the model:

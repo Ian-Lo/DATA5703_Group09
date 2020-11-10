@@ -1,31 +1,33 @@
-REQUIREMENTS
 
-Python 3.8
 
-numpy
-pandas
-matplotlib
-jsonlines
-pillow (PIL)
-h5py
-pytorch
-torchvision
-tdqm
+# INSTRUCTIONS ON HOW TO RUN THE MODEL
 
-INSTRUCTIONS ON HOW TO RUN THE MODEL
-
+Download the script 'run.sh' from https://github.com/Ian-Lo/DATA5703_Group09/blob/main/DevOps/run.sh.
 Run the script run.sh (in the DevOps folder) in a bash terminal. This script will set up folders, clone the repository and download the HDF5 files.
 
-Then edit the file Test_Model.py: in the first line, edit the folder string to point it to the folder where the Dataset folder is on 
-the local machine.
+Our test model is at 'BaseModel_pytorch/Test_Model.py.
 
-Finally, run: python Test_Model.py from the directory BaseModel_pytorch
+To execute use 'python3 Test_Model.py' from the directory 'BaseModel_pytorch'.
 
-THE MODEL: ENCODER-DECODER
+
+# REQUIREMENTS
+
+* Python 3.8
+  * numpy
+  * pandas
+  * matplotlib
+  * jsonlines
+  * pillow (PIL)
+  * h5py
+  * pytorch
+  * torchvision
+  * tdqm
+
+# THE MODEL: ENCODER-DECODER
 
 This is the structure of the model:
 
-PRETRAINED ENCODER
+* PRETRAINED ENCODER
 
 ENCODER
 

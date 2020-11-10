@@ -2,12 +2,13 @@
 
 # INSTRUCTIONS ON HOW TO RUN THE MODEL
 
-Download the script 'run.sh' from https://github.com/Ian-Lo/DATA5703_Group09/blob/main/DevOps/run.sh.
-Run the script run.sh (in the DevOps folder) in a bash terminal. This script will set up folders, clone the repository and download the HDF5 files.
+* Download the script 'run.sh' from https://github.com/Ian-Lo/DATA5703_Group09/blob/main/DevOps/run.sh.
+* Run the script run.sh (in the DevOps folder) in a bash terminal. 
+ * This script will set up folders, clone the repository and download the HDF5 files.
 
-Our test model is at 'BaseModel_pytorch/Test_Model.py.
+* Our test model is at 'BaseModel_pytorch/Test_Model.py.
 
-To execute use 'python3 Test_Model.py' from the directory 'BaseModel_pytorch'.
+* To run 'python3 Test_Model.py' from the directory 'BaseModel_pytorch'.
 
 
 # REQUIREMENTS

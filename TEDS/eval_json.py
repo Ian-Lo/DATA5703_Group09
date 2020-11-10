@@ -209,7 +209,7 @@ def TEDS_json(pred_json, TEDS_gt, max_count = 600000):
                 )
 
         if annotation['filename'] in pred_images:
-            print(f'{annotation['filename']} found in {pred_images}')
+            print(f'{annotation["filename"]} found in {pred_images}')
 
     end_t = datetime.datetime.now()
     print(f"Main Cell exit count: {count} \

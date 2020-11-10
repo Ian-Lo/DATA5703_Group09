@@ -209,7 +209,18 @@ def TEDS_json(pred_json, TEDS_gt, max_count = 600000):
                 )
 
         if annotation['filename'] in pred_images:
-            print(f'{annotation["filename"]} found in {pred_images}')
+            # print(f'{annotation["filename"]} found in {pred_images}')
+            img_filename = annotation['filename']
+            img_struct = annotation['html']['structure']['tokens']
+            img_cell = annotation['html']['cells']
+
+            # Create valid HTML from structural tokens
+            html_structure = build_html_structure(img_struct)
+            # Merge structural and cell tokens
+            html_string = fill_html_structure(html_structure, img_cell)
+
+            # Create dictionary with fully formed HTML
+            gt_html[img_filename] = html_string
 
     end_t = datetime.datetime.now()
     print(f"Main Cell exit count: {count} \
@@ -218,7 +229,7 @@ def TEDS_json(pred_json, TEDS_gt, max_count = 600000):
             \n\tDELTA: {(str(end_t - start_t))} \
             ")
     # return_dict = {'TEDS_score':pred_score, 'pred_file':pred_json}
-    return pred_html
+    return pred_html, gt_html
 
 
     # Consider making this multi threaded

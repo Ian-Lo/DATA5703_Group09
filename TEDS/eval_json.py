@@ -151,6 +151,7 @@ def TEDS_json(TEDS_pred, TEDS_gt, max_count = 600000):
     count = 0
 
     reader = jsonlines.open(f'{TEDS_pred}', 'r') # Load JSON with predictions
+    pred_html = {}
     pred_score = {}
 
     while count < max_count:
@@ -178,10 +179,13 @@ def TEDS_json(TEDS_pred, TEDS_gt, max_count = 600000):
             # Merge structural and cell tokens
             html_string = fill_html_structure(html_structure, img_cell)
 
-            # Test current prediction against Ground Truth
-            score, delta_t = test_pred_html(img_filename, html_string, TEDS_gt, max_count)
-            pred_score[img_filename] = {'proc_time':delta_t, 'score':score}
-            print(f'Main Cell score = {score} \n')
+            # Create dictionary with fully formed HTML
+            pred_html[img_filename] = html_string
+
+            # # Test current prediction against Ground Truth
+            # score, delta_t = test_pred_html(img_filename, html_string, TEDS_gt, max_count)
+            # pred_score[img_filename] = {'proc_time':delta_t, 'score':score}
+            # print(f'Main Cell score = {score} \n')
 
           
 
@@ -192,8 +196,10 @@ def TEDS_json(TEDS_pred, TEDS_gt, max_count = 600000):
             \n\tEND: {end_t} \
             \n\tDELTA: {(str(end_t - start_t))} \
             ")
-    return_dict = {'TEDS_score':pred_score, 'pred_file':TEDS_pred}
-    return return_dict
+    # return_dict = {'TEDS_score':pred_score, 'pred_file':TEDS_pred}
+    return pred_html
+
+
     # Consider making this multi threaded
     # Currently single threaded
 

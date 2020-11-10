@@ -144,14 +144,15 @@ def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
 
 # Take prediction and GT JSON to calculate TEDS score
 # Input JSON files in the same format as PubTabNet v2.0
-def TEDS_json(TEDS_pred, TEDS_gt, max_count = 600000):
+def TEDS_json(pred_json, TEDS_gt, max_count = 600000):
     import sys
     start_t = datetime.datetime.now()
     print(f'START: {start_t}')
     count = 0
 
-    reader = jsonlines.open(f'{TEDS_pred}', 'r') # Load JSON with predictions
+    reader = jsonlines.open(f'{pred_json}', 'r') # Load JSON with predictions
     pred_html = {}
+    gt_html = {}
     pred_score = {}
 
     while count < max_count:
@@ -187,7 +188,8 @@ def TEDS_json(TEDS_pred, TEDS_gt, max_count = 600000):
             # pred_score[img_filename] = {'proc_time':delta_t, 'score':score}
             # print(f'Main Cell score = {score} \n')
 
-          
+    print(pred_html.keys)
+    # reader = jsonlines.open(f'{pred_json}', 'r') # Load JSON with Ground Truth
 
 
     end_t = datetime.datetime.now()
@@ -196,7 +198,7 @@ def TEDS_json(TEDS_pred, TEDS_gt, max_count = 600000):
             \n\tEND: {end_t} \
             \n\tDELTA: {(str(end_t - start_t))} \
             ")
-    # return_dict = {'TEDS_score':pred_score, 'pred_file':TEDS_pred}
+    # return_dict = {'TEDS_score':pred_score, 'pred_file':pred_json}
     return pred_html
 
 

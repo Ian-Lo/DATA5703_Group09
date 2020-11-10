@@ -145,57 +145,58 @@ def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
 # Take prediction and GT JSON to calculate TEDS score
 # Input JSON files in the same format as PubTabNet v2.0
 def TEDS_json(TEDS_pred, TEDS_gt, max_count = 600000):
-  import sys
-  start_t = datetime.datetime.now()
-  print(f'START: {start_t}')
-  count = 0
-  
-  reader = jsonlines.open(f'{TEDS_pred}', 'r') # Load JSON with predictions
-  pred_score = {}
+    import sys
+    start_t = datetime.datetime.now()
+    print(f'START: {start_t}')
+    count = 0
 
-  while count < max_count:
-      count += 1
-      if count % 10000 == 1:
-          print(f'Main Cell count: {count}')
-      try:
-          annotation = next(reader.iter())
-      except StopIteration:
-          print("Oops!", sys.exc_info()[0], "occurred.")
-          break
-      except:
-          print(
+    reader = jsonlines.open(f'{TEDS_pred}', 'r') # Load JSON with predictions
+    pred_score = {}
+
+    while count < max_count:
+        count += 1
+        if count % 10000 == 1:
+            print(f'Main Cell count: {count}')
+        try:
+            annotation = next(reader.iter())
+        except StopIteration:
+            print("Oops!", sys.exc_info()[0], "occurred.")
+            break
+        except:
+            print(
                 f"{sys.exc_info()[0]} \
                 last file processed {annotation['filename']}"
-               )
+                )
 
-      if annotation['filename']:
-          img_filename = annotation['filename']
-          img_struct = annotation['html']['structure']['tokens']
-          img_cell = annotation['html']['cells']
+        if annotation['filename']:
+            img_filename = annotation['filename']
+            img_struct = annotation['html']['structure']['tokens']
+            img_cell = annotation['html']['cells']
 
-          # Create valid HTML from structural tokens
-          html_structure = build_html_structure(img_struct)
-          # Merge structural and cell tokens
-          html_string = fill_html_structure(html_structure, img_cell)
+            # Create valid HTML from structural tokens
+            html_structure = build_html_structure(img_struct)
+            # Merge structural and cell tokens
+            html_string = fill_html_structure(html_structure, img_cell)
 
-          # Test current prediction against Ground Truth
-          score, delta_t = test_pred_html(img_filename, html_string, TEDS_gt, max_count)
-          pred_score[img_filename] = {'proc_time':delta_t, 'score':score}
-          print(f'Main Cell score = {score} \n')
+            # Test current prediction against Ground Truth
+            score, delta_t = test_pred_html(img_filename, html_string, TEDS_gt, max_count)
+            pred_score[img_filename] = {'proc_time':delta_t, 'score':score}
+            print(f'Main Cell score = {score} \n')
+
           
 
 
-  end_t = datetime.datetime.now()
-  print(f"Main Cell exit count: {count} \
-        \n\tSTART: {start_t} \
-        \n\tEND: {end_t} \
-        \n\tDELTA: {(str(end_t - start_t))} \
-        ")
-  return_dict = {'TEDS_score':pred_score, 'pred_file':TEDS_pred}
-  return return_dict
+    end_t = datetime.datetime.now()
+    print(f"Main Cell exit count: {count} \
+            \n\tSTART: {start_t} \
+            \n\tEND: {end_t} \
+            \n\tDELTA: {(str(end_t - start_t))} \
+            ")
+    return_dict = {'TEDS_score':pred_score, 'pred_file':TEDS_pred}
+    return return_dict
+    # Consider making this multi threaded
+    # Currently single threaded
 
-# Consider making this multi threaded
-# Currently single threaded
 
 
 # write Scores to JSONL file

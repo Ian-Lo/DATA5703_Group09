@@ -29,13 +29,13 @@ This is the structure of the model:
 
 * PRETRAINED ENCODER
 
-ENCODER
+* ENCODER
 
-STRUCTURAL ATTENTION MECHANISM + STRUCTURAL DECODER
+* STRUCTURAL ATTENTION MECHANISM + STRUCTURAL DECODER
 
-CELL CONTENT ATTENTION MECHANISM + CELL CONTENT DECODER
+* CELL CONTENT ATTENTION MECHANISM + CELL CONTENT DECODER
 
-(OPTIONAL) DATA EXPLORATION AND SUBSET CREATION (PREPROCESSING)
+* (OPTIONAL) DATA EXPLORATION AND SUBSET CREATION (PREPROCESSING)
 
 The dataset for this project is PubTabNet. It is only required if performing data exploration and preprocessing.
 PubTabNet: this dataset can be downloaded from https://developer.ibm.com/technologies/artificial-intelligence/data/pubtabnet/
@@ -43,7 +43,7 @@ Untar the file in a convenient location and leave its folder structure intact.
 Under the 'PubTabNet' folder, create a folder named 'Dataset'.
 The pretrained encoder for this model is a pretrained CNN network (ResNet18). Because this section of the model is frozen, we can take all images, pass them through the ResNet18 and consider the output tensors as the real input to the model. Most of the preprocessing consists in transforming each image in its features map and storing it away for further usage later on.
 
-HDF5 FILES   
+# HDF5 FILES   
 
 10k examples were randomly selected among the 500k images in the PubTabNet training set to form the validation set for this model.
 10k examples were randomly selected among the 500k images in the PubTabNet training set to form the test set for this model.
@@ -54,34 +54,34 @@ Images were passed through a ResNet18 and the final tensor was stored in the HDF
 Structural tokens and cell content tokens were converted into numbers by means of vocabularies and the final tensors were stored in the HDF5 files.
 The input of the model are these HDF5 files not the original PubTabNet files.
 
-BATCHINGMECHANISM AND STORAGE CLASS
+# BATCHINGMECHANISM AND STORAGE CLASS
 
 The BatchingMechanism class contains the infrustructure to gather batches from the HDF5 files. It leverage the Storage class that wraps the low level communication with the HDF5 files. 
 
-ENCODER CLASS
+# ENCODER CLASS
 
 The encoder class contains a 1x1 convolutional layer that takes in the features maps tensors contained in the HDF5 files and produces transformed features maps. The function of this layer is to adapt the features maps produced by the ResNet18 to out task.
 
-STRUCTURALATTENTION CLASS
+# STRUCTURALATTENTION CLASS
 
 This StructuralAttention class contains the attention mechanism for the struictural decoder.
 
-DECODERSTRUCTURAL CLASS
+# DECODERSTRUCTURAL CLASS
 
 The DecoderStructural class contains the decoder for the structural tokens.
 
-CELLCONTENTATTENTION CLASS
+# CELLCONTENTATTENTION CLASS
 
 The CellContentAttention class contains the attention mechanism for the cell content tokens.
 
-DECODERCELLCONTENT CLASS
+# DECODERCELLCONTENT CLASS
 
 The DecoderCellContent class contains the decoder for the structural tokens.
 
-CHECKPOINT CLASS
+# CHECKPOINT CLASS
 
 The CheckPoint class contains functionality to save and retrieve checkpoints. A checkpoint contains information about the weights/biases of the various fully connected and convolutional layers that define the model.
 
-UTILS CLASS
+# UTILS CLASS
 
 The Utils class contains functionality to set up file paths.

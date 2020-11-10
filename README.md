@@ -13,7 +13,8 @@ torchvision
 tdqm
 
 INSTRUCTIONS ON HOW TO RUN THE MODEL
-
+Run the script run.sh (in the DevOps folder) in bash terminal.
+This script will 
 
 THE MODEL: ENCODER-DECODER
 This is the structure of the model:

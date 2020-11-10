@@ -1,3 +1,4 @@
+
 # model_tag is the name of the folder that the checkpoints folders will be saved in
 model_tag = "baseline_min"
 
@@ -56,4 +57,5 @@ from Model import Model
 model = Model(relative_path, model_tag, in_channels = in_channels, out_channels = out_channels, encoder_size = encoder_size, structural_embedding_size=structural_embedding_size, structural_hidden_size=structural_hidden_size, structural_attention_size=structural_attention_size, cell_content_embedding_size=cell_content_embedding_size, cell_content_hidden_size=cell_content_hidden_size, cell_content_attention_size=cell_content_attention_size)
 
 # train model
+
 model.train(epochs=epochs, lambdas=lambdas, lrs=lrs, number_examples=number_examples, number_examples_val=number_examples_val, batch_size=batch_size, storage_size=storage_size,val = val)

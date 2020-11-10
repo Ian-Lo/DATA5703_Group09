@@ -183,8 +183,6 @@ class BatchingMechanism:
         num_layers = dims[1]
         layer_dim = int(math.sqrt(dims[2]))
         features_maps = torch.reshape(features_maps, (num_examples, num_layers, layer_dim, -1))
-        # stacking the layers vertically
-        features_maps = torch.reshape(features_maps, (num_examples, num_layers * layer_dim, -1))
         # moving to device
         features_maps = features_maps.to(self.device)
 

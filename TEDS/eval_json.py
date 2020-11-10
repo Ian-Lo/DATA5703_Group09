@@ -200,7 +200,7 @@ def TEDS_json(TEDS_pred, TEDS_gt, max_count = 600000):
 
 
 # write Scores to JSONL file
-def TEDS_score2json(TEDS_score):
+def TEDS_score2json(TEDS_score, output_path):
   scores = TEDS_score['TEDS_score'] # Dictionary
   write_fn = ([line for line in TEDS_score['pred_file'].split('/')
               if '.jsonl' in line

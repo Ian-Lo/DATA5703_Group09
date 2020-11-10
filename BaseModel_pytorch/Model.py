@@ -11,7 +11,7 @@ from ValStep import val_step
 
 import torch
 from time import perf_counter, time
-
+import numpy as np
 
 class Model:
     """Combined class for encoder, structural decoder and cell decoder."""
@@ -124,11 +124,22 @@ class Model:
                 # call 'get_batch' to actually load the tensors from file
                 features_maps, structural_tokens, triggers, cells_content_tokens = batching.get_batch(batch)
                 # test greedy
-                structural_tokens = structural_tokens[:, 0:2]
-                triggers = triggers[:,0:2]
+                structural_tokens = structural_tokens#[:, 0:50]
+                triggers = triggers#[:,0:50]
+#                assert 0
                 #####
                 # send to training function for forward pass, backpropagation and weight updates
                 predictions, loss_s, predictions_cell, loss_cc, loss = train_step(features_maps, structural_tokens, triggers, cells_content_tokens, self, LAMBDA=LAMBDA)
+                # apply logsoftmax
+                print(predictions.shape)
+                log_p = torch.nn.LogSoftmax(dim=2)(predictions)
+
+                # greedy decoder:
+                _, predict_id = torch.max(log_p, dim = 2 )
+                print(structural_tokens)
+                print("truth", [self.structural_integer2token[p.item()] for p in structural_tokens[0].detach().numpy()] )
+                print("test", [self.structural_integer2token[p.item()] for p in predict_id.detach().numpy()])
+                print(np.sum(structural_tokens[0].detach().numpy()==predict_id.detach().numpy()[:,0])/structural_tokens[0].detach().numpy().shape[0])
                 total_loss_s += loss_s
                 total_loss += loss
                 if loss_cc:

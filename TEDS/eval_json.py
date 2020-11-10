@@ -208,7 +208,7 @@ def TEDS_json(pred_json, TEDS_gt, max_count = 600000):
                 last file processed {annotation['filename']}"
                 )
 
-        if annotation['filename'] is in pred_images:
+        if annotation['filename'] in pred_images:
             print(f'{annotation['filename']} found in {pred_images}')
 
     end_t = datetime.datetime.now()

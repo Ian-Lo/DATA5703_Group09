@@ -95,7 +95,7 @@ def fill_html_structure(html_structure, cells_information):
 
 # Take filename HTML string as input and test against GT
 def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
-    print(os.getcwd())
+    # print(os.getcwd())
     from TEDS.metric import TEDS
     start_t = datetime.datetime.now()
     reader = jsonlines.open(f'{gt_file}', 'r')
@@ -129,8 +129,6 @@ def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
             true_html = fill_html_structure(html_structure, img_cell)
 
             # Test current prediction against Ground Truth
-            # Import TEDS
-
             teds = TEDS()
             test_pred_score = teds.evaluate(pred_html, true_html)
             # print(f'test_pred_html() score = {test_pred_score}')
@@ -145,6 +143,7 @@ def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
 
 
 # Take prediction and GT JSON to calculate TEDS score
+# Input JSON files in the same format as PubTabNet v2.0
 def TEDS_json(TEDS_pred, TEDS_gt, max_count = 600000):
   import sys
   start_t = datetime.datetime.now()
@@ -215,13 +214,8 @@ def TEDS_score2json(TEDS_score, output_path):
 
 
 # write scores to folder in google drive
-def w2gdrive_folder(filename, path, folder_id):
-    # Refresh auth/my_drive in case the above code 
-    # is long running and the auth times out
-    auth.authenticate_user()
-    gauth = GoogleAuth()
-    gauth.credentials = GoogleCredentials.get_application_default()
-    my_drive = GoogleDrive(gauth)
+def w2gdrive_folder(filename, path, folder_id, my_drive):
+
 
     pydr_writer = my_drive.CreateFile({'parents': [{'id': folder_id}], 
                                        'title': filename})
@@ -233,11 +227,9 @@ def w2gdrive_folder(filename, path, folder_id):
 def dl_by_listfile(list_file, path, my_drive):
     create_folder(path)
     for i in list_file:
-        # print(i['title'], i['id'])
         filename = i['title']
         file_id = i['id']
         target =path + filename
-        # print(target)
     
         if os.path.exists(target):
             print(f"'{target}' already exists")

@@ -123,6 +123,10 @@ class Model:
 
                 # call 'get_batch' to actually load the tensors from file
                 features_maps, structural_tokens, triggers, cells_content_tokens = batching.get_batch(batch)
+                # test greedy
+                structural_tokens = structural_tokens[:, 0:2]
+                triggers = triggers[:,0:2]
+                #####
                 # send to training function for forward pass, backpropagation and weight updates
                 predictions, loss_s, predictions_cell, loss_cc, loss = train_step(features_maps, structural_tokens, triggers, cells_content_tokens, self, LAMBDA=LAMBDA)
                 total_loss_s += loss_s

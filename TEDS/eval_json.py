@@ -188,7 +188,7 @@ def TEDS_json(pred_json, TEDS_gt, max_count = 600000):
             # pred_score[img_filename] = {'proc_time':delta_t, 'score':score}
             # print(f'Main Cell score = {score} \n')
 
-    print(pred_html.keys)
+    print(pred_html.keys())
     # reader = jsonlines.open(f'{pred_json}', 'r') # Load JSON with Ground Truth
 
 

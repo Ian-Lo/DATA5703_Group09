@@ -12,6 +12,9 @@ pytorch
 torchvision
 tdqm
 
+INSTRUCTIONS ON HOW TO RUN THE MODEL
+
+
 THE MODEL: ENCODER-DECODER
 This is the structure of the model:
 
@@ -59,3 +62,10 @@ The CellContentAttention class contains the attention mechanism for the cell con
 
 DECODERCELLCONTENT CLASS
 The DecoderCellContent class contains the decoder for the structural tokens.
+
+CHECKPOINT CLASS
+The CheckPoint class contains functionality to save and retrieve checkpoints. A checkpoint contains information about the weights/biases
+of the various fully connected and convolutional layers that define the model.
+
+UTILS CLASS
+The Utils class contains functionality to set up file paths.

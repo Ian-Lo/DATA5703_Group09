@@ -1,14 +1,59 @@
-from Model import Model
-#fjkalsdfjaslkj
-# initialize model class
-model = Model("../../Dataset/" , "test_run", encoder_size = 12, structural_embedding_size = 16, structural_hidden_size = 256, structural_attention_size = 256, cell_content_embedding_size = 80, cell_content_hidden_size = 512, cell_content_attention_size = 256 )
+# model_tag is the name of the folder that the checkpoints folders will be saved in
+model_tag = "baseline_min"
+
+# the relative path of the folder containing the dataset
+relative_path = "../../Dataset/"
+
+# tunable parameters
+out_channels = 64 # number of channels
+structural_hidden_size=256 # dimensions of hidden layer in structural decoder
+structural_attention_size=64 # dimensions of context vector in structural decoder
+cell_content_hidden_size=64 # dimensions of hidden layer in cell decoder
+cell_content_attention_size=64 # dimensions of ontext vector in structural decoder
+
+# fixed parameters
+in_channels=512 # fixed in output from resnet, do not change
+encoder_size =12 # fixed in output from resnet, do not change
+structural_embedding_size=16 # determined from preprocessing, do not change
+cell_content_embedding_size=80 # determined from preprocessing, do not change
 
 # set number of epochs
-epochs = 25
+epochs = 100
+#epochs = 25
 
-# make list of lambdas to use in training
-# this is the same strategy as Zhong et al.
-lambdas =  [1 for _ in range(10)] + [1 for _ in range(3)]+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
-lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
+# make list of lambdas to use for each epoch in training
+lambdas = [1 for n in range(epochs)] # LAMBDA = 1 turns OFF cell decoder
+# if you want to run WITH cell decoder, you can uncomment the line below, remember to change epochs to 25
+#lambdas = [1 for _ in range(10)] + [1 for _ in range(3)]+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
 
-model.train(epochs = epochs, lambdas = lambdas, lrs = lrs)
+# make list of learning rate to use for each epoch in training
+lrs =[0.01 for n in range(epochs)]# [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
+#if you want to run WITH cell decoder, you can uncomment the line below, rembember to change epochs to 25
+#lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
+
+assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and lambdas are inconsistent"
+
+# Number of examples to include in the training set
+number_examples=1
+
+# Number of examples to include in validation set
+number_examples_val=1 # not used if val==None
+
+# size of batches
+batch_size=1
+
+# number of examples in each preprocessed file
+storage_size=1000 # fixed, do not change
+
+# whether to calculate the validation loss
+val = True
+
+
+# import model
+from Model import Model
+
+# instantiate model
+model = Model(relative_path, model_tag, in_channels = in_channels, out_channels = out_channels, encoder_size = encoder_size, structural_embedding_size=structural_embedding_size, structural_hidden_size=structural_hidden_size, structural_attention_size=structural_attention_size, cell_content_embedding_size=cell_content_embedding_size, cell_content_hidden_size=cell_content_hidden_size, cell_content_attention_size=cell_content_attention_size)
+
+# train model
+model.train(epochs=epochs, lambdas=lambdas, lrs=lrs, number_examples=number_examples, number_examples_val=number_examples_val, batch_size=batch_size, storage_size=storage_size,val = val)

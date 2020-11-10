@@ -16,7 +16,7 @@ from time import perf_counter, time
 class Model:
     """Combined class for encoder, structural decoder and cell decoder."""
 
-    def __init__(self, relative_path, model_tag, encoder_size=12, structural_embedding_size=16, structural_hidden_size=256, structural_attention_size=256, cell_content_embedding_size=80, cell_content_hidden_size=512, cell_content_attention_size=256):
+    def __init__(self, relative_path, model_tag, out_channels=16, structural_embedding_size=16, structural_hidden_size=256, structural_attention_size=256, cell_content_embedding_size=80, cell_content_hidden_size=512, cell_content_attention_size=256):
 
         # set device
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # sets device for model and PyTorch tensors
@@ -40,11 +40,10 @@ class Model:
         batch= batching.build_batches(randomise=True)[0]
         features_map, _, _, _ = batching.get_batch(batch)
         in_channels = features_map.size()[1]
-
+        encoder_size = features_map.size()[-1]
 
         # initialize encoder
-        encoder_size = 16
-        encoder = Encoder(in_channels, encoder_size)
+        encoder = Encoder(in_channels, out_channels)
         encoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder.parameters()))
         self.encoder = encoder.to(self.device)
         self.encoder_optimizer = encoder_optimizer

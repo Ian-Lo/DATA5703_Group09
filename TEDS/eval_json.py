@@ -1,4 +1,4 @@
-# load libraries and install apps
+# load libraries
 import os
 import jsonlines
 import sys
@@ -87,15 +87,15 @@ def fill_html_structure(html_structure, cells_information):
 
     # ***** MIGHT BE SLOW ******
     # prettify the html
-    soup = bs(html_string) 
+    soup = bs(html_string, features="lxml") 
     html_string = soup.prettify(formatter='minimal')
     return html_string
 
 
-# Take filename HTML string as input and test against GT
+# Take filename HTML string as input and test against GT JSON
 def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
     # print(os.getcwd())
-    from TEDS.metric import TEDS
+    from TEDS.metric import evaluate
     start_t = datetime.datetime.now()
     reader = jsonlines.open(f'{gt_file}', 'r')
     count = 0
@@ -128,8 +128,7 @@ def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
             true_html = fill_html_structure(html_structure, img_cell)
 
             # Test current prediction against Ground Truth
-            teds = TEDS()
-            test_pred_score = teds.evaluate(pred_html, true_html)
+            test_pred_score = evaluate(pred_html, true_html)
             # print(f'test_pred_html() score = {test_pred_score}')
             break
 
@@ -142,7 +141,7 @@ def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
 
 
 # Take PRED and GT JSONL to calculate TEDS score
-# Input JSON files in the same format as PubTabNet v2.0
+# Pass JSON files in the same format as PubTabNet v2.0
 def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
     import sys
     start_t = datetime.datetime.now()
@@ -215,12 +214,17 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
     # print(f'Main Cell score = {score} \n')            
 
     from TEDS.parallel import parallel_process
+    pred_img_fns_count = len(pred_img_fns)
     if pred_img_fns == 1:
-        print(len(pred_img_fns))
+        print(f"{pred_img_fns_count}")
     else:
-        inputs = [fn for fn in pred_img_fns]
-        print(len(pred_img_fns))
+        inputs = [
+                    {'pred':pred_html[fn], 'true':gt_html[fn]} 
+                    for fn in pred_img_fns
+                 ]
+        print(pred_img_fns_count)
         print(inputs)
+        # scores = parallel_process
 
 
     

@@ -212,7 +212,8 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
     # Cleanup reader and variables
     # reader.close()
 
-    print(gt_html)      
+    # print(gt_html)      
+    print(pred_html)      
 
     # Parallel Eval PRED and GT HTML 
     from TEDS.parallel import parallel_process

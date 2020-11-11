@@ -138,7 +138,7 @@ class Model:
                 print("Ground truth:")
                 print([self.structural_integer2token[p.item()] for p in structural_tokens[0].detach().numpy()] )
                 print("Prediction WITH teacher forcing (1 example):")
-                print( [self.structural_integer2token[p.item()] for p in predict_id.detach().numpy()])
+                print( [self.structural_integer2token[p.item()] for p in predict_id[:,0].detach().numpy()])
                 print("Accuracy WITH teacher forcing (1 example):")
                 print(np.sum(structural_tokens[0].detach().numpy()==predict_id.detach().numpy()[:,0])/structural_tokens[0].detach().numpy().shape[0])
                 total_loss_s += loss_s

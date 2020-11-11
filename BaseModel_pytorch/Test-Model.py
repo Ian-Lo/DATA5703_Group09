@@ -1,6 +1,6 @@
 
 # the relative path of the folder containing the dataset
-relative_path = "../Dataset/"
+relative_path = "../../Dataset/"
 
 # model_tag is the name of the folder that the checkpoints folders will be saved in
 model_tag = "baseline_min"
@@ -35,13 +35,13 @@ lrs =[0.01 for n in range(epochs)]# [0.001 for _ in range(10)] + [0.0001 for _ i
 assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and lambdas are inconsistent"
 
 # Number of examples to include in the training set
-number_examples=1
+number_examples=2
 
 # Number of examples to include in validation set
-number_examples_val=1 # not used if val==None
+number_examples_val=2 # not used if val==None
 
 # size of batches
-batch_size=1
+batch_size=2
 
 # number of examples in each preprocessed file
 storage_size=1000 # fixed, do not change

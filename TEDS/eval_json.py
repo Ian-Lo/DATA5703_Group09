@@ -3,8 +3,10 @@ import os
 import jsonlines
 import sys
 import datetime
-from TEDS.metric import evaluate
+from TEDS.metric import TEDS
 
+cpus = os.cpu_count()
+teds_metric = TEDS(n_jobs = cpus)
 
 def create_folder(path):
     if os.path.exists(path) is False:
@@ -128,7 +130,8 @@ def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
             true_html = fill_html_structure(html_structure, img_cell)
 
             # Test current prediction against Ground Truth
-            test_pred_score = evaluate(pred_html, true_html)
+            
+            test_pred_score = teds_metric.evaluate(pred_html, true_html)
             # print(f'test_pred_html() score = {test_pred_score}')
             break
 
@@ -212,6 +215,7 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
     # pred_score[img_filename] = {'proc_time':delta_t, 'score':score}
     # print(f'Main Cell score = {score} \n')            
 
+    # Parallel Eval PRED and GT HTML 
     from TEDS.parallel import parallel_process
     pred_img_fns_count = len(pred_img_fns)
     if pred_img_fns == 1:
@@ -223,10 +227,10 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
                  ]
         print(pred_img_fns_count)
         print(inputs)
-        cpus = os.cpu_count()
+        
         scores = parallel_process(
                                 inputs, 
-                                evaluate, # Function to parallelise
+                                teds_metric.evaluate, # Function to parallelise
                                 use_kwargs=True, 
                                 n_jobs=cpus, # Number of threads to use
                                 front_num=1 # First few jobs can be serialised to catch errors

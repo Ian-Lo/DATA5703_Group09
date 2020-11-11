@@ -212,10 +212,7 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
     # Cleanup reader and variables
     # reader.close()
 
-    # # Test dictionary of PREDs against GTs
-    # score, delta_t = test_pred_html(img_filename, html_string, gt_jsonl, max_count)
-    # pred_score[img_filename] = {'proc_time':delta_t, 'score':score}
-    # print(f'Main Cell score = {score} \n')            
+    print(gt_html)      
 
     # Parallel Eval PRED and GT HTML 
     from TEDS.parallel import parallel_process

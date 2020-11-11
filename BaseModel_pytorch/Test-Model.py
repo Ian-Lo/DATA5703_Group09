@@ -5,7 +5,7 @@ relative_path = "../../Dataset/"
 model_tag = "baseline_min"
 
 # tunable parameters
-out_channels = 256 # number of channels
+out_channels = 24 # number of channels
 structural_hidden_size = 256 # dimensions of hidden layer in structural decoder
 structural_attention_size = 64 # dimensions of context vector in structural decoder
 cell_content_hidden_size = 512 # dimensions of hidden layer in cell decoder

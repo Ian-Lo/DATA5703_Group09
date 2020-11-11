@@ -205,7 +205,7 @@ class DecoderStructural(torch.nn.Module):
 
             # slice out only those in continue_decoder
             encoded_features_map_in = encoded_features_map[batch_indices_to_keep,:,:]
-            structural_input_in = predict_id[batch_indices_to_keep]
+            structural_input_in = predict_id[indices_to_keep]
 
             structural_hidden_state_in = structural_hidden_state[:, indices_to_keep, :]
             # run through rnn

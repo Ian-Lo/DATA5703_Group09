@@ -1,4 +1,3 @@
-
 # the relative path of the folder containing the dataset
 relative_path = "../Dataset/"
 
@@ -6,17 +5,17 @@ relative_path = "../Dataset/"
 model_tag = "baseline_min"
 
 # tunable parameters
-out_channels = 64 # number of channels
-structural_hidden_size=256 # dimensions of hidden layer in structural decoder
-structural_attention_size=64 # dimensions of context vector in structural decoder
-cell_content_hidden_size=64 # dimensions of hidden layer in cell decoder
-cell_content_attention_size=64 # dimensions of ontext vector in structural decoder
+out_channels = 24 # number of channels
+structural_hidden_size = 256 # dimensions of hidden layer in structural decoder
+structural_attention_size = 64 # dimensions of context vector in structural decoder
+cell_content_hidden_size = 512 # dimensions of hidden layer in cell decoder
+cell_content_attention_size = 64 # dimensions of ontext vector in structural decoder
 
 # fixed parameters
-in_channels=512 # fixed in output from resnet, do not change
-encoder_size =12 # fixed in output from resnet, do not change
-structural_embedding_size=16 # determined from preprocessing, do not change
-cell_content_embedding_size=80 # determined from preprocessing, do not change
+in_channels = 512 # fixed in output from resnet, do not change
+encoder_size = out_channels # fixed in output from resnet, do not change
+structural_embedding_size = 16 # determined from preprocessing, do not change
+cell_content_embedding_size = 80 # determined from preprocessing, do not change
 
 # set number of epochs
 epochs = 100
@@ -35,13 +34,13 @@ lrs =[0.01 for n in range(epochs)]# [0.001 for _ in range(10)] + [0.0001 for _ i
 assert epochs == len(lambdas) == len(lrs), "number of epoch, learning rates and lambdas are inconsistent"
 
 # Number of examples to include in the training set
-number_examples=1
+number_examples=2
 
 # Number of examples to include in validation set
-number_examples_val=1 # not used if val==None
+number_examples_val=2 # not used if val==None
 
 # size of batches
-batch_size=1
+batch_size=2
 
 # number of examples in each preprocessed file
 storage_size=1000 # fixed, do not change

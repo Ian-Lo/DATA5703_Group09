@@ -144,17 +144,18 @@ def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
 
 # Take PRED and GT JSONL to calculate TEDS score
 # Input JSON files in the same format as PubTabNet v2.0
-def teds_jsonl(pred_json, gt_json, max_count = 600000):
+def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
     import sys
     start_t = datetime.datetime.now()
     print(f'START: {start_t}')
-    count = 0
 
-    reader = jsonlines.open(f'{pred_json}', 'r') # Load JSON with predictions
+    reader = jsonlines.open(f'{pred_jsonl}', 'r') # Load JSON with predictions
     pred_html = {}
     gt_html = {}
     pred_score = {}
 
+    # Loop through predictions and generate valid HTML from structural and cell tokens
+    count = 0
     while count < max_count:
         count += 1
         if count % 10000 == 1:
@@ -165,34 +166,25 @@ def teds_jsonl(pred_json, gt_json, max_count = 600000):
             print("Oops!", sys.exc_info()[0], "occurred.")
             break
         except:
-            print(
-                f"{sys.exc_info()[0]} \
-                last file processed {annotation['filename']}"
-                )
+            print(f"{sys.exc_info()[0]} last file processed {annotation['filename']}")
 
         if annotation['filename']:
             img_filename = annotation['filename']
             img_struct = annotation['html']['structure']['tokens']
             img_cell = annotation['html']['cells']
+            
+            html_structure = build_html_structure(img_struct) # Create valid HTML from structural tokens
+            html_string = fill_html_structure(html_structure, img_cell) # Merge structural and cell tokens
+            
+            pred_html[img_filename] = html_string # Create dictionary with fully formed HTML
 
-            # Create valid HTML from structural tokens
-            html_structure = build_html_structure(img_struct)
-            # Merge structural and cell tokens
-            html_string = fill_html_structure(html_structure, img_cell)
-
-            # Create dictionary with fully formed HTML
-            pred_html[img_filename] = html_string
-
-            # # Test current prediction against Ground Truth
-            # score, delta_t = test_pred_html(img_filename, html_string, gt_json, max_count)
-            # pred_score[img_filename] = {'proc_time':delta_t, 'score':score}
-            # print(f'Main Cell score = {score} \n')
 
     # Check if prediction is in GT and then generate valid HTML from structural/cell tokens
-    # print(pred_html.keys())
-    reader = jsonlines.open(f'{gt_json}', 'r') # Load JSON with Ground Truth
-    count = 0
+    reader = jsonlines.open(f'{gt_jsonl}', 'r') # Load JSON with Ground Truth
+    count = 0 # Reset counter for new loop
     pred_images = pred_html.keys()
+
+    # Loop through GT file
     while count < max_count:
         count += 1
         if count % 10000 == 1:
@@ -203,24 +195,25 @@ def teds_jsonl(pred_json, gt_json, max_count = 600000):
             print("Oops!", sys.exc_info()[0], "occurred.")
             break
         except:
-            print(
-                f"{sys.exc_info()[0]} \
-                last file processed {annotation['filename']}"
-                )
+            print(f"{sys.exc_info()[0]} last file processed {annotation['filename']}")
 
-        if annotation['filename'] in pred_images:
-            # print(f'{annotation["filename"]} found in {pred_images}')
+        if annotation['filename'] in pred_images: # Check PRED img in GT
             img_filename = annotation['filename']
             img_struct = annotation['html']['structure']['tokens']
             img_cell = annotation['html']['cells']
 
-            # Create valid HTML from structural tokens
-            html_structure = build_html_structure(img_struct)
-            # Merge structural and cell tokens
-            html_string = fill_html_structure(html_structure, img_cell)
+            html_structure = build_html_structure(img_struct) # Create valid HTML from structural tokens
+            html_string = fill_html_structure(html_structure, img_cell) # Merge structural and cell tokens
+            gt_html[img_filename] = html_string # Add HTML to Dictionary
+        else:
+            print(f"WARNING: prediction image({img_filename}) not found in GT file")
+            
 
-            # Create dictionary with fully formed HTML
-            gt_html[img_filename] = html_string
+    # # Test dictionary of PREDs against GTs
+    # score, delta_t = test_pred_html(img_filename, html_string, gt_jsonl, max_count)
+    # pred_score[img_filename] = {'proc_time':delta_t, 'score':score}
+    # print(f'Main Cell score = {score} \n')            
+
 
     end_t = datetime.datetime.now()
     print(f"Main Cell exit count: {count} \
@@ -228,7 +221,7 @@ def teds_jsonl(pred_json, gt_json, max_count = 600000):
             \n\tEND: {end_t} \
             \n\tDELTA: {(str(end_t - start_t))} \
             ")
-    # return_dict = {'TEDS_score':pred_score, 'pred_file':pred_json}
+    # return_dict = {'TEDS_score':pred_score, 'pred_file':pred_jsonl}
     return pred_html, gt_html
 
 

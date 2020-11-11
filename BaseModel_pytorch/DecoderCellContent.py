@@ -229,7 +229,7 @@ class DecoderCellContent(torch.nn.Module):
             indices_to_keep = torch.tensor(range(len(structural_hidden_state[batch_index])), dtype = torch.long)
 
             # initialisation
-            cell_content_input, cell_content_hidden_state = self.initialise(outer_indices_to_keep.shape[0])
+            predict_id, cell_content_hidden_state = self.initialise(outer_indices_to_keep.shape[0])
 
             encoded_features_map_example = encoded_features_map[batch_index].repeat(outer_indices_to_keep.shape[0],1,1 )
             structural_hidden_state_example = torch.stack(structural_hidden_state[batch_index]).reshape(1, len(structural_hidden_state[batch_index]), -1)
@@ -242,7 +242,7 @@ class DecoderCellContent(torch.nn.Module):
                 structural_hidden_state_in = structural_hidden_state_example[:, outer_indices_to_keep, :]
 
                 # keep only those examples that have not predicted and <end> token
-                cell_content_input_in = cell_content_input[indices_to_keep]
+                cell_content_input_in = predict_id[indices_to_keep]
                 cell_content_hidden_state_in = cell_content_hidden_state[:, indices_to_keep, :]
                 # print("outside ")
                 # print("encoded_features_map_in")

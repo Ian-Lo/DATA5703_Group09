@@ -7,6 +7,7 @@ from TEDS.metric import TEDS
 
 cpus = os.cpu_count()
 teds_metric = TEDS(n_jobs = cpus)
+print(f"number of CPUs detected = {cpus}")
 
 def create_folder(path):
     if os.path.exists(path) is False:
@@ -189,8 +190,8 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
     # Loop through GT file
     with jsonlines.open(f'{gt_jsonl}', 'r') as reader:
         while match_count < pred_img_fns_count: # Stop loop when count == number of PRED keys 
-            if count % 10000 == 1:
-                print(f'GT Cell count: {count}')
+            if match_count % 10000 == 1:
+                print(f'GT Cell count: {match_count}')
             match = False # reset exit condition
             while not match:
                 try:
@@ -212,13 +213,7 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
                     match = True # Inner Exit condition
                     match_count += 1 # Increment outer exit condition
                     print(f'{img_filename} found in GT')
-                else:
-                    print(f"WARNING: prediction image({img_filename}) not found in GT file")
-    # Cleanup reader and variables
-    # reader.close()
 
-    print(gt_html)      
-    # print(pred_html)      
 
     # Parallel Eval PRED and GT HTML 
     from TEDS.parallel import parallel_process
@@ -237,10 +232,6 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
                                 n_jobs=cpus, # Number of threads to use
                                 front_num=1 # First few jobs can be serialised to catch errors
                                 )
-
-
-    
-
 
     end_t = datetime.datetime.now()
     print(f"Main Cell exit count: {count} \

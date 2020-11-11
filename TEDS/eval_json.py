@@ -142,9 +142,9 @@ def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
     return test_pred_score, delta_t
 
 
-# Take prediction and GT JSON to calculate TEDS score
+# Take PRED and GT JSONL to calculate TEDS score
 # Input JSON files in the same format as PubTabNet v2.0
-def TEDS_json(pred_json, gt_json, max_count = 600000):
+def teds_jsonl(pred_json, gt_json, max_count = 600000):
     import sys
     start_t = datetime.datetime.now()
     print(f'START: {start_t}')

@@ -1,9 +1,7 @@
 # load libraries and install apps
 import os
 import jsonlines
-# import json
 import sys
-# import time
 import datetime
 
 
@@ -87,9 +85,10 @@ def fill_html_structure(html_structure, cells_information):
         html_string = html_string[:n.end(1) + offset] + cell + html_string[n.start(2) + offset:]
         offset += len(cell)
 
+    # ***** MIGHT BE SLOW ******
     # prettify the html
-    soup = bs(html_string)
-    html_string = soup.prettify()
+    soup = bs(html_string) 
+    html_string = soup.prettify(formatter='minimal')
     return html_string
 
 
@@ -182,7 +181,7 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
     # Check if prediction is in GT and then generate valid HTML from structural/cell tokens
     reader = jsonlines.open(f'{gt_jsonl}', 'r') # Load JSON with Ground Truth
     count = 0 # Reset counter for new loop
-    pred_images = pred_html.keys()
+    pred_img_fns = pred_html.keys()
 
     # Loop through GT file
     while count < max_count:
@@ -197,7 +196,7 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
         except:
             print(f"{sys.exc_info()[0]} last file processed {annotation['filename']}")
 
-        if annotation['filename'] in pred_images: # Check PRED img in GT
+        if annotation['filename'] in pred_img_fns: # Check PRED img in GT
             img_filename = annotation['filename']
             img_struct = annotation['html']['structure']['tokens']
             img_cell = annotation['html']['cells']
@@ -207,12 +206,24 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
             gt_html[img_filename] = html_string # Add HTML to Dictionary
         else:
             print(f"WARNING: prediction image({img_filename}) not found in GT file")
-            
+    # Cleanup reader and variables
+    reader.close()
 
     # # Test dictionary of PREDs against GTs
     # score, delta_t = test_pred_html(img_filename, html_string, gt_jsonl, max_count)
     # pred_score[img_filename] = {'proc_time':delta_t, 'score':score}
     # print(f'Main Cell score = {score} \n')            
+
+    from TEDS.parallel import parallel_process
+    if pred_img_fns == 1:
+        print(len(pred_img_fns))
+    else:
+        inputs = [fn for fn in pred_img_fns]
+        print(len(pred_img_fns))
+        print(inputs)
+
+
+    
 
 
     end_t = datetime.datetime.now()

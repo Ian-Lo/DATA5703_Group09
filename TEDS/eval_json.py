@@ -3,6 +3,7 @@ import os
 import jsonlines
 import sys
 import datetime
+from TEDS.metric import evaluate
 
 
 def create_folder(path):
@@ -95,7 +96,6 @@ def fill_html_structure(html_structure, cells_information):
 # Take filename HTML string as input and test against GT JSON
 def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
     # print(os.getcwd())
-    from TEDS.metric import evaluate
     start_t = datetime.datetime.now()
     reader = jsonlines.open(f'{gt_file}', 'r')
     count = 0
@@ -150,7 +150,6 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
     reader = jsonlines.open(f'{pred_jsonl}', 'r') # Load JSON with predictions
     pred_html = {}
     gt_html = {}
-    pred_score = {}
 
     # Loop through predictions and generate valid HTML from structural and cell tokens
     count = 0
@@ -224,7 +223,14 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
                  ]
         print(pred_img_fns_count)
         print(inputs)
-        # scores = parallel_process
+        cpus = os.cpu_count()
+        scores = parallel_process(
+                                inputs, 
+                                evaluate, # Function to parallelise
+                                use_kwargs=True, 
+                                n_jobs=cpus, # Number of threads to use
+                                front_num=1 # First few jobs can be serialised to catch errors
+                                )
 
 
     
@@ -237,7 +243,7 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
             \n\tDELTA: {(str(end_t - start_t))} \
             ")
     # return_dict = {'TEDS_score':pred_score, 'pred_file':pred_jsonl}
-    return pred_html, gt_html
+    return scores #, pred_html, gt_html
 
 
     # Consider making this multi threaded

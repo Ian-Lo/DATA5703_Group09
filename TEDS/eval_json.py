@@ -159,7 +159,7 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
     while count < max_count:
         count += 1
         if count % 10000 == 1:
-            print(f'Main Cell count: {count}')
+            print(f'PRED Cell count: {count}')
         try:
             annotation = next(reader.iter())
         except StopIteration:
@@ -181,14 +181,15 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
 
     # Check if prediction is in GT and then generate valid HTML from structural/cell tokens
     reader = jsonlines.open(f'{gt_jsonl}', 'r') # Load JSON with Ground Truth
-    count = 0 # Reset counter for new loop
+    count = 0 # Reset counter for GT loop
     pred_img_fns = pred_html.keys()
+    pred_img_fns_count = len(pred_img_fns)
 
     # Loop through GT file
-    while count < max_count:
+    while count < pred_img_fns_count: # Stop loop when count == number of PRED keys 
         count += 1
         if count % 10000 == 1:
-            print(f'Main Cell count: {count}')
+            print(f'GT Cell count: {count}')
         try:
             annotation = next(reader.iter())
         except StopIteration:
@@ -217,17 +218,14 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
 
     # Parallel Eval PRED and GT HTML 
     from TEDS.parallel import parallel_process
-    pred_img_fns_count = len(pred_img_fns)
+    
     if pred_img_fns == 1:
-        print(f"{pred_img_fns_count}")
+        print(f"Only a single predicton {pred_img_fns_count}")
     else:
         inputs = [
                     {'pred':pred_html[fn], 'true':gt_html[fn]} 
                     for fn in pred_img_fns
-                 ]
-        print(pred_img_fns_count)
-        print(inputs)
-        
+                 ]        
         scores = parallel_process(
                                 inputs, 
                                 teds_metric.evaluate, # Function to parallelise

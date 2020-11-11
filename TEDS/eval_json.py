@@ -190,30 +190,34 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
         count += 1
         if count % 10000 == 1:
             print(f'GT Cell count: {count}')
-        with jsonlines.open(f'{gt_jsonl}', 'r') as reader:
-            try:
-                annotation = next(reader.iter())
-            except StopIteration:
-                print("Oops!", sys.exc_info()[0], "occurred.")
-                break
-            except:
-                print(f"{sys.exc_info()[0]} last file processed {annotation['filename']}")
+        match = False # reset exit condition
+        while not match:
+            with jsonlines.open(f'{gt_jsonl}', 'r') as reader:
+                try:
+                    annotation = next(reader.iter())
+                except StopIteration:
+                    print("Oops!", sys.exc_info()[0], "occurred.")
+                    break
+                except:
+                    print(f"{sys.exc_info()[0]} last file processed {annotation['filename']}")
 
-            if annotation['filename'] in pred_img_fns: # Check PRED img in GT
-                img_filename = annotation['filename']
-                img_struct = annotation['html']['structure']['tokens']
-                img_cell = annotation['html']['cells']
+                if annotation['filename'] in pred_img_fns: # Check PRED img in GT
+                    img_filename = annotation['filename']
+                    img_struct = annotation['html']['structure']['tokens']
+                    img_cell = annotation['html']['cells']
 
-                html_structure = build_html_structure(img_struct) # Create valid HTML from structural tokens
-                html_string = fill_html_structure(html_structure, img_cell) # Merge structural and cell tokens
-                gt_html[img_filename] = html_string # Add HTML to Dictionary
-            else:
-                print(f"WARNING: prediction image({img_filename}) not found in GT file")
+                    html_structure = build_html_structure(img_struct) # Create valid HTML from structural tokens
+                    html_string = fill_html_structure(html_structure, img_cell) # Merge structural and cell tokens
+                    gt_html[img_filename] = html_string # Add HTML to Dictionary
+                    match = True # Exit condition
+                    print(f'{img_filename} found in GT')
+                else:
+                    print(f"WARNING: prediction image({img_filename}) not found in GT file")
     # Cleanup reader and variables
     # reader.close()
 
-    # print(gt_html)      
-    print(pred_html)      
+    print(gt_html)      
+    # print(pred_html)      
 
     # Parallel Eval PRED and GT HTML 
     from TEDS.parallel import parallel_process

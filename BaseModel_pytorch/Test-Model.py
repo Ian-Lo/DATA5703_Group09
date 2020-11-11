@@ -1,4 +1,3 @@
-
 # the relative path of the folder containing the dataset
 relative_path = "../Dataset/"
 
@@ -6,17 +5,17 @@ relative_path = "../Dataset/"
 model_tag = "baseline_min"
 
 # tunable parameters
-out_channels = 64 # number of channels
-structural_hidden_size=256 # dimensions of hidden layer in structural decoder
-structural_attention_size=64 # dimensions of context vector in structural decoder
-cell_content_hidden_size=64 # dimensions of hidden layer in cell decoder
-cell_content_attention_size=64 # dimensions of ontext vector in structural decoder
+out_channels = 256 # number of channels
+structural_hidden_size = 256 # dimensions of hidden layer in structural decoder
+structural_attention_size = 64 # dimensions of context vector in structural decoder
+cell_content_hidden_size = 512 # dimensions of hidden layer in cell decoder
+cell_content_attention_size = 64 # dimensions of ontext vector in structural decoder
 
 # fixed parameters
-in_channels=512 # fixed in output from resnet, do not change
-encoder_size =12 # fixed in output from resnet, do not change
-structural_embedding_size=16 # determined from preprocessing, do not change
-cell_content_embedding_size=80 # determined from preprocessing, do not change
+in_channels = 512 # fixed in output from resnet, do not change
+encoder_size = out_channels # fixed in output from resnet, do not change
+structural_embedding_size = 16 # determined from preprocessing, do not change
+cell_content_embedding_size = 80 # determined from preprocessing, do not change
 
 # set number of epochs
 epochs = 100

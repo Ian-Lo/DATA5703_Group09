@@ -182,17 +182,17 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
     # Check if prediction is in GT and then generate valid HTML from structural/cell tokens
     reader = jsonlines.open(f'{gt_jsonl}', 'r') # Load JSON with Ground Truth
     count = 0 # Reset counter for GT loop
+    match_count = 0 # count number of matches
     pred_img_fns = pred_html.keys()
     pred_img_fns_count = len(pred_img_fns)
 
     # Loop through GT file
-    while count < pred_img_fns_count: # Stop loop when count == number of PRED keys 
-        count += 1
-        if count % 10000 == 1:
-            print(f'GT Cell count: {count}')
-        match = False # reset exit condition
-        while not match:
-            with jsonlines.open(f'{gt_jsonl}', 'r') as reader:
+    with jsonlines.open(f'{gt_jsonl}', 'r') as reader:
+        while match_count < pred_img_fns_count: # Stop loop when count == number of PRED keys 
+            if count % 10000 == 1:
+                print(f'GT Cell count: {count}')
+            match = False # reset exit condition
+            while not match:
                 try:
                     annotation = next(reader.iter())
                 except StopIteration:
@@ -209,7 +209,8 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
                     html_structure = build_html_structure(img_struct) # Create valid HTML from structural tokens
                     html_string = fill_html_structure(html_structure, img_cell) # Merge structural and cell tokens
                     gt_html[img_filename] = html_string # Add HTML to Dictionary
-                    match = True # Exit condition
+                    match = True # Inner Exit condition
+                    match_count += 1 # Increment outer exit condition
                     print(f'{img_filename} found in GT')
                 else:
                     print(f"WARNING: prediction image({img_filename}) not found in GT file")

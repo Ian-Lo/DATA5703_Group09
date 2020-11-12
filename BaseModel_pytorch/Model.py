@@ -89,7 +89,7 @@ class Model:
         batching.initialise()
 
         if val:
-            batching_val = BatchingMechanism(dataset_split='val', number_examples=number_examples_val, batch_size=10, storage_size=storage_size)
+            batching_val = BatchingMechanism(dataset_split='dev', number_examples=number_examples_val, batch_size=10, storage_size=storage_size)
             batching_val.initialise()
 
         # instantiate checkpoint
@@ -145,18 +145,18 @@ class Model:
 
                 # greedy decoder to check prediction WITH teacher forcing
                 _, predict_id = torch.max(log_p, dim = 2 )
-                print("Ground truth:")
-                print([self.structural_integer2token[p.item()] for p in structural_tokens[0].detach().numpy()] )
-                print("Prediction WITH teacher forcing (1 example):")
-                print( [self.structural_integer2token[p.item()] for p in predict_id[:,0].detach().numpy()])
-                print("Accuracy WITH teacher forcing (1 example):")
-                print(np.sum(structural_tokens[0].detach().numpy()==predict_id.detach().numpy()[:,0])/structural_tokens[0].detach().numpy().shape[0])
                 total_loss_s += loss_s
                 total_loss += loss
                 if loss_cc:
                     total_loss_cc+=loss_cc
 
             total_loss_s /= len(batches)
+            print("Ground truth:")
+            print([self.structural_integer2token[p.item()] for p in structural_tokens[0].detach().numpy()] )
+            print("Prediction WITH teacher forcing (1 example):")
+            print( [self.structural_integer2token[p.item()] for p in predict_id[:,0].detach().numpy()])
+            print("Accuracy WITH teacher forcing (1 example):")
+            print(np.sum(structural_tokens[0].detach().numpy()==predict_id.detach().numpy()[:,0])/structural_tokens[0].detach().numpy().shape[0])
 
             checkpoint.save_checkpoint(epoch, self.encoder, self.decoder_structural, self.decoder_cell_content,
                                       self.encoder_optimizer, self.decoder_structural_optimizer, self.decoder_cell_content_optimizer, total_loss, total_loss_s, total_loss_cc)

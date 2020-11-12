@@ -267,7 +267,8 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
             \n\tDELTA: {(str(end_t - start_t))} \
             ")
     # return_dict = {'TEDS_score':pred_score, 'pred_file':pred_jsonl}
-    return dict(zip(pred_img_fns, zip(scores, delta_ts))) #, pred_html, gt_html
+    # return dict(zip(pred_img_fns, zip(scores, delta_ts))) #, pred_html, gt_html
+    return dict(zip(pred_img_fns, zip([score],scores))) #, pred_html, gt_html
 
 
 

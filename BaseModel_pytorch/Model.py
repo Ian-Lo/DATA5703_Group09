@@ -103,7 +103,7 @@ class Model:
         features_map_input = torch.reshape(features_map_tensor, (1, 512, features_map_size, features_map_size))
         # pass through encoders
         encoded_features_map = self.encoder.forward(features_map_input)
-        predictions, storage, pred_triggers = self.decoder_structural.predict(encoded_features_map, structural_target = None )
+        predictions, storage, pred_triggers, structure_attention_weights = self.decoder_structural.predict(encoded_features_map, structural_target = None, store_attention = True )
         predictions_cell = self.decoder_cell_content.predict(encoded_features_map, storage , cell_content_target = None  )
 
         return predictions, predictions_cell#html, attention, pred_struc_tokens, pred_cell_cont_tokens

@@ -143,6 +143,7 @@ cython_debug/
 *.tar
 *.tar
 
+
 # Added by Ian
 TED_scores
 *.pth.tar
@@ -150,3 +151,4 @@ TEDS/pubtabnet1000_pretty.jsonl
 TEDS/pubtabnet1000.jsonl
 .vscode/settings.json
 client_secrets.json
+

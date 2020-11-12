@@ -10,17 +10,17 @@ class CheckPoint:
     # note: there is no need to instantiate an object
     # call as: CheckPoint.load_checkpoint()
     @classmethod
-    def load_checkpoint(cls):
+    def load_checkpoint(cls, file_path='checkpoint.pth.tar'):
 
         # load the latest checkpoint
         # this local checkpoint is over-witten
         # every time a new checkpoint is saved
-        file_path = Utils.absolute_path('', 'checkpoint.pth.tar')
+        file_path = Utils.absolute_path('', file_path)
         state = torch.load(file_path)
 
         return state
 
-    def __init__(self, model_tag, drive = None, checkpoint_temp_id = None):
+    def __init__(self, model_tag, drive=None, checkpoint_temp_id=None):
 
         self.model_tag = model_tag
 
@@ -31,12 +31,21 @@ class CheckPoint:
         # code below is for uploading to Google Drive
         self.drive = drive
         self.checkpoint_temp_id = checkpoint_temp_id
+
         if self.drive:
             self.folders = drive.ListFile(
                         {'q': f"'{checkpoint_temp_id}' in parents  \
                         and trashed = false \
                         and mimeType contains 'vnd.google-apps.folder' \
                         "}).GetList()
+            # create subfolder for model
+            model_folder = self.drive.CreateFile()
+            model_folder['title'] = self.model_tag
+            model_folder['parents'] = [{'id': self.checkpoint_temp_id}] # assign parent folder
+            model_folder['mimeType'] = 'application/vnd.google-apps.folder' # specify object as folder
+            model_folder.Upload() # upload to google drive
+            model_folder_id = model_folder["id"]
+            self.model_folder_id = model_folder_id
 
     # save the current checkpoint
     # note: this checkpoint is local and unique
@@ -102,28 +111,14 @@ class CheckPoint:
             # store the best checkpoint
             torch.save(self.state, file_path)
 
-    def copy_checkpoint(self ):
-        folder_title = [folder['title'] for i, folder in enumerate(self.folders)]
-        subfolder_count = folder_title.count(self.model_tag)
-        if subfolder_count > 0 :
-          folder_index = folder_title.index(model)
-          model_folder_id = folders[folder_index]['id']
-
-        else:
-            # create subfolder for model
-            model_folder = drive.CreateFile()
-            model_folder['title'] = self.model_tag
-            model_folder['parents'] = [{'id': self.checkpoint_temp_id}] # assign parent folder
-            model_folder['mimeType'] = 'application/vnd.google-apps.folder' # specify object as folder
-            model_folder.Upload() # upload to google drive
-            model_folder_id = model_folder["id"]
+    def copy_checkpoint(self):
 
         # create filename
         epoch = self.state['epoch']
         suffix = '{:0>3}'.format(epoch)
         fn =  f'checkpoint_{suffix}.pth.tar'
 
-        checkpoint_gdrive = drive.CreateFile()
+        checkpoint_gdrive = self.drive.CreateFile()
         checkpoint_gdrive['title'] = os.path.basename(fn)
-        checkpoint_gdrive['parents'] = [{'id': model_folder_id}]
+        checkpoint_gdrive['parents'] = [{'id': self.model_folder_id}]
         checkpoint_gdrive.Upload()

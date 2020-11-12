@@ -3,17 +3,26 @@ import torch
 
 class Encoder(torch.nn.Module):
 
-    def __init__(self, features_map_size, encoder_size):
+    def __init__(self, in_channels, out_channels):
 
         super(Encoder, self).__init__()
 
-        self.fc = torch.nn.Linear(features_map_size, encoder_size)
-        self.relu = torch.nn.ReLU()
+        self.conv1x1 = torch.nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1)
 
     def forward(self, features_map):
 
-        # encoded_features_map: (batch_size, n*n, encoder_size)
-        encoded_features_map = self.relu(self.fc(features_map))
+        # reducing the number of channels
+        features_map = self.conv1x1(features_map)
 
-        return encoded_features_map
+        # swap axes
+        features_map = features_map.permute(0, 2, 3, 1)
 
+        # stacking the layers vertically
+        dims = features_map.size()
+        num_examples = dims[0]
+        num_layers = dims[1]
+        layer_dim1 = dims[2]
+        layer_dim2 = dims[3]
+        features_map = torch.reshape(features_map, (num_examples, num_layers * layer_dim1, layer_dim2))
+
+        return features_map

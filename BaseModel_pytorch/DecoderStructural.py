@@ -187,7 +187,7 @@ class DecoderStructural(torch.nn.Module):
         storage = [ [] for n in range(batch_size)]
 
         # initialisation
-        structural_input, structural_hidden_state = self.initialise(batch_size)
+        predict_id, structural_hidden_state = self.initialise(batch_size)
 
         loss = 0
 
@@ -197,13 +197,15 @@ class DecoderStructural(torch.nn.Module):
 
         #indices to keep within for loop
         indices_to_keep = torch.tensor(range(batch_size), dtype = torch.long)
+#        print("outside")
+#        print(structural_input.shape)
 
         #run the timesteps
         for t in range(maxT):
 
             # slice out only those in continue_decoder
             encoded_features_map_in = encoded_features_map[batch_indices_to_keep,:,:]
-            structural_input_in = structural_input[batch_indices_to_keep]
+            structural_input_in = predict_id[indices_to_keep]
 
             structural_hidden_state_in = structural_hidden_state[:, indices_to_keep, :]
             # run through rnn
@@ -214,6 +216,10 @@ class DecoderStructural(torch.nn.Module):
 
             # greedy decoder:
             _, predict_id = torch.max(log_p, dim = 1 )
+
+#            print("inside")#
+#            print(structural_input.shape)
+
 
             # list to contain indices to remove from batch_indices_to_keep
             removes = []

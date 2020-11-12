@@ -58,6 +58,10 @@ def index(request):
 
         predictions, predictions_cell = model.predict(image_path)
 
+
+
+
+
         print('\nCosine similarity: {0:.2f}\n'.format(float(cos_sim)))
         return render(request, "index.html", {"cos_sim": 'Score: {0:.2f}'.format(float(cos_sim)),
                                               "post": True,

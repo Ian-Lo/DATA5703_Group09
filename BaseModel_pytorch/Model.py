@@ -13,6 +13,10 @@ import torch
 from time import perf_counter, time
 import numpy as np
 
+from FixedEncoder import FixedEncoder
+import PIL
+
+
 class Model:
     """Combined class for encoder, structural decoder and cell decoder."""
 
@@ -75,6 +79,34 @@ class Model:
         self.decoder_structural = self.decoder_structural.train()
         self.decoder_cell_content = self.decoder_cell_content.train()
         self.encoder = self.encoder.train()
+
+    def predict(self, file_path):
+        ''' Only works for a single example.'''
+
+        # instantiate the fixed CNN encoder
+        # with ResNet-18, the features map will be (features_map_size * features_map_size, 512)
+        features_map_size = 12
+        fixedEncoder = FixedEncoder('ResNet18', features_map_size)
+        # open image
+        image = PIL.Image.open(file_path)
+        # preprocess image
+        preprocessed_images = [fixedEncoder.preprocess(image)]
+        preprocessed_image = torch.stack(preprocessed_images)
+        # run through ResNet-18
+        features_map = fixedEncoder.encode(preprocessed_image)
+        features_map_float32 = features_map.astype(np.float32)
+        features_map_tensor = torch.from_numpy(features_map_float32)
+
+        # permute axes of features map in the same way as during training
+        features_map_tensor = features_map_tensor.permute(0,2,1)
+        # reshape to correct dimensions
+        features_map_input = torch.reshape(features_map_tensor, (1, 512, features_map_size, features_map_size))
+        # pass through encoders
+        encoded_features_map = self.encoder.forward(features_map_input)
+        predictions, storage, pred_triggers = self.decoder_structural.predict(encoded_features_map, structural_target = None )
+        predictions_cell = self.decoder_cell_content.predict(encoded_features_map, storage , cell_content_target = None  )
+
+        return #html, attention, pred_struc_tokens, pred_cell_cont_tokens
 
     def train(self, drive=None, checkpoint_temp_id=None, epochs=1, lambdas=[1], lrs=[0.001], number_examples=100, number_examples_val=100, batch_size=10, storage_size=1000,val = None ):
 

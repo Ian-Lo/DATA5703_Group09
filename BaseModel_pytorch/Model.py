@@ -54,6 +54,16 @@ class Model:
         self.decoder_cell_content = decoder_cell_content.to(self.device)
         self.decoder_cell_content_optimizer = decoder_cell_content_optimizer
 
+    def load_checkpoint(self, file_path="checkpoint.pth.tar"):
+        loader = CheckPoint.load_checkpoint(file_path)
+        self.encoder.load_state_dict(loader['encoder'])
+        self.decoder_structural.load_state_dict(loader['decoder_structural'])
+        self.decoder_cell_content.load_state_dict(loader['decoder_cell_content'])
+        self.encoder_optimizer.load_state_dict(loader['encoder_optimizer'])
+        self.decoder_structural_optimizer.load_state_dict(loader['decoder_structural_optimizer'])
+        self.decoder_cell_content_optimizer.load_state_dict(loader['decoder_cell_content_optimizer'])
+
+
     def set_eval(self):
         '''Change to evaluation state.'''
         self.decoder_structural = self.decoder_structural.eval()

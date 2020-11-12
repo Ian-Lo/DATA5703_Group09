@@ -10,12 +10,12 @@ class CheckPoint:
     # note: there is no need to instantiate an object
     # call as: CheckPoint.load_checkpoint()
     @classmethod
-    def load_checkpoint(cls):
+    def load_checkpoint(cls, file_path='checkpoint.pth.tar'):
 
         # load the latest checkpoint
         # this local checkpoint is over-witten
         # every time a new checkpoint is saved
-        file_path = Utils.absolute_path('', 'checkpoint.pth.tar')
+        file_path = Utils.absolute_path('', file_path)
         state = torch.load(file_path)
 
         return state

@@ -97,7 +97,6 @@ def fill_html_structure(html_structure, cells_information):
 # Take filename HTML string as input and test against GT JSON
 def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
     # print(os.getcwd())
-    start_t = datetime.datetime.now()
     reader = jsonlines.open(f'{gt_file}', 'r')
     count = 0
 
@@ -130,13 +129,11 @@ def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
 
             # Test current prediction against Ground Truth
             
-            test_pred_score = teds_metric.evaluate(pred_html, true_html)
+            test_pred_score, delta_t = teds_metric.evaluate(pred_html, true_html)
             # print(f'test_pred_html() score = {test_pred_score}')
             break
 
     print(f"test_pred_html() exit count: {count}")
-    end_t = datetime.datetime.now()
-    delta_t = (end_t - start_t).total_seconds()
     print(f'{img_filename}: {str(delta_t)} sec(s)')
 
     return test_pred_score, delta_t
@@ -228,7 +225,7 @@ def teds_jsonl_parallel(pred_jsonl, gt_jsonl, max_count = 600000):
                     {'pred':pred_html[fn], 'true':gt_html[fn]} 
                     for fn in pred_img_fns
                  ]        
-        scores = parallel_process(
+        scores, delta_ts = parallel_process(
                                 inputs, 
                                 teds_metric.evaluate, # Function to parallelise
                                 use_kwargs=True, 
@@ -243,7 +240,7 @@ def teds_jsonl_parallel(pred_jsonl, gt_jsonl, max_count = 600000):
             \n\tDELTA: {(str(end_t - start_t))} \
             ")
     # return_dict = {'TEDS_score':pred_score, 'pred_file':pred_jsonl}
-    return dict(zip(pred_img_fns, scores)) #, pred_html, gt_html
+    return dict(zip(pred_img_fns, scores, delta_ts)) #, pred_html, gt_html
 
 # Single threaded for checking function performance
 def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
@@ -251,24 +248,15 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
     print(f'START: {start_t}')
     pred_html, gt_html = json2html_TEDS(pred_jsonl, gt_jsonl, max_count)
     pred_img_fns = pred_html.keys()
-    pred_img_fns_count = len(pred_img_fns)
+    scores = []
+    delta_ts = []
 
-    # Parallel Eval PRED and GT HTML     
-    from TEDS.parallel import parallel_process
-    if pred_img_fns == 1:
-        print(f"Only a single predicton {pred_img_fns_count}")
-    else:
-        inputs = [
-                    {'pred':pred_html[fn], 'true':gt_html[fn]} 
-                    for fn in pred_img_fns
-                 ]        
-        scores = parallel_process(
-                                inputs, 
-                                teds_metric.evaluate, # Function to parallelise
-                                use_kwargs=True, 
-                                n_jobs=cpus, # Number of threads to use
-                                front_num=0 # First few jobs can be serialised to catch errors
-                                )
+    # Eval PRED and GT HTML     
+    for fn in pred_img_fns:
+        
+        score, delta_t = teds_metric.evaluate(pred_html[fn], gt_html[fn])
+        scores.append(score)
+        delta_ts.append(delta_t)
 
     end_t = datetime.datetime.now()
     print(f"\n \
@@ -277,7 +265,7 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
             \n\tDELTA: {(str(end_t - start_t))} \
             ")
     # return_dict = {'TEDS_score':pred_score, 'pred_file':pred_jsonl}
-    return dict(zip(pred_img_fns, scores)) #, pred_html, gt_html
+    return dict(zip(pred_img_fns, scores, delta_ts)) #, pred_html, gt_html
 
 
 

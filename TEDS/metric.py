@@ -111,8 +111,9 @@ class TEDS(object):
         ''' Computes TEDS score between the prediction and the ground truth of a
             given sample
         '''
+        loop_start_t = datetime.datetime.now()
         if (not pred) or (not true):
-            return 0.0
+            ret_val = 0.0
         parser = html.HTMLParser(remove_comments=True, encoding='utf-8')
         pred = html.fromstring(pred, parser=parser)
         true = html.fromstring(true, parser=parser)
@@ -128,9 +129,13 @@ class TEDS(object):
             tree_pred = self.load_html_tree(pred)
             tree_true = self.load_html_tree(true)
             distance = APTED(tree_pred, tree_true, CustomConfig()).compute_edit_distance()
-            return 1.0 - (float(distance) / n_nodes)
+            ret_val = 1.0 - (float(distance) / n_nodes)
         else:
-            return 0.0
+            ret_val = 0.0
+        loop_end_t = datetime.datetime.now()
+        delta_t = loop_end_t - loop_start_t
+        return ret_val, delta_t
+
 
     def batch_evaluate(self, pred_json, true_json):
         ''' Computes TEDS score between the prediction and the ground truth of
@@ -141,10 +146,10 @@ class TEDS(object):
         '''
         samples = true_json.keys()
         if self.n_jobs == 1:
-            scores = [self.evaluate(pred_json.get(filename, ''), true_json[filename]['html']) for filename in tqdm(samples)]
+            scores, delta_t = [self.evaluate(pred_json.get(filename, ''), true_json[filename]['html']) for filename in tqdm(samples)]
         else:
             inputs = [{'pred': pred_json.get(filename, ''), 'true': true_json[filename]['html']} for filename in samples]
-            scores = parallel_process(inputs, self.evaluate, use_kwargs=True, n_jobs=self.n_jobs, front_num=1)
+            scores, delta_t = parallel_process(inputs, self.evaluate, use_kwargs=True, n_jobs=self.n_jobs, front_num=1)
         scores = dict(zip(samples, scores))
         return scores
 

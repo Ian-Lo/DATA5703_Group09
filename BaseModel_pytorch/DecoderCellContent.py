@@ -68,7 +68,7 @@ class DecoderCellContent(torch.nn.Module):
 
         # compute the context vector
         # context_vector: (batch_size, encoder_size)
-        context_vector = self.cell_content_attention.forward(encoded_features_map, structural_hidden_state, cell_content_hidden_state)
+        context_vector, attention_weights = self.cell_content_attention.forward(encoded_features_map, structural_hidden_state, cell_content_hidden_state)
 
         # print("context_vector")
         # print(context_vector.shape)
@@ -98,7 +98,7 @@ class DecoderCellContent(torch.nn.Module):
         # output: (batch_size, vocabulary_size)
         prediction = self.fc(output)
 
-        return prediction, cell_content_hidden_state
+        return prediction, cell_content_hidden_state, attention_weights
 
     def forward(self, encoded_features_map, structural_hidden_state, cell_content_target):
 
@@ -116,7 +116,7 @@ class DecoderCellContent(torch.nn.Module):
         # run the timesteps
         for t in range(0, num_timesteps):
 
-            prediction, cell_content_hidden_state = self.timestep(encoded_features_map, structural_hidden_state, cell_content_input, cell_content_hidden_state)
+            prediction, cell_content_hidden_state, attention_weights = self.timestep(encoded_features_map, structural_hidden_state, cell_content_input, cell_content_hidden_state)
 
             # stores the predictions
             predictions[t] = prediction
@@ -186,7 +186,7 @@ class DecoderCellContent(torch.nn.Module):
             loss+= self.loss_criterion(compatible_prediction_prob, compatible_target)/num_predictions
         return loss
 
-    def predict(self, encoded_features_map, structural_hidden_state, cell_content_target=None, maxT = 2000):
+    def predict(self, encoded_features_map, structural_hidden_state, cell_content_target=None, maxT = 2000, store_attention=False):
         ''' For use on validation set and test set.
         encoded_features_map: tensor of shape (num_examples,encoder_size,encoder_size)
         structural_hidden_state: list of list of tensors (num_examples, num_struc_token, hidden_dim)
@@ -201,17 +201,21 @@ class DecoderCellContent(torch.nn.Module):
         # print("cell_content_target")
         # print(cell_content_target.shape)
 
-        batch_size =encoded_features_map.shape[0] #number of triggers for each example. Will vary from image to image
+        batch_size = encoded_features_map.shape[0] #number of triggers for each example. Will vary from image to image
 
         # create list to hold predictions since we sometimes dont know the size
         predictions =[]
         prediction_probs = []
+        attention_storage = []
         for n in range(batch_size):
             predictions.append([])
             prediction_probs.append([])
+            attention_storage.append([])
+
             for m in range(len(structural_hidden_state[n])):
                 predictions[n].append([])
                 prediction_probs[n].append([])
+                attention_storage[n].append(([]))
 
         loss = 0
 
@@ -255,7 +259,7 @@ class DecoderCellContent(torch.nn.Module):
                 # print(cell_content_hidden_state_in.shape)
 
                 # run through rnn
-                prediction, cell_content_hidden_state = self.timestep(encoded_features_map_in, structural_hidden_state_in, cell_content_input_in, cell_content_hidden_state_in)
+                prediction, cell_content_hidden_state, attention_weights = self.timestep(encoded_features_map_in, structural_hidden_state_in, cell_content_input_in, cell_content_hidden_state_in)
 
                 # apply logsoftmax
                 log_p = self.LogSoftmax(prediction)
@@ -276,6 +280,10 @@ class DecoderCellContent(torch.nn.Module):
                         # do not save prediction or hidden state
                         predictions[batch_index][outer_index].append(id)
                         prediction_probs[batch_index][outer_index].append(prediction[n,:])
+
+                        if store_attention:
+                            attention_storage[batch_index][outer_index].append(attention_weights[n, :])
+
                         continue
                     #if not stop
                     else:
@@ -283,6 +291,9 @@ class DecoderCellContent(torch.nn.Module):
                         # get correct index
                         predictions[batch_index][outer_index].append(id)
                         prediction_probs[batch_index][outer_index].append(prediction[n,:])
+
+                        if store_attention:
+                            attention_storage[batch_index][outer_index].append(attention_weights[n, :])
 
                 if len(keeps)==0:
                     break
@@ -304,6 +315,10 @@ class DecoderCellContent(torch.nn.Module):
 #                print(prediction_probs[batch_index])
                 loss_batch += self.calc_loss_cell(cell_content_target[batch_index, :, :], prediction_probs[batch_index] )
             return predictions, loss
+
+        elif store_attention:
+
+            return predictions, attention_storage
 
         else:
             return predictions

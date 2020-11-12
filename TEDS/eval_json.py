@@ -216,8 +216,7 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
 
 
     # Parallel Eval PRED and GT HTML 
-    print(f"number of CPUs detected = {cpus}"\n
-           )
+    print(f"number of CPUs detected = {cpus}\n # GTs == PRED {match_count == pred_img_fns_count}")
     from TEDS.parallel import parallel_process
     if pred_img_fns == 1:
         print(f"Only a single predicton {pred_img_fns_count}")
@@ -231,7 +230,7 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
                                 teds_metric.evaluate, # Function to parallelise
                                 use_kwargs=True, 
                                 n_jobs=cpus, # Number of threads to use
-                                front_num=1 # First few jobs can be serialised to catch errors
+                                front_num=0 # First few jobs can be serialised to catch errors
                                 )
 
     end_t = datetime.datetime.now()

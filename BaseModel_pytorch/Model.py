@@ -106,7 +106,7 @@ class Model:
         predictions, storage, pred_triggers = self.decoder_structural.predict(encoded_features_map, structural_target = None )
         predictions_cell = self.decoder_cell_content.predict(encoded_features_map, storage , cell_content_target = None  )
 
-        return #html, attention, pred_struc_tokens, pred_cell_cont_tokens
+        return predictions, predictions_cell#html, attention, pred_struc_tokens, pred_cell_cont_tokens
 
     def train(self, drive=None, checkpoint_temp_id=None, epochs=1, lambdas=[1], lrs=[0.001], number_examples=100, number_examples_val=100, batch_size=10, storage_size=1000,val = None ):
 

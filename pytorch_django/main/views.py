@@ -13,7 +13,8 @@ from torch.autograd import Variable
 from PIL import Image
 from FeatureVector.settings import MEDIA_ROOT
 
-#from BaseModel_pytorch.model import Model
+import sys
+sys.path.append('/Users/andersborges/Documents/Capstone/code/DATA5703_Group09/BaseModel_pytorch/')
 
 
 def handle_uploaded_file(f):
@@ -24,13 +25,38 @@ def handle_uploaded_file(f):
 
 def index(request):
     if request.POST:
-        imgtovec = Img2Vec()
-        file1_path, file1_name = handle_uploaded_file(request.FILES['file1'])
-        pic_one_vector = imgtovec.get_vec(Image.open(file1_path))
-        pic_two_vector = imgtovec.get_vec(Image.open(file1_path))
-        # Using PyTorch Cosine Similarity
-        cos = nn.CosineSimilarity(dim=1, eps=1e-6)
-        cos_sim = cos(torch.tensor(pic_one_vector).unsqueeze(0), torch.tensor(pic_two_vector).unsqueeze(0))
+        # the relative path of the folder containing the dataset
+        relative_path = "../../Dataset/"
+
+        # model_tag is the name of the folder that the checkpoints folders will be saved in
+        model_tag = "baseline_min_struc"
+
+        # tunable parameters
+        out_channels = 128 # number of channels
+        structural_hidden_size = 128 # dimensions of hidden layer in structural decoder
+        structural_attention_size = 128 # dimensions of context vector in structural decoder
+        cell_content_hidden_size = 256 # dimensions of hidden layer in cell decoder
+        cell_content_attention_size = 128 # dimensions of ontext vector in structural decoder
+
+        # fixed parameters
+        in_channels = 512 # fixed in output from resnet, do not change
+        encoder_size = out_channels # fixed in output from resnet, do not change
+        structural_embedding_size = 16 # determined from preprocessing, do not change
+        cell_content_embedding_size = 80 # determined from preprocessing, do not change
+
+        # import model
+        from Model import Model
+
+        # instantiate model
+        model = Model(relative_path, model_tag, in_channels = in_channels, out_channels = out_channels, encoder_size = encoder_size, structural_embedding_size=structural_embedding_size, structural_hidden_size=structural_hidden_size, structural_attention_size=structural_attention_size, cell_content_embedding_size=cell_content_embedding_size, cell_content_hidden_size=cell_content_hidden_size, cell_content_attention_size=cell_content_attention_size)
+
+        # reload latest checkpoint
+        model.load_checkpoint("../../checkpoint.pth.tar")
+
+        # get path of selected image
+        image_path, file1_name = handle_uploaded_file(request.FILES['file1'])
+
+        predictions, predictions_cell = model.predict(image_path)
 
         print('\nCosine similarity: {0:.2f}\n'.format(float(cos_sim)))
         return render(request, "index.html", {"cos_sim": 'Score: {0:.2f}'.format(float(cos_sim)),

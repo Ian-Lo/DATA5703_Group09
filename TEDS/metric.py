@@ -16,7 +16,7 @@ from lxml import etree, html
 from collections import deque
 from TEDS.parallel import parallel_process
 from tqdm import tqdm
-from datetime import import datetime
+from datetime import  datetime
 
 class TableTree(Tree):
     def __init__(self, tag, colspan=None, rowspan=None, content=None, *children):

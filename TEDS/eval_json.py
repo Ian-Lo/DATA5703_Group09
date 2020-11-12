@@ -89,8 +89,6 @@ def fill_html_structure(html_structure, cells_information):
         html_string = html_string[:n.end(1) + offset] + cell + html_string[n.start(2) + offset:]
         offset += len(cell)
 
-    # ***** MIGHT BE SLOW ******
-    # prettify the html
     soup = bs(html_string, features="lxml") 
     html_string = soup.prettify(formatter='minimal')
     return html_string
@@ -143,13 +141,9 @@ def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
 
     return test_pred_score, delta_t
 
-
-# Take PRED and GT JSONL to calculate TEDS score
-# Pass JSON files in the same format as PubTabNet v2.0
-def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
+# Takes pred and GT JSON and formats them into two dictionarys of PRED and GT
+def json2html_TEDS(pred_jsonl, gt_jsonl, max_count):
     import sys
-    start_t = datetime.datetime.now()
-    print(f'START: {start_t}')
 
     reader = jsonlines.open(f'{pred_jsonl}', 'r') # Load JSON with predictions
     pred_html = {}
@@ -213,10 +207,19 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
                     match = True # Inner Exit condition
                     match_count += 1 # Increment outer exit condition
                     print(f'{img_filename} found in GT')
-
-
-    # Parallel Eval PRED and GT HTML 
     print(f"number of CPUs detected = {cpus}\n #GTs == #PREDs {match_count == pred_img_fns_count}")
+    return pred_html, gt_html
+
+# Take PRED and GT JSONL to calculate TEDS score
+# Pass JSON files in the same format as PubTabNet v2.0
+def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
+    start_t = datetime.datetime.now()
+    print(f'START: {start_t}')
+    pred_html, gt_html = json2html_TEDS(pred_jsonl, gt_jsonl, max_count)
+    pred_img_fns = pred_html.keys()
+    pred_img_fns_count = len(pred_img_fns)
+
+    # Parallel Eval PRED and GT HTML     
     from TEDS.parallel import parallel_process
     if pred_img_fns == 1:
         print(f"Only a single predicton {pred_img_fns_count}")
@@ -234,7 +237,7 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
                                 )
 
     end_t = datetime.datetime.now()
-    print(f"Main Cell exit count: {count} \
+    print(f"\n \
             \n\tSTART: {start_t} \
             \n\tEND: {end_t} \
             \n\tDELTA: {(str(end_t - start_t))} \

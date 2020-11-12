@@ -16,6 +16,7 @@ from lxml import etree, html
 from collections import deque
 from TEDS.parallel import parallel_process
 from tqdm import tqdm
+from datetime import import datetime
 
 class TableTree(Tree):
     def __init__(self, tag, colspan=None, rowspan=None, content=None, *children):
@@ -111,7 +112,7 @@ class TEDS(object):
         ''' Computes TEDS score between the prediction and the ground truth of a
             given sample
         '''
-        loop_start_t = datetime.datetime.now()
+        loop_start_t = datetime.now()
         if (not pred) or (not true):
             ret_val = 0.0
         parser = html.HTMLParser(remove_comments=True, encoding='utf-8')
@@ -132,7 +133,7 @@ class TEDS(object):
             ret_val = 1.0 - (float(distance) / n_nodes)
         else:
             ret_val = 0.0
-        loop_end_t = datetime.datetime.now()
+        loop_end_t = datetime.now()
         delta_t = loop_end_t - loop_start_t
         return ret_val, delta_t
 

@@ -211,6 +211,7 @@ def json2html_TEDS(pred_jsonl, gt_jsonl, max_count):
 # Pass JSON files in the same format as PubTabNet v2.0
 def teds_jsonl_parallel(pred_jsonl, gt_jsonl, max_count = 600000):
     start_t = datetime.now()
+    print(f'TEDS in Parallel')
     print(f'START: {start_t}')
     pred_html, gt_html = json2html_TEDS(pred_jsonl, gt_jsonl, max_count)
     pred_img_fns = pred_html.keys()
@@ -245,6 +246,7 @@ def teds_jsonl_parallel(pred_jsonl, gt_jsonl, max_count = 600000):
 # Single threaded for checking function performance
 def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
     start_t = datetime.now()
+    print(f'TEDS serial')
     print(f'START: {start_t}')
     pred_html, gt_html = json2html_TEDS(pred_jsonl, gt_jsonl, max_count)
     pred_img_fns = pred_html.keys()
@@ -265,7 +267,7 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
             \n\tDELTA: {(str(end_t - start_t))} \
             ")
     # return_dict = {'TEDS_score':pred_score, 'pred_file':pred_jsonl}
-    return dict(zip(pred_img_fns, scores, delta_ts)) #, pred_html, gt_html
+    return dict(zip(pred_img_fns, zip(scores, delta_ts))) #, pred_html, gt_html
 
 
 

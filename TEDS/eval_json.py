@@ -244,7 +244,7 @@ def teds_jsonl_parallel(pred_jsonl, gt_jsonl, max_count = 600000):
     # print(delta_ts)
     # scores_dict = [{img_fn:{"score":scores[i], "proc_time": delta_ts[i]}} for i, img_fn in enumerate(pred_img_fns)]
     
-    return scores_dict #, pred_html, gt_html
+    return #scores_dict #, pred_html, gt_html
 
 # Single threaded for checking function performance
 def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):

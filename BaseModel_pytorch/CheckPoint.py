@@ -22,7 +22,6 @@ class CheckPoint:
 
         return state
 
-
     def refresh_gauth(self):
         """
         docstring
@@ -30,7 +29,6 @@ class CheckPoint:
         self.gauth.Refresh()
         drive = GoogleDrive(self.gauth)
         self.drive = drive
-
 
     def __init__(self, model_tag, drive=None, gauth=None, checkpoint_temp_id=None):
 
@@ -41,26 +39,28 @@ class CheckPoint:
         self.best_evaluation_metric = 0
 
         # code below is for uploading to Google Drive
-        if not gauth: 
+        if not gauth:
             print("No Google Authentication Object!")
         else:
             self.gauth = gauth
-        
-        self.drive = self.refresh_gauth()
+
+        self.refresh_gauth()
         self.checkpoint_temp_id = checkpoint_temp_id
 
         if self.drive:
             self.folders = drive.ListFile(
-                        {'q': f"'{checkpoint_temp_id}' in parents  \
+                {'q': f"'{checkpoint_temp_id}' in parents  \
                         and trashed = false \
                         and mimeType contains 'vnd.google-apps.folder' \
                         "}).GetList()
             # create subfolder for model
             model_folder = self.drive.CreateFile()
             model_folder['title'] = self.model_tag
-            model_folder['parents'] = [{'id': self.checkpoint_temp_id}] # assign parent folder
-            model_folder['mimeType'] = 'application/vnd.google-apps.folder' # specify object as folder
-            model_folder.Upload() # upload to google drive
+            model_folder['parents'] = [
+                {'id': self.checkpoint_temp_id}]  # assign parent folder
+            # specify object as folder
+            model_folder['mimeType'] = 'application/vnd.google-apps.folder'
+            model_folder.Upload()  # upload to google drive
             model_folder_id = model_folder["id"]
             self.model_folder_id = model_folder_id
 
@@ -68,9 +68,9 @@ class CheckPoint:
     # note: this checkpoint is local and unique
     # note: the previous checkpoint is over-written
     def save_checkpoint(self, epoch,
-                              encoder_structural, encoder_cell_content, decoder_structural, decoder_cell_content,
-                              encoder_structural_optimizer, encoder_cell_content_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer,
-                              loss, loss_s, loss_cc):
+                        encoder_structural, encoder_cell_content, decoder_structural, decoder_cell_content,
+                        encoder_structural_optimizer, encoder_cell_content_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer,
+                        loss, loss_s, loss_cc):
 
         # assemble the state of the model
         state = {'model_tag': self.model_tag,
@@ -107,7 +107,8 @@ class CheckPoint:
         # create filename
         epoch = self.state['epoch']
         suffix = '{:0>3}'.format(epoch)
-        file_path = Utils.absolute_path(folder_name, f'checkpoint_{suffix}.pth.tar')
+        file_path = Utils.absolute_path(
+            folder_name, f'checkpoint_{suffix}.pth.tar')
 
         # archive the checkpoint
         torch.save(self.state, file_path)
@@ -120,12 +121,14 @@ class CheckPoint:
         if evaluation_metric > self.best_evaluation_metric:
 
             # create archive folder if it does not exist
-            folder_name = Utils.absolute_path(f'Checkpoints/{self.model_tag}', '')
+            folder_name = Utils.absolute_path(
+                f'Checkpoints/{self.model_tag}', '')
             if not os.path.isdir(folder_name):
                 os.makedirs(folder_name)
 
             # create filename
-            file_path = Utils.absolute_path(folder_name, 'best_checkpoint.pth.tar')
+            file_path = Utils.absolute_path(
+                folder_name, 'best_checkpoint.pth.tar')
 
             # store the best checkpoint
             torch.save(self.state, file_path)
@@ -135,7 +138,7 @@ class CheckPoint:
         # create filename
         epoch = self.state['epoch']
         suffix = '{:0>3}'.format(epoch)
-        fn =  f'checkpoint_{suffix}.pth.tar'
+        fn = f'checkpoint_{suffix}.pth.tar'
 
         checkpoint_gdrive = self.drive.CreateFile()
         checkpoint_gdrive['title'] = os.path.basename(fn)

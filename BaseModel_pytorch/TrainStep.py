@@ -3,10 +3,12 @@ import torch
 def train_step(features_map, structural_tokens, triggers, cells_content_tokens, model, LAMBDA=0.5,):
 
     # pass features through encoder
-    encoded_features_map = model.encoder.forward(features_map)
+    encoded_structural_features_map = model.encoder_structural.forward(features_map)
+    encoded_cell_content_features_map = model.encoder_cell_content.forward(features_map)
 
     # pass encoded features through structural decoder
-    predictions, loss_s, storage_hidden = model.decoder_structural.forward(encoded_features_map, structural_tokens)
+    predictions, loss_s, storage_hidden = model.decoder_structural.forward(encoded_structural_features_map, structural_tokens)
+
     # run structural decoder only if lambda != 1
     if abs(LAMBDA-1)>0.001:
         ### PROCESSING STORAGE ###
@@ -20,7 +22,7 @@ def train_step(features_map, structural_tokens, triggers, cells_content_tokens, 
             for cell_num, example_trigger in enumerate(example_triggers):
 
                 if example_trigger != 0:
-                    list1.append(encoded_features_map[example_num])
+                    list1.append(encoded_cell_content_features_map[example_num])
 
                     list2.append(storage_hidden[example_trigger, 0, example_num, :])
 
@@ -38,23 +40,25 @@ def train_step(features_map, structural_tokens, triggers, cells_content_tokens, 
         # Back propagation
         model.decoder_cell_content_optimizer.zero_grad()
         model.decoder_structural_optimizer.zero_grad()
-        model.encoder_optimizer.zero_grad()
+        model.encoder_cell_content_optimizer.zero_grad()
+        model.encoder_structural_optimizer.zero_grad()
         loss.backward()
 
         # Update weights
         model.decoder_cell_content_optimizer.step()#
         model.decoder_structural_optimizer.step()
-        model.encoder_optimizer.step()
+        model.encoder_cell_content_optimizer.step()
+        model.encoder_structural_optimizer.step()
 
     if abs(LAMBDA-1.0)<0.001:
         loss = loss_s
         # Back propagation
         model.decoder_structural_optimizer.zero_grad()
-        model.encoder_optimizer.zero_grad()
+        model.encoder_structural_optimizer.zero_grad()
         loss.backward()
         # Update weights
         model.decoder_structural_optimizer.step()
-        model.encoder_optimizer.step()
+        model.encoder_structural_optimizer.step()
         predictions_cell = None
         loss_cc = None
 

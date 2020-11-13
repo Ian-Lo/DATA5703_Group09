@@ -51,17 +51,19 @@ class CheckPoint:
     # note: this checkpoint is local and unique
     # note: the previous checkpoint is over-written
     def save_checkpoint(self, epoch,
-                              encoder, decoder_structural, decoder_cell_content,
-                              encoder_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer,
+                              encoder_structural, encoder_cell_content, decoder_structural, decoder_cell_content,
+                              encoder_structural_optimizer, encoder_cell_content_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer,
                               loss, loss_s, loss_cc):
 
         # assemble the state of the model
         state = {'model_tag': self.model_tag,
                  'epoch': epoch,
-                 'encoder': encoder.state_dict(),
+                 'encoder_structural': encoder_structural.state_dict(),
+                 'encoder_cell_content': encoder_cell_content.state_dict(),
                  'decoder_structural': decoder_structural.state_dict(),
                  'decoder_cell_content': decoder_cell_content.state_dict(),
-                 'encoder_optimizer': encoder_optimizer.state_dict(),
+                 'encoder_structural_optimizer': encoder_structural_optimizer.state_dict(),
+                 'encoder_cell_content_optimizer': encoder_cell_content_optimizer.state_dict(),
                  'decoder_structural_optimizer': decoder_structural_optimizer.state_dict(),
                  'decoder_cell_content_optimizer': decoder_cell_content_optimizer.state_dict(),
                  'loss': loss,

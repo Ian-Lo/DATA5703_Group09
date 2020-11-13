@@ -28,7 +28,7 @@ class CheckPoint:
         docstring
         """
         self.gauth.Refresh()
-        drive = GoogleDrive(gauth)
+        drive = GoogleDrive(self.gauth)
         self.drive = drive
 
 
@@ -46,7 +46,7 @@ class CheckPoint:
         else:
             self.gauth = gauth
         
-        self.drive = refresh_gauth
+        self.drive = self.refresh_gauth
         self.checkpoint_temp_id = checkpoint_temp_id
 
         if self.drive:

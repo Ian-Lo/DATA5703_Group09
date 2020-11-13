@@ -226,7 +226,7 @@ def teds_jsonl_parallel(pred_jsonl, gt_jsonl, max_count = 600000):
                     {'pred':pred_html[fn], 'true':gt_html[fn]} 
                     for fn in pred_img_fns
                  ]        
-        scores, delta_ts = parallel_process(
+        scores = parallel_process(
                                 inputs, 
                                 teds_metric.evaluate, # Function to parallelise
                                 use_kwargs=True, 
@@ -241,7 +241,7 @@ def teds_jsonl_parallel(pred_jsonl, gt_jsonl, max_count = 600000):
             \n\tDELTA: {(str(end_t - start_t))} \
             ")
     print(scores)
-    print(delta_ts)
+    # print(delta_ts)
     scores_dict = [{img_fn:{"score":scores[i], "proc_time": delta_ts[i]}} for i, img_fn in enumerate(pred_img_fns)]
     
     return scores_dict #, pred_html, gt_html

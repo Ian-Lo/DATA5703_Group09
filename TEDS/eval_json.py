@@ -242,6 +242,7 @@ def teds_jsonl_parallel(pred_jsonl, gt_jsonl, max_count = 600000):
             ")
     # return_dict = {'TEDS_score':pred_score, 'pred_file':pred_jsonl}
     ret_values = [{"score":scores[i], "proc_time": delta_ts[i]} for i in scores]
+    print(ret_values)
     return dict(zip(pred_img_fns, ret_values)) #, pred_html, gt_html
 
 # Single threaded for checking function performance

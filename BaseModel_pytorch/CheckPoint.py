@@ -40,7 +40,7 @@ class CheckPoint:
 
         # Create drive object from gauth
         if not gauth:
-            print("No Google Authentication Object!")
+            print("ERROR No Google Authentication Object!")
         else:
             self.gauth = gauth
 
@@ -141,10 +141,9 @@ class CheckPoint:
         suffix = '{:0>3}'.format(epoch)
         fn = f'checkpoint_{suffix}.pth.tar'
 
+        self.refresh_gauth()
         checkpoint_gdrive = self.drive.CreateFile()
         checkpoint_gdrive['title'] = os.path.basename(fn)
         checkpoint_gdrive['parents'] = [{'id': self.model_folder_id}]
-        checkpoint_gdrive.SetContentFile(fn)
+        checkpoint_gdrive.SetContentFile('checkpoint.pth.tar')
         checkpoint_gdrive.Upload()
-
-# stupid one line change 

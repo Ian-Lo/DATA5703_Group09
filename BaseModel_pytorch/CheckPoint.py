@@ -48,7 +48,7 @@ class CheckPoint:
         self.checkpoint_temp_id = checkpoint_temp_id
 
         if self.drive:
-            self.folders = drive.ListFile(
+            self.folders = self.drive.ListFile(
                 {'q': f"'{checkpoint_temp_id}' in parents  \
                         and trashed = false \
                         and mimeType contains 'vnd.google-apps.folder' \

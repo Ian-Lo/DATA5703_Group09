@@ -46,7 +46,7 @@ class CheckPoint:
         else:
             self.gauth = gauth
         
-        self.drive = self.refresh_gauth
+        self.drive = self.refresh_gauth()
         self.checkpoint_temp_id = checkpoint_temp_id
 
         if self.drive:

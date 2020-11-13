@@ -2,8 +2,10 @@ import torch
 
 def val_step(features_map_val, structural_tokens_val,triggers_val,cells_content_tokens_val, model, LAMBDA):
 
-    encoded_features_map_val = model.encoder.forward(features_map_val)
-    predictions_val, loss_s_val, storage_hidden_val, pred_triggers = model.decoder_structural.predict(encoded_features_map_val, structural_target = structural_tokens_val )
+    encoded_structural_features_map_val = model.encoder_structural.forward(features_map_val)
+    encoded_cell_content_features_map_val = model.encoder_cell_content.forward(features_map_val)
+
+    predictions_val, loss_s_val, storage_hidden_val, pred_triggers = model.decoder_structural.predict(encoded_structural_features_map_val, structural_target = structural_tokens_val )
 
     # get shapes
     num_examples = features_map_val.shape[0]
@@ -37,7 +39,7 @@ def val_step(features_map_val, structural_tokens_val,triggers_val,cells_content_
     # run cell decoder
     if abs(1.0 - LAMBDA)>=0.001:
         # call cell decoder
-        predictions_cell_val, loss_cc_val = model.decoder_cell_content.predict(encoded_features_map_val, storage_hidden_val,cell_content_target =new_cells_content_tokens  )
+        predictions_cell_val, loss_cc_val = model.decoder_cell_content.predict(encoded_cell_content_features_map_val, storage_hidden_val,cell_content_target =new_cells_content_tokens  )
         loss_val = LAMBDA * loss_s_val + (1.0-LAMBDA) * loss_cc_val
 
     # do not run cell decoder:

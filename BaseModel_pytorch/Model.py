@@ -1,6 +1,7 @@
 import Utils
 
-from Encoder import Encoder
+from EncoderStructural import EncoderStructural
+from EncoderCellContent import EncoderCellContent
 from DecoderStructural import DecoderStructural
 from DecoderCellContent import DecoderCellContent
 
@@ -20,7 +21,7 @@ import PIL
 class Model:
     """Combined class for encoder, structural decoder and cell decoder."""
 
-    def __init__(self, relative_path, model_tag, in_channels=512, out_channels=16,encoder_size =12, structural_embedding_size=16, structural_hidden_size=256, structural_attention_size=256, cell_content_embedding_size=80, cell_content_hidden_size=512, cell_content_attention_size=256):
+    def __init__(self, relative_path, model_tag, in_channels=512, out_channels_structural=16, out_channels_cell_content= 16, structural_embedding_size=16, structural_hidden_size=256, structural_attention_size=256, cell_content_embedding_size=80, cell_content_hidden_size=512, cell_content_attention_size=256):
 
         # set device
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # sets device for model and PyTorch tensors
@@ -39,31 +40,38 @@ class Model:
         self.cell_content_token2integer = cell_content_token2integer
         self.cell_content_integer2token = cell_content_integer2token
 
-        # initialize encoder
-        encoder = Encoder(in_channels, out_channels)
-        encoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder.parameters()))
-        self.encoder = encoder.to(self.device)
-        self.encoder_optimizer = encoder_optimizer
+        # initialize structural_encoder
+        encoder_structural = EncoderStructural(in_channels, out_channels_structural)
+        encoder_structural_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder_structural.parameters()))
+        self.encoder_structural = encoder_structural.to(self.device)
+        self.encoder_structural_optimizer = encoder_structural_optimizer
+
+        # initialize cell_encoder
+        encoder_cell_content = EncoderCellContent(in_channels, out_channels_cell_content)
+        encoder_cell_content_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder_cell_content.parameters()))
+        self.encoder_cell_content = encoder_cell_content.to(self.device)
+        self.encoder_cell_content_optimizer = encoder_cell_content_optimizer
 
         # set up the decoder for structural tokens
-        decoder_structural = DecoderStructural(structural_token2integer, structural_embedding_size, encoder_size, structural_hidden_size, structural_attention_size)
+        decoder_structural = DecoderStructural(structural_token2integer, structural_embedding_size, out_channels_structural, structural_hidden_size, structural_attention_size)
         decoder_structural_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, decoder_structural.parameters()))
         self.decoder_structural = decoder_structural.to(self.device)
         self.decoder_structural_optimizer = decoder_structural_optimizer
 
         # set up the decoder for cell content tokens
-        decoder_cell_content = DecoderCellContent(cell_content_token2integer, cell_content_embedding_size, encoder_size, structural_hidden_size, cell_content_hidden_size, cell_content_attention_size)
+        decoder_cell_content = DecoderCellContent(cell_content_token2integer, cell_content_embedding_size, out_channels_cell_content, structural_hidden_size, cell_content_hidden_size, cell_content_attention_size)
         decoder_cell_content_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, decoder_cell_content.parameters()))
-
         self.decoder_cell_content = decoder_cell_content.to(self.device)
         self.decoder_cell_content_optimizer = decoder_cell_content_optimizer
 
     def load_checkpoint(self, file_path="checkpoint.pth.tar"):
         loader = CheckPoint.load_checkpoint(file_path)
-        self.encoder.load_state_dict(loader['encoder'])
+        self.encoder_structural.load_state_dict(loader['encoder_structural'])
+        self.encoder_cell_content.load_state_dict(loader['encoder_cell_content'])
         self.decoder_structural.load_state_dict(loader['decoder_structural'])
         self.decoder_cell_content.load_state_dict(loader['decoder_cell_content'])
-        self.encoder_optimizer.load_state_dict(loader['encoder_optimizer'])
+        self.encoder_structural_optimizer.load_state_dict(loader['encoder_structural_optimizer'])
+        self.encoder_cell_content_optimizer.load_state_dict(loader['encoder_cell_content_optimizer'])
         self.decoder_structural_optimizer.load_state_dict(loader['decoder_structural_optimizer'])
         self.decoder_cell_content_optimizer.load_state_dict(loader['decoder_cell_content_optimizer'])
 
@@ -72,13 +80,15 @@ class Model:
         '''Change to evaluation state.'''
         self.decoder_structural = self.decoder_structural.eval()
         self.decoder_cell_content = self.decoder_cell_content.eval()
-        self.encoder = self.encoder.eval()
+        self.encoder_structural = self.encoder_structural.eval()
+        self.encoder_cell_content = self.encoder_cell_content.eval()
 
     def set_train(self):
         ''' Change to training state'''
         self.decoder_structural = self.decoder_structural.train()
         self.decoder_cell_content = self.decoder_cell_content.train()
-        self.encoder = self.encoder.train()
+        self.encoder_structural = self.encoder_structural.train()
+        self.encoder_cell_content = self.encoder_cell_content.train()
 
     def predict(self, file_path):
         ''' Only works for a single example.'''
@@ -102,9 +112,10 @@ class Model:
         # reshape to correct dimensions
         features_map_input = torch.reshape(features_map_tensor, (1, 512, features_map_size, features_map_size))
         # pass through encoders
-        encoded_features_map = self.encoder.forward(features_map_input)
-        predictions, storage, pred_triggers, structure_attention_weights = self.decoder_structural.predict(encoded_features_map, structural_target = None, store_attention = True )
-        predictions_cell, cell_attention_weights  = self.decoder_cell_content.predict(encoded_features_map, storage , cell_content_target = None , store_attention = True )
+        encoded_structural_features_map = self.encoder_structural.forward(features_map_input)
+        predictions, storage, pred_triggers, structure_attention_weights = self.decoder_structural.predict(encoded_structural_features_map, structural_target = None, store_attention = True )
+        encoded_cell_content_features_map = self.encoder_cell_content.forward(features_map_input)
+        predictions_cell, cell_attention_weights  = self.decoder_cell_content.predict(encoded_cell_content_features_map, storage , cell_content_target = None , store_attention = True )
 
         predicted_struc_tokens = [self.structural_integer2token[p.item()] for p in predictions[0]]
 
@@ -118,13 +129,12 @@ class Model:
         # instantiate the batching object
         batching = BatchingMechanism(dataset_split='train', number_examples=number_examples, batch_size=batch_size, storage_size=storage_size)
 
-
         # initialise the object
         # here the object works out how many storages and how many examples from every storage are needed
         batching.initialise()
 
         if val:
-            batching_val = BatchingMechanism(dataset_split='dev', number_examples=number_examples_val, batch_size=10, storage_size=storage_size)
+            batching_val = BatchingMechanism(dataset_split='val', number_examples=number_examples_val, batch_size=10, storage_size=storage_size)
             batching_val.initialise()
 
         # instantiate checkpoint
@@ -160,7 +170,9 @@ class Model:
                 g['lr'] = lr
             for g in self.decoder_cell_content_optimizer.param_groups:
                 g['lr'] = lr
-            for g in self.encoder_optimizer.param_groups:
+            for g in self.encoder_structural_optimizer.param_groups:
+                g['lr'] = lr
+            for g in self.encoder_cell_content_optimizer.param_groups:
                 g['lr'] = lr
 
             # batch looping for training
@@ -193,8 +205,8 @@ class Model:
             print("Accuracy WITH teacher forcing (1 example):")
             print(np.sum(structural_tokens[0].detach().numpy()==predict_id.detach().numpy()[:,0])/structural_tokens[0].detach().numpy().shape[0])
 
-            checkpoint.save_checkpoint(epoch, self.encoder, self.decoder_structural, self.decoder_cell_content,
-                                      self.encoder_optimizer, self.decoder_structural_optimizer, self.decoder_cell_content_optimizer, total_loss, total_loss_s, total_loss_cc)
+            checkpoint.save_checkpoint(epoch, self.encoder_structural, self.encoder_cell_content, self.decoder_structural, self.decoder_cell_content,
+                                      self.encoder_structural_optimizer, self.encoder_cell_content_optimizer, self.decoder_structural_optimizer, self.decoder_cell_content_optimizer, total_loss, total_loss_s, total_loss_cc)
 
             checkpoint.archive_checkpoint()
 

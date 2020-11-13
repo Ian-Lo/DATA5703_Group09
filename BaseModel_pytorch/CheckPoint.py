@@ -69,10 +69,9 @@ class CheckPoint:
     # save the current checkpoint
     # note: this checkpoint is local and unique
     # note: the previous checkpoint is over-written
-    def save_checkpoint(self, epoch,
-                        encoder_structural, encoder_cell_content, decoder_structural, decoder_cell_content,
-                        encoder_structural_optimizer, encoder_cell_content_optimizer, decoder_structural_optimizer, decoder_cell_content_optimizer,
-                        loss, loss_s, loss_cc):
+    def save_checkpoint(self, epoch, encoder_structural, encoder_cell_content, decoder_structural,
+                        decoder_cell_content, encoder_structural_optimizer, encoder_cell_content_optimizer,
+                        decoder_structural_optimizer, decoder_cell_content_optimizer, loss, loss_s, loss_cc):
 
         # assemble the state of the model
         state = {'model_tag': self.model_tag,
@@ -145,4 +144,5 @@ class CheckPoint:
         checkpoint_gdrive = self.drive.CreateFile()
         checkpoint_gdrive['title'] = os.path.basename(fn)
         checkpoint_gdrive['parents'] = [{'id': self.model_folder_id}]
+        checkpoint_gdrive.SetContentFile(fn)
         checkpoint_gdrive.Upload()

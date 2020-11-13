@@ -2,6 +2,8 @@ import Utils
 import torch
 import os
 from datetime import datetime, timezone
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 
 
 class CheckPoint:
@@ -20,7 +22,17 @@ class CheckPoint:
 
         return state
 
-    def __init__(self, model_tag, drive=None, checkpoint_temp_id=None):
+
+    def refresh_gauth(self):
+        """
+        docstring
+        """
+        self.gauth.Refresh()
+        drive = GoogleDrive(gauth)
+        self.drive = drive
+
+
+    def __init__(self, model_tag, drive=None, gauth=None, checkpoint_temp_id=None):
 
         self.model_tag = model_tag
 
@@ -29,7 +41,12 @@ class CheckPoint:
         self.best_evaluation_metric = 0
 
         # code below is for uploading to Google Drive
-        self.drive = drive
+        if not gauth: 
+            print("No Google Authentication Object!")
+        else:
+            self.gauth = gauth
+        
+        self.drive = refresh_gauth
         self.checkpoint_temp_id = checkpoint_temp_id
 
         if self.drive:

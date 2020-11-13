@@ -134,7 +134,7 @@ class TEDS(object):
         else:
             ret_val = 0.0
         loop_end_t = datetime.now()
-        delta_t = loop_end_t - loop_start_t
+        delta_t = (loop_end_t - loop_start_t).total_seconds
         return ret_val, delta_t
 
 

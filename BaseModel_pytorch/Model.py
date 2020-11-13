@@ -153,7 +153,7 @@ class Model:
 
         return predicted_struc_tokens, predictions_cell, structure_attention_weights, cell_attention_weights
 
-    def train(self, gauth=None, drive=None, checkpoint_temp_id=None, epochs=1, lambdas=[1], lrs=[0.001], number_examples=100, number_examples_val=100, batch_size=10, storage_size=1000, val=None):
+    def train(self, gauth=None, checkpoint_temp_id=None, epochs=1, lambdas=[1], lrs=[0.001], number_examples=100, number_examples_val=100, batch_size=10, storage_size=1000, val=None):
 
         assert epochs == len(lambdas) == len(
             lrs), "number of epoch, learning rates and lambdas are inconsistent"
@@ -250,8 +250,8 @@ class Model:
 
             checkpoint.archive_checkpoint()
 
-            # if drive:
-            checkpoint.copy_checkpoint()
+            if gauth:
+                checkpoint.copy_checkpoint()
 
             # batch loop for validation
             if val:

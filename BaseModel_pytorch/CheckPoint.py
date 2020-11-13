@@ -30,7 +30,7 @@ class CheckPoint:
         drive = GoogleDrive(self.gauth)
         self.drive = drive
 
-    def __init__(self, model_tag, drive=None, gauth=None, checkpoint_temp_id=None):
+    def __init__(self, model_tag, gauth=None, checkpoint_temp_id=None):
 
         self.model_tag = model_tag
 
@@ -38,18 +38,13 @@ class CheckPoint:
 
         self.best_evaluation_metric = 0
 
-        # Create drive object from gauth
-        if not gauth:
-            print("ERROR No Google Authentication Object!")
-        else:
+        # If gauth exists then exceute below
+        if gauth:
             self.gauth = gauth
+            self.refresh_gauth()
+            self.checkpoint_temp_id = checkpoint_temp_id
 
-        # code below is for uploading to Google Drive
-
-        self.refresh_gauth()
-        self.checkpoint_temp_id = checkpoint_temp_id
-
-        if self.drive:
+            # code below is for uploading to Google Drive
             self.folders = self.drive.ListFile(
                 {'q': f"'{checkpoint_temp_id}' in parents  \
                         and trashed = false \
@@ -69,6 +64,7 @@ class CheckPoint:
     # save the current checkpoint
     # note: this checkpoint is local and unique
     # note: the previous checkpoint is over-written
+
     def save_checkpoint(self, epoch, encoder_structural, encoder_cell_content, decoder_structural,
                         decoder_cell_content, encoder_structural_optimizer, encoder_cell_content_optimizer,
                         decoder_structural_optimizer, decoder_cell_content_optimizer, loss, loss_s, loss_cc):

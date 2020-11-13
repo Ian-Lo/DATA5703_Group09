@@ -82,7 +82,7 @@ class Model:
 
     def predict(self, file_path):
         ''' Only works for a single example.'''
-
+        self.set_eval()
         # instantiate the fixed CNN encoder
         # with ResNet-18, the features map will be (features_map_size * features_map_size, 512)
         features_map_size = 12
@@ -103,10 +103,13 @@ class Model:
         features_map_input = torch.reshape(features_map_tensor, (1, 512, features_map_size, features_map_size))
         # pass through encoders
         encoded_features_map = self.encoder.forward(features_map_input)
-        predictions, storage, pred_triggers = self.decoder_structural.predict(encoded_features_map, structural_target = None )
-        predictions_cell = self.decoder_cell_content.predict(encoded_features_map, storage , cell_content_target = None  )
+        predictions, storage, pred_triggers, structure_attention_weights = self.decoder_structural.predict(encoded_features_map, structural_target = None, store_attention = True )
+        predictions_cell, cell_attention_weights  = self.decoder_cell_content.predict(encoded_features_map, storage , cell_content_target = None , store_attention = True )
 
-        return #html, attention, pred_struc_tokens, pred_cell_cont_tokens
+        predicted_struc_tokens = [self.structural_integer2token[p.item()] for p in predictions[0]]
+
+
+        return predicted_struc_tokens, predictions_cell, structure_attention_weights , cell_attention_weights
 
     def train(self, drive=None, checkpoint_temp_id=None, epochs=1, lambdas=[1], lrs=[0.001], number_examples=100, number_examples_val=100, batch_size=10, storage_size=1000,val = None ):
 

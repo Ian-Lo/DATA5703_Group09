@@ -38,11 +38,13 @@ class CheckPoint:
 
         self.best_evaluation_metric = 0
 
-        # code below is for uploading to Google Drive
+        # Create drive object from gauth
         if not gauth:
             print("No Google Authentication Object!")
         else:
             self.gauth = gauth
+
+        # code below is for uploading to Google Drive
 
         self.refresh_gauth()
         self.checkpoint_temp_id = checkpoint_temp_id

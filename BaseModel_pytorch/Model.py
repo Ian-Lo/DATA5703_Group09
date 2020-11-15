@@ -178,7 +178,7 @@ class Model:
 
         if val:
             batching_val = BatchingMechanism(
-                dataset_split='val', number_examples=number_examples_val, batch_size=batch_size_val, storage_size=storage_size)
+                dataset_split='dev', number_examples=number_examples_val, batch_size=batch_size_val, storage_size=storage_size)
             batching_val.initialise()
 
         # instantiate checkpoint

@@ -237,16 +237,16 @@ class Model:
 
                 # apply logsoftmax
                 log_p = torch.nn.LogSoftmax(dim=2)(predictions)
-                if val:
-                    if val[epoch]:
-
-                        log_p_cell = torch.nn.LogSoftmax(dim=2)(predictions_cell)
+                # if val:
+                #     if val[epoch]:
+                #
+                #         log_p_cell = torch.nn.LogSoftmax(dim=2)(predictions_cell)
 
                 # greedy decoder to check prediction WITH teacher forcing
                 _, predict_id = torch.max(log_p, dim=2)
-                if val:
-                    if val[epoch]:
-                        _, predict_id_cell = torch.max(log_p_cell, dim=2)
+                # if val:
+                #     if val[epoch]:
+                #         _, predict_id_cell = torch.max(log_p_cell, dim=2)
 
 
                 total_loss_s += loss_s
@@ -265,15 +265,15 @@ class Model:
             print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(
             ).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])
 
-            if val:
-                if val[epoch]:
-
-                    print("Ground truth, cells:")
-                    print([self.cell_content_integer2token[p.item()]
-                           for p in cells_content_tokens[0][0].detach().numpy()])
-                    print("Prediction WITH teacher forcing (1 example):")
-                    print([self.cell_content_integer2token[p.item()]
-                           for p in predict_id_cell[:, 0,].detach().numpy()])
+            # if val:
+            #     if val[epoch]:
+            #
+            #         print("Ground truth, cells:")
+            #         print([self.cell_content_integer2token[p.item()]
+            #                for p in cells_content_tokens[0][0].detach().numpy()])
+            #         print("Prediction WITH teacher forcing (1 example):")
+            #         print([self.cell_content_integer2token[p.item()]
+            #                for p in predict_id_cell[:, 0,].detach().numpy()])
 #            print("Accuracy WITH teacher forcing (1 example):")
 #            print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(
 #            ).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])

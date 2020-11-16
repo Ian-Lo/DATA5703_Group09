@@ -3,8 +3,6 @@ import torch
 import numpy as np
 
 
-
-
 class DecoderStructural(torch.nn.Module):
 
     def __init__(self, structural_token2integer, embedding_size, encoder_size, structural_hidden_size, structural_attention_size):
@@ -97,6 +95,8 @@ class DecoderStructural(torch.nn.Module):
 
         loss = 0
 
+        attention_accumulator = torch.zeros((encoded_features_map.shape[0], encoded_features_map.shape[1])).to(self.device)
+
         # run the timesteps
         for t in range(0, num_timesteps):
 
@@ -104,6 +104,9 @@ class DecoderStructural(torch.nn.Module):
 
             # stores the predictions
             predictions[t] = prediction
+
+            # accumulate attention weights
+            attention_accumulator += attention_weights
 
             # teacher forcing
             structural_input = structural_target[:, t]
@@ -115,6 +118,12 @@ class DecoderStructural(torch.nn.Module):
 
         # normalize by the number of timesteps and examples to allow comparison
         loss = loss/num_timesteps/batch_size
+
+        # compute doubly stochastic regularisation term
+        regularisation_term = 1 * torch.mean(((1 - attention_accumulator)**2))
+        
+        # add to the loss
+        loss += regularisation_term
 
         return predictions, loss, storage
 

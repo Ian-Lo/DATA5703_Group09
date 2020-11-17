@@ -95,18 +95,26 @@ class DecoderStructural(torch.nn.Module):
 
         loss = 0
 
-        attention_accumulator = torch.zeros((encoded_features_map.shape[0], encoded_features_map.shape[1])).to(self.device)
+        #attention_accumulator = torch.zeros((encoded_features_map.shape[0], encoded_features_map.shape[1])).to(self.device)
 
         # run the timesteps
         for t in range(0, num_timesteps):
 
             prediction, structural_hidden_state, attention_weights = self.timestep(encoded_features_map, structural_input, structural_hidden_state)
 
+            ###
+            if t < 10:
+                f = open('testA.csv', 'a')
+                w = attention_weights[0].detach().numpy().reshape((1,-1))
+                np.savetxt(f, w, delimiter=',')
+                f.close()
+            ###
+
             # stores the predictions
             predictions[t] = prediction
 
             # accumulate attention weights
-            attention_accumulator += attention_weights
+            #attention_accumulator += attention_weights
 
             # teacher forcing
             structural_input = structural_target[:, t]
@@ -120,10 +128,10 @@ class DecoderStructural(torch.nn.Module):
         loss = loss/num_timesteps/batch_size
 
         # compute doubly stochastic regularisation term
-        regularisation_term = 1 * torch.mean(((1 - attention_accumulator)**2))
+        #regularisation_term = 1 * torch.mean(((1 - attention_accumulator)**2))
         
         # add to the loss
-        loss += regularisation_term
+        #loss += regularisation_term
 
         return predictions, loss, storage
 

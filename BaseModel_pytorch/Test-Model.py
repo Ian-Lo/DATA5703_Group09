@@ -33,7 +33,7 @@ lrs =[0.01 for n in range(epochs)]# [0.001 for _ in range(10)] + [0.0001 for _ i
 #lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 
 # Number of examples to include in the training set
-number_examples=2
+number_examples=100
 
 # Number of examples to include in validation set
 number_examples_val=2 # not used if val==None

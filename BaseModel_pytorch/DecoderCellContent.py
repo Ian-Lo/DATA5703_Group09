@@ -128,7 +128,7 @@ class DecoderCellContent(torch.nn.Module):
             loss += self.loss_criterion(prediction, cell_content_input)
 
         # normalize
-        loss = loss/num_timesteps/batch_size
+#        loss = loss/num_timesteps/batch_size
 
         return predictions, loss
 
@@ -183,10 +183,10 @@ class DecoderCellContent(torch.nn.Module):
 
 #                print('pad prob', compatible_target.size(), compatible_prediction_prob.size())
 
-            loss+= self.loss_criterion(compatible_prediction_prob, compatible_target)/num_predictions
+            loss+= self.loss_criterion(compatible_prediction_prob, compatible_target)#/num_predictions
         return loss
 
-    def predict(self, encoded_features_map, structural_hidden_state, cell_content_target=None, maxT = 2000, store_attention=False):
+    def predict(self, encoded_features_map, structural_hidden_state, cell_content_target=None, maxT = 150, store_attention=False):
         ''' For use on validation set and test set.
         encoded_features_map: tensor of shape (num_examples,encoder_size,encoder_size)
         structural_hidden_state: list of list of tensors (num_examples, num_struc_token, hidden_dim)

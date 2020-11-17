@@ -114,7 +114,7 @@ class DecoderStructural(torch.nn.Module):
             storage[t] = structural_hidden_state
 
         # normalize by the number of timesteps and examples to allow comparison
-        loss = loss/num_timesteps/batch_size
+#        loss = loss/num_timesteps/batch_size
 
         return predictions, loss, storage
 
@@ -161,7 +161,7 @@ class DecoderStructural(torch.nn.Module):
 
 #                print('pad prob', compatible_target.size(), compatible_prediction_prob.size())
 
-            loss+= self.loss_criterion(compatible_prediction_prob, compatible_target)/num_predictions
+            loss+= self.loss_criterion(compatible_prediction_prob, compatible_target)#/num_predictions
         return loss
 
     def predict(self, encoded_features_map, structural_target = None, maxT = 2000, store_attention=False):

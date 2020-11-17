@@ -122,11 +122,14 @@ class Model:
         # with ResNet-18, the features map will be (features_map_size * features_map_size, 512)
         features_map_size = 12
         fixedEncoder = FixedEncoder('ResNet18', features_map_size)
+
         # open image
         image = PIL.Image.open(file_path)
+
         # preprocess image
         preprocessed_images = [fixedEncoder.preprocess(image)]
         preprocessed_image = torch.stack(preprocessed_images)
+
         # run through ResNet-18
         features_map = fixedEncoder.encode(preprocessed_image)
         features_map_float32 = features_map.astype(np.float32)
@@ -134,9 +137,11 @@ class Model:
 
         # permute axes of features map in the same way as during training
         features_map_tensor = features_map_tensor.permute(0, 2, 1)
+
         # reshape to correct dimensions
         features_map_input = torch.reshape(
             features_map_tensor, (1, 512, features_map_size, features_map_size))
+
         # pass through encoders
         encoded_structural_features_map = self.encoder_structural.forward(
             features_map_input)
@@ -237,16 +242,15 @@ class Model:
 
                 # apply logsoftmax
                 log_p = torch.nn.LogSoftmax(dim=2)(predictions)
-                # if val:
-                #     if val[epoch]:
-                #
-                #         log_p_cell = torch.nn.LogSoftmax(dim=2)(predictions_cell)
+                if val:
+                    if val[epoch]:
+                        log_p_cell = torch.nn.LogSoftmax(dim=2)(predictions_cell)
 
                 # greedy decoder to check prediction WITH teacher forcing
                 _, predict_id = torch.max(log_p, dim=2)
-                # if val:
-                #     if val[epoch]:
-                #         _, predict_id_cell = torch.max(log_p_cell, dim=2)
+                if val:
+                    if val[epoch]:
+                        _, predict_id_cell = torch.max(log_p_cell, dim=2)
 
 
                 total_loss_s += loss_s
@@ -254,7 +258,7 @@ class Model:
                 if loss_cc:
                     total_loss_cc += loss_cc
 
-            total_loss_s /= len(batches)
+#           total_loss_s /= len(batches)
             print("Ground truth, structural:")
             print([self.structural_integer2token[p.item()]
                    for p in structural_tokens[0].detach().numpy()])
@@ -265,18 +269,17 @@ class Model:
             print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(
             ).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])
 
-            # if val:
-            #     if val[epoch]:
-            #
-            #         print("Ground truth, cells:")
-            #         print([self.cell_content_integer2token[p.item()]
-            #                for p in cells_content_tokens[0][0].detach().numpy()])
-            #         print("Prediction WITH teacher forcing (1 example):")
-            #         print([self.cell_content_integer2token[p.item()]
-            #                for p in predict_id_cell[:, 0,].detach().numpy()])
-#            print("Accuracy WITH teacher forcing (1 example):")
-#            print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(
-#            ).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])
+            if val:
+                if val[epoch]:
+                    print("Ground truth, cells:")
+                    print([self.cell_content_integer2token[p.item()]
+                           for p in cells_content_tokens[0][0].detach().numpy()])
+                    print("Prediction WITH teacher forcing (1 example):")
+                    print([self.cell_content_integer2token[p.item()]
+                           for p in predict_id_cell[:, 0].detach().numpy()])
+            #print("Accuracy WITH teacher forcing (1 example):")
+            #print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(#
+            #).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])
 
 
             checkpoint.save_checkpoint(epoch, self.encoder_structural, self.encoder_cell_content, self.decoder_structural, self.decoder_cell_content,
@@ -290,7 +293,7 @@ class Model:
             # batch loop for validation
             if val:
                 if val[epoch]:
-                    # change state of encoder and decoders to .eval
+                    # change state of encoders and decoders to .eval
                     self.set_eval()
 
                     batches_val = batching_val.build_batches(randomise=False)
@@ -306,8 +309,8 @@ class Model:
                         total_loss_s_val += loss_s_val
                         if loss_cc_val:
                             total_loss_cc_val += loss_cc_val
-                    total_loss_s_val /= len(batches)
-                    total_loss_cc_val /= len(batches)
+                    #total_loss_s_val /= len(batches)
+                    #total_loss_cc_val /= len(batches)
                     print("-------------Validation loss:---------------")
                     print("-- structural decoder:---")
                     print("Truth (1 example)")

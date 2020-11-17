@@ -3,19 +3,27 @@ import torch
 
 class EncoderStructural(torch.nn.Module):
 
-    def __init__(self, in_channels, out_channels_structural):
+    def __init__(self, in_channels, out_channels_structural, conv = False):
+        """conv: use convolutional layer, else linear layer """
 
         super(EncoderStructural, self).__init__()
 
-        self.conv1x1 = torch.nn.Conv2d(in_channels=in_channels, out_channels=out_channels_structural, kernel_size=1)
+        self.conv = conv
+        if self.conv:
+            self.conv1x1 = torch.nn.Conv2d(in_channels=in_channels, out_channels=out_channels_cell_content, kernel_size=1)
+        else:
+            self.fc = torch.nn.Linear(in_channels, out_channels_structural)
 
     def forward(self, features_map):
 
-        # reducing the number of channels
-        features_map = self.conv1x1(features_map)
-
+        if self.conv:
+            # reducing the number of channels
+            features_map = self.conv1x1(features_map)
+            features_map = features_map.permute(0, 2, 3, 1)
+        else:
         # swap axes
-        features_map = features_map.permute(0, 2, 3, 1)
+            features_map = features_map.permute(0, 2, 3, 1)
+            features_map = self.fc(features_map)
 
         # stacking the layers vertically
         dims = features_map.size()

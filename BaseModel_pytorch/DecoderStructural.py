@@ -104,7 +104,7 @@ class DecoderStructural(torch.nn.Module):
 
             ###
             if t < 10:
-                f = open('testA.csv', 'a')
+                f = open('testB.csv', 'a')
                 w = attention_weights[0].detach().numpy().reshape((1,-1))
                 np.savetxt(f, w, delimiter=',')
                 f.close()

@@ -193,7 +193,8 @@ class Model:
 
         # then reinitialize so we haven't used up batch
         batching.initialise()
-
+        losses_s = []
+        loss_s_val = []
         for epoch in range(epochs):
             print(epoch)
             # change model to training
@@ -329,7 +330,8 @@ class Model:
                             print([self.cell_content_integer2token[p.item()]
                                    for p in predictions_cell_val[0][0]])
                     ######################
-
+            losses_s.append(total_loss_s)
+            losses_s_val.append(total_loss_s_val)
             t1_stop = perf_counter()
             print("----------------------")
             print('epoch: %d \tLAMBDA: %.2f\tlr:%.5f\ttime: %.2f' %
@@ -343,3 +345,6 @@ class Model:
 #                print('Validation cell decoder. loss: %.5f'%loss_cc_val)
             print('time for 100k examples:', "%.2f hours" %
                   ((t1_stop-t1_start)/number_examples*100000/3600))
+        return losses_s, losses_s_val
+
+        

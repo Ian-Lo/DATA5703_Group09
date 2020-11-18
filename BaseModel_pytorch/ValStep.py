@@ -1,11 +1,11 @@
 import torch
 
-def val_step(features_map_val, structural_tokens_val,triggers_val,cells_content_tokens_val, model, LAMBDA):
+def val_step(features_map_val, structural_tokens_val,triggers_val,cells_content_tokens_val, model, LAMBDA, maxT_val = 2000):
 
     encoded_structural_features_map_val = model.encoder_structural.forward(features_map_val)
     encoded_cell_content_features_map_val = model.encoder_cell_content.forward(features_map_val)
 
-    predictions_val, loss_s_val, storage_hidden_val, pred_triggers = model.decoder_structural.predict(encoded_structural_features_map_val, structural_target = structural_tokens_val )
+    predictions_val, loss_s_val, storage_hidden_val, pred_triggers = model.decoder_structural.predict(encoded_structural_features_map_val, structural_target = structural_tokens_val, maxT = maxT_val )
 
 
     # run cell decoder

@@ -1,6 +1,6 @@
 import torch
 
-def train_step(features_map, structural_tokens, triggers, cells_content_tokens, model, LAMBDA=0.5,):
+def train_step(features_map, structural_tokens, triggers, cells_content_tokens, model, LAMBDA=0.5):
 
     # pass features through encoder
     encoded_structural_features_map = model.encoder_structural.forward(features_map)

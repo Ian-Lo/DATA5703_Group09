@@ -202,7 +202,6 @@ class DecoderStructural(torch.nn.Module):
         indices_to_keep = torch.tensor(range(batch_size), dtype = torch.long)
 #        print("outside")
 #        print(structural_input.shape)
-
         #run the timesteps
         for t in range(maxT):
 

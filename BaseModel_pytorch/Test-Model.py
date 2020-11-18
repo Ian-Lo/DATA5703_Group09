@@ -36,14 +36,14 @@ lrs = [0.001 for _ in range(epochs)] #+ [0.001]*25
 #lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 
 # Number of examples to include in the training set
-number_examples=10
+number_examples=100
 
 # Number of examples to include in validation set
-number_examples_val=10 # not used if val==None
+number_examples_val=1000 # not used if val==None
 
 # size of batches
 batch_size=10
-batch_size_val = 1000
+batch_size_val = 100
 
 # number of examples in each preprocessed file
 storage_size=1000 # fixed, do not change
@@ -51,6 +51,8 @@ storage_size=1000 # fixed, do not change
 # whether to calculate the validation loss
 f = 0
 val = f*[False]+(epochs-f)*[True]#, False, True, True]
+
+maxT_val = 200
 
 # import model
 from Model import Model
@@ -80,5 +82,6 @@ loss_s, loss_s_val = model.train(epochs=epochs,
             batch_size=batch_size,
             batch_size_val = batch_size_val,
             storage_size=storage_size,
-            val = val)
+            val = val,
+            maxT_val = maxT_val)
 print(loss_s, loss_s_val)

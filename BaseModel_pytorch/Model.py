@@ -169,7 +169,8 @@ class Model:
             batch_size=10,
             batch_size_val=10,
             storage_size=1000,
-            val=None):
+            val=None,
+            maxT_val = 2000):
 
         assert epochs == len(lambdas) == len(
             lrs) == len(val), "number of epoch, learning rates, lambdas and val are inconsistent"
@@ -307,7 +308,7 @@ class Model:
                             features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(
                                 batch)
                             predictions_val, loss_s_val, predictions_cell_val, loss_cc_val, loss_val = val_step(
-                                features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val, self, LAMBDA)
+                                features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val, self, LAMBDA, maxT_val = maxT_val)
                             total_loss_s_val += loss_s_val
                             if loss_cc_val:
                                 total_loss_cc_val += loss_cc_val

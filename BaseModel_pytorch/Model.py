@@ -194,7 +194,7 @@ class Model:
         # then reinitialize so we haven't used up batch
         batching.initialise()
         losses_s = []
-        loss_s_val = []
+        losses_s_val = []
         for epoch in range(epochs):
             print(epoch)
             # change model to training
@@ -346,5 +346,3 @@ class Model:
             print('time for 100k examples:', "%.2f hours" %
                   ((t1_stop-t1_start)/number_examples*100000/3600))
         return losses_s, losses_s_val
-
-        

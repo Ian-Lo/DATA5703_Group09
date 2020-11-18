@@ -20,7 +20,7 @@ cell_content_embedding_size = 80 # determined from preprocessing, do not change
 # 50 epochs with batch size 10 to get a decent length
 
 # set number of epochs
-epochs = 100
+epochs = 2
 #epochs = 25
 
 # make list of lambdas to use for each epoch in training
@@ -36,10 +36,10 @@ lrs = [0.001 for _ in range(epochs)] #+ [0.001]*25
 #lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 
 # Number of examples to include in the training set
-number_examples=1000
+number_examples=10
 
 # Number of examples to include in validation set
-number_examples_val=1000 # not used if val==None
+number_examples_val=10 # not used if val==None
 
 # size of batches
 batch_size=10
@@ -49,7 +49,7 @@ batch_size_val = 1000
 storage_size=1000 # fixed, do not change
 
 # whether to calculate the validation loss
-f = 1
+f = 0
 val = f*[False]+(epochs-f)*[True]#, False, True, True]
 
 # import model
@@ -72,7 +72,7 @@ model = Model(relative_path,
 
 # train model
 
-model.train(epochs=epochs,
+loss_s, loss_s_val = model.train(epochs=epochs,
             lambdas=lambdas,
             lrs=lrs,
             number_examples=number_examples,
@@ -81,3 +81,4 @@ model.train(epochs=epochs,
             batch_size_val = batch_size_val,
             storage_size=storage_size,
             val = val)
+print(loss_s, loss_s_val)

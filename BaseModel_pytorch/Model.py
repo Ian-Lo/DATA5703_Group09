@@ -32,7 +32,8 @@ class Model:
                  structural_attention_size=256,
                  cell_content_embedding_size=80,
                  cell_content_hidden_size=512,
-                 cell_content_attention_size=256):
+                 cell_content_attention_size=256,
+                 maxT_structure = 2000):
 
         # set device
         # sets device for model and PyTorch tensors
@@ -242,13 +243,13 @@ class Model:
 
                 # apply logsoftmax
                 log_p = torch.nn.LogSoftmax(dim=2)(predictions)
-                if val:
+                if val and abs(LAMBDA-1.0>0.001):
                     if val[epoch]:
                         log_p_cell = torch.nn.LogSoftmax(dim=2)(predictions_cell)
 
                 # greedy decoder to check prediction WITH teacher forcing
                 _, predict_id = torch.max(log_p, dim=2)
-                if val:
+                if val and abs(LAMBDA-1.0>0.001):
                     if val[epoch]:
                         _, predict_id_cell = torch.max(log_p_cell, dim=2)
 
@@ -269,7 +270,7 @@ class Model:
             print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(
             ).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])
 
-            if val:
+            if val and abs(LAMBDA-1.0)>0.001:
                 if val[epoch]:
                     print("Ground truth, cells:")
                     print([self.cell_content_integer2token[p.item()]
@@ -293,41 +294,41 @@ class Model:
             # batch loop for validation
             if val:
                 if val[epoch]:
-                    # change state of encoders and decoders to .eval
-                    self.set_eval()
+                    with torch.no_grad():
+                        # change state of encoders and decoders to .eval
+                        self.set_eval()
 
-                    batches_val = batching_val.build_batches(randomise=False)
+                        batches_val = batching_val.build_batches(randomise=False)
 
-                    # batch looping for validation
-                    for batch in batches_val:
-                        # call 'get_batch' to actually load the tensors from file
-                        features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(
-                            batch)
-                        predictions_val, loss_s_val, predictions_cell_val, loss_cc_val, loss_val = val_step(
-                            features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val, self, LAMBDA)
-
-                        total_loss_s_val += loss_s_val
-                        if loss_cc_val:
-                            total_loss_cc_val += loss_cc_val
-                    #total_loss_s_val /= len(batches)
-                    #total_loss_cc_val /= len(batches)
-                    print("-------------Validation loss:---------------")
-                    print("-- structural decoder:---")
-                    print("Truth (1 example)")
-                    print([self.structural_integer2token[p.item()]
-                           for p in structural_tokens_val[0]])
-                    print("Prediction (1 example)")
-                    print([self.structural_integer2token[p.item()]
-                           for p in predictions_val[0]])
-                    if abs(LAMBDA-1.0) > 0.01:
-                        print("-- cell decoder:---")
-                        print("Truth")
-                        print([self.cell_content_integer2token[p.item()]
-                               for p in cells_content_tokens_val[0][0]])
-                        print("Prediction")
-                        print([self.cell_content_integer2token[p.item()]
-                               for p in predictions_cell_val[0][0]])
-                ######################
+                        # batch looping for validation
+                        for batch in batches_val:
+                            # call 'get_batch' to actually load the tensors from file
+                            features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(
+                                batch)
+                            predictions_val, loss_s_val, predictions_cell_val, loss_cc_val, loss_val = val_step(
+                                features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val, self, LAMBDA)
+                            total_loss_s_val += loss_s_val
+                            if loss_cc_val:
+                                total_loss_cc_val += loss_cc_val
+                        #total_loss_s_val /= len(batches)
+                        #total_loss_cc_val /= len(batches)
+                        print("-------------Validation loss:---------------")
+                        print("-- structural decoder:---")
+                        print("Truth (1 example)")
+                        print([self.structural_integer2token[p.item()]
+                               for p in structural_tokens_val[0]])
+                        print("Prediction (1 example)")
+                        print([self.structural_integer2token[p.item()]
+                               for p in predictions_val[0]])
+                        if abs(LAMBDA-1.0) > 0.01:
+                            print("-- cell decoder:---")
+                            print("Truth")
+                            print([self.cell_content_integer2token[p.item()]
+                                   for p in cells_content_tokens_val[0][0]])
+                            print("Prediction")
+                            print([self.cell_content_integer2token[p.item()]
+                                   for p in predictions_cell_val[0][0]])
+                    ######################
 
             t1_stop = perf_counter()
             print("----------------------")
@@ -336,8 +337,8 @@ class Model:
             print('Total loss: %.5f' % total_loss)
             print('Struct. decod. loss: %.5f' % total_loss_s)
             print("Cell dec. loss:", total_loss_cc)
-
-#            print('Validation struct. decod. loss: %.5f'%total_loss_s_val)
+            if val:
+                print('Validation struct. decod. loss: %.5f'%total_loss_s_val)
 #            if loss_cc_val:
 #                print('Validation cell decoder. loss: %.5f'%loss_cc_val)
             print('time for 100k examples:', "%.2f hours" %

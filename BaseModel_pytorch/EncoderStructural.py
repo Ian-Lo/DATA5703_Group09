@@ -14,6 +14,7 @@ class EncoderStructural(torch.nn.Module):
         else:
             self.fc = torch.nn.Linear(in_channels, out_channels_structural)
 
+
     def forward(self, features_map):
 
         if self.conv:

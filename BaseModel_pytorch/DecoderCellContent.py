@@ -219,7 +219,7 @@ class DecoderCellContent(torch.nn.Module):
 
         loss = 0
 
-        # loop over images/example
+        # loop over triggers
         for batch_index in range(batch_size):
 
             # continue if no td is predicted for image

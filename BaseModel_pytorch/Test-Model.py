@@ -17,12 +17,14 @@ in_channels = 512 # fixed in output from resnet, do not change
 structural_embedding_size = 16 # determined from preprocessing, do not change
 cell_content_embedding_size = 80 # determined from preprocessing, do not change
 
+# 50 epochs with batch size 10 to get a decent length
+
 # set number of epochs
 epochs = 100
 #epochs = 25
 
 # make list of lambdas to use for each epoch in training
-lambdas = [1.0 for n in range(epochs) ] # LAMBDA = 1 turns OFF cell decoder
+lambdas = [1 for n in range(epochs) ] # LAMBDA = 1 turns OFF cell decoder
 #lambdas = [1.0]*25 + 25*[1, 1, 0.5, 0.5]# for n in range(epochs)] # LAMBDA = 1 turns OFF cell decoder
 # if you want to run WITH cell decoder, you can uncomment the line below, remember to change epochs to 25
 #lambdas = [1 for _ in range(30)] + [0.5 for _ in range(70)]#+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
@@ -34,22 +36,22 @@ lrs = [0.001 for _ in range(epochs)] #+ [0.001]*25
 #lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 
 # Number of examples to include in the training set
-number_examples=10
+number_examples=1000
 
 # Number of examples to include in validation set
-number_examples_val=2 # not used if val==None
+number_examples_val=1000 # not used if val==None
 
 # size of batches
 batch_size=10
+batch_size_val = 1000
 
 # number of examples in each preprocessed file
 storage_size=1000 # fixed, do not change
 
 # whether to calculate the validation loss
-f = 0
+f = 1
 val = f*[False]+(epochs-f)*[True]#, False, True, True]
 
-batch_size_val = 2
 # import model
 from Model import Model
 
@@ -65,7 +67,8 @@ model = Model(relative_path,
                 cell_content_embedding_size=cell_content_embedding_size,
                 cell_content_hidden_size=cell_content_hidden_size,
                 cell_content_attention_size=cell_content_attention_size)
-model.load_checkpoint(file_path="checkpoint_struc_cell1.pth.tar")
+
+#model.load_checkpoint(file_path="checkpoint_struc_cell1.pth.tar")
 
 # train model
 

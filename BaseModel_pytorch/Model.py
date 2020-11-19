@@ -116,7 +116,7 @@ class Model:
         self.encoder_structural = self.encoder_structural.train()
         self.encoder_cell_content = self.encoder_cell_content.train()
 
-    def predict(self, file_path):
+    def predict(self, file_path, maxT=2000):
         ''' Only works for a single example.'''
         self.set_eval()
         # instantiate the fixed CNN encoder
@@ -147,7 +147,7 @@ class Model:
         encoded_structural_features_map = self.encoder_structural.forward(
             features_map_input)
         predictions, storage, pred_triggers, structure_attention_weights = self.decoder_structural.predict(
-            encoded_structural_features_map, structural_target=None, store_attention=True)
+            encoded_structural_features_map, structural_target=None, store_attention=True, maxT = maxT)
         encoded_cell_content_features_map = self.encoder_cell_content.forward(
             features_map_input)
         predictions_cell, cell_attention_weights = self.decoder_cell_content.predict(

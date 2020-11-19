@@ -70,7 +70,7 @@ model = Model(relative_path,
                 cell_content_hidden_size=cell_content_hidden_size,
                 cell_content_attention_size=cell_content_attention_size)
 
-#model.load_checkpoint(file_path="checkpoint_struc_cell1.pth.tar")
+model.load_checkpoint(file_path="/Users/andersborges/Desktop/baseline_num_examples_10000/checkpoint_008.pth.tar")
 
 # train model
 

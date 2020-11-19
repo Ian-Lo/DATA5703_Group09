@@ -13,6 +13,8 @@ class StructuralAttention(torch.nn.Module):
         self.attention_combined = torch.nn.Linear(structural_attention_size, 1)
         self.relu = torch.nn.ReLU()
         self.softmax = torch.nn.Softmax(dim=1)
+        #self.sigmoid = torch.nn.Sigmoid()
+
 
     def forward(self, encoded_features_map, structural_hidden_state):
 
@@ -28,6 +30,11 @@ class StructuralAttention(torch.nn.Module):
         # attention_structural_hidden: (batch_size, 1, structural_attention_size)
         attention_structural_hidden_state = attention_structural_hidden_state.unsqueeze(1)
 
+        # print("attention_structural_hidden_state[0]")
+        # print(torch.min(attention_structural_hidden_state[0]), torch.max(attention_structural_hidden_state[0]))
+        # print("attention_encoded_features_map[0]")
+        # print(torch.min(attention_encoded_features_map[0]), torch.max(attention_encoded_features_map[0]))
+        
         # combine the attentions
         attention_combined = self.attention_combined(self.relu(attention_encoded_features_map + attention_structural_hidden_state))
         # we remove last dimension

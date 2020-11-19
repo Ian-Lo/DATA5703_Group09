@@ -20,7 +20,7 @@ cell_content_embedding_size = 80 # determined from preprocessing, do not change
 # 50 epochs with batch size 10 to get a decent length
 
 # set number of epochs
-epochs = 2
+epochs = 10
 #epochs = 25
 
 # make list of lambdas to use for each epoch in training
@@ -36,20 +36,20 @@ lrs = [0.001 for _ in range(epochs)] #+ [0.001]*25
 #lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 
 # Number of examples to include in the training set
-number_examples=2000
+number_examples=1000
 
 # Number of examples to include in validation set
-number_examples_val=2000 # not used if val==None
+number_examples_val=3000 # not used if val==None
 
 # size of batches
 batch_size=10
-batch_size_val = 5000
+batch_size_val = 10
 
 # number of examples in each preprocessed file
 storage_size=1000 # fixed, do not change
 
 # whether to calculate the validation loss
-f = epochs
+f = 0
 val = f*[False]+(epochs-f)*[True]#, False, True, True]
 
 maxT_val = 200
@@ -70,7 +70,7 @@ model = Model(relative_path,
                 cell_content_hidden_size=cell_content_hidden_size,
                 cell_content_attention_size=cell_content_attention_size)
 
-model.load_checkpoint(file_path="/Users/andersborges/Desktop/baseline_num_examples_10000/checkpoint_008.pth.tar")
+#model.load_checkpoint(file_path="checkpoint.pth.tar")
 
 # train model
 
@@ -84,4 +84,3 @@ loss_s, loss_s_val = model.train(epochs=epochs,
             storage_size=storage_size,
             val = val,
             maxT_val = maxT_val)
-print(loss_s, loss_s_val)

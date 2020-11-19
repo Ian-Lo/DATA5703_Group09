@@ -81,10 +81,21 @@ class DecoderStructural(torch.nn.Module):
         return prediction, structural_hidden_state, attention_weights
 
     def forward(self, encoded_features_map, structural_target):
+        batch_size = encoded_features_map.shape[0]
+        first_nonzero = (structural_target == 0).sum(dim=1)
+        # find lengths without padding
+        caption_lengths = structural_target.shape[1]*torch.ones(batch_size).long()-first_nonzero
+        caption_lengths, sort_ind = caption_lengths.sort(dim=0, descending = True)
+        # sort
+        encoded_features_map =  encoded_features_map[sort_ind]
+        structural_target = structural_target[sort_ind]
+
+        decode_lengths = (caption_lengths ).tolist()
 
         # prepare to collect all predictions
         num_timesteps = structural_target.size()[-1]
-        batch_size = encoded_features_map.shape[0]
+
+#        batch_size = encoded_features_map.shape[0]
         predictions = np.zeros((num_timesteps, batch_size, self.vocabulary_size), dtype=np.float32)
         predictions = torch.from_numpy(predictions).to(self.device)
 
@@ -95,24 +106,27 @@ class DecoderStructural(torch.nn.Module):
         # initialisation
         structural_input, structural_hidden_state = self.initialise(batch_size)
 
+
         loss = 0
 
         # run the timesteps
         for t in range(0, num_timesteps):
-
-            prediction, structural_hidden_state, attention_weights = self.timestep(encoded_features_map, structural_input, structural_hidden_state)
+            batch_size_t = sum([l > t for l in decode_lengths]) #
+            prediction, structural_hidden_state, attention_weights = self.timestep(encoded_features_map[:batch_size_t], structural_input[:batch_size_t], structural_hidden_state[:, :batch_size_t, :])
 
             # stores the predictions
-            predictions[t] = prediction
+            predictions[t, :batch_size_t, :] = prediction
 
             # teacher forcing
-            structural_input = structural_target[:, t]
+            structural_input = structural_target[:batch_size_t, t]
 
             loss += self.loss_criterion(prediction, structural_input)
-
             # TODO: implement more efficiently
-            storage[t] = structural_hidden_state
+            storage[t, :, :batch_size_t] = structural_hidden_state
 
+        # reorder back to original positions
+        storage = storage[:,:, sort_ind]
+        predictions = predictions[:, sort_ind, :]
         # normalize by the number of timesteps and examples to allow comparison
 #        loss = loss/num_timesteps/batch_size
 

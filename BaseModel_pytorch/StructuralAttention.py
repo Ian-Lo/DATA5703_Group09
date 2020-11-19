@@ -34,7 +34,7 @@ class StructuralAttention(torch.nn.Module):
         # print(torch.min(attention_structural_hidden_state[0]), torch.max(attention_structural_hidden_state[0]))
         # print("attention_encoded_features_map[0]")
         # print(torch.min(attention_encoded_features_map[0]), torch.max(attention_encoded_features_map[0]))
-        
+
         # combine the attentions
         attention_combined = self.attention_combined(self.relu(attention_encoded_features_map + attention_structural_hidden_state))
         # we remove last dimension

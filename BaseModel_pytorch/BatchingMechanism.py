@@ -122,6 +122,8 @@ class BatchingMechanism:
         # all subsequent columns are filled with '<pad>'
         cut_off_index = np.max(indices) + 1
 
+
+
         # trim the columns with all '<pad>'
         trimmed_structural_tokens = padded_structural_tokens[:, :cut_off_index]
 

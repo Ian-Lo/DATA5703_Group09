@@ -230,7 +230,6 @@ class Model:
 
             # batch looping for training
             for batch in batches:
-
                 # call 'get_batch' to actually load the tensors from file
                 features_maps, structural_tokens, triggers, cells_content_tokens = batching.get_batch(
                     batch)

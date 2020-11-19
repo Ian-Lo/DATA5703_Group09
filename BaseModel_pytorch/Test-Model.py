@@ -36,20 +36,20 @@ lrs = [0.001 for _ in range(epochs)] #+ [0.001]*25
 #lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 
 # Number of examples to include in the training set
-number_examples=100
+number_examples=2000
 
 # Number of examples to include in validation set
-number_examples_val=1000 # not used if val==None
+number_examples_val=2000 # not used if val==None
 
 # size of batches
 batch_size=10
-batch_size_val = 100
+batch_size_val = 5000
 
 # number of examples in each preprocessed file
 storage_size=1000 # fixed, do not change
 
 # whether to calculate the validation loss
-f = 0
+f = epochs
 val = f*[False]+(epochs-f)*[True]#, False, True, True]
 
 maxT_val = 200

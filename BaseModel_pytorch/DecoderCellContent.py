@@ -189,7 +189,7 @@ class DecoderCellContent(torch.nn.Module):
     def predict(self, encoded_features_map, structural_hidden_state, cell_content_target=None, maxT = 150, store_attention=False):
         ''' For use on validation set and test set.
         encoded_features_map: tensor of shape (num_examples,encoder_size,encoder_size)
-        structural_hidden_state: list of list of tensors (num_examples, num_struc_token, hidden_dim)
+        structural_hidden_state: list of list of tensors (num_examples, num_struc_token, hidden_dim_struc)
         cell_content_target: tensor of shape (num_examples,  max_struc_token_pred , max_cell_tokens_true)
         maxT: integer, maximum number of time steps
         '''
@@ -207,11 +207,12 @@ class DecoderCellContent(torch.nn.Module):
         predictions =[]
         prediction_probs = []
         attention_storage = []
+        # add empty list for each example
         for n in range(batch_size):
             predictions.append([])
             prediction_probs.append([])
             attention_storage.append([])
-
+            # add empty list for each td token predicted in structural decoder
             for m in range(len(structural_hidden_state[n])):
                 predictions[n].append([])
                 prediction_probs[n].append([])
@@ -220,6 +221,7 @@ class DecoderCellContent(torch.nn.Module):
         loss = 0
 
         # loop over triggers
+
         for batch_index in range(batch_size):
 
             # continue if no td is predicted for image
@@ -228,7 +230,6 @@ class DecoderCellContent(torch.nn.Module):
 
             # define tensor to contain outer indices to run through timestep.
             outer_indices_to_keep = torch.tensor([n for n in range(len(structural_hidden_state[batch_index])) if len(structural_hidden_state[batch_index])!=0] , dtype = torch.long)
-
             # indices to keep within for loop
             indices_to_keep = torch.tensor(range(len(structural_hidden_state[batch_index])), dtype = torch.long)
 

@@ -50,4 +50,6 @@ class StructuralAttention(torch.nn.Module):
         # context_vector: (batch_size, encoder_size)
         context_vector = (encoded_features_map * attention_weights).sum(dim=1)
 
+        attention_weights = torch.squeeze(attention_weights, 2)
+
         return context_vector, attention_weights

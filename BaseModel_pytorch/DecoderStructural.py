@@ -90,7 +90,7 @@ class DecoderStructural(torch.nn.Module):
         caption_lengths = structural_target.shape[1]*torch.ones(batch_size).long()-first_nonzero
         caption_lengths, sort_ind = caption_lengths.sort(dim=0, descending = True)
         # sort
-        encoded_features_map =  encoded_features_map[sort_ind]
+        encoded_features_map = encoded_features_map[sort_ind]
         structural_target = structural_target[sort_ind]
 
         decode_lengths = (caption_lengths).tolist()

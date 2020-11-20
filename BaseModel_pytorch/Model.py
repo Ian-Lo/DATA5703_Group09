@@ -32,7 +32,8 @@ class Model:
                  structural_attention_size=256,
                  cell_content_embedding_size=80,
                  cell_content_hidden_size=512,
-                 cell_content_attention_size=256):
+                 cell_content_attention_size=256,
+                 maxT_structure = 2000):
 
         # set device
         # sets device for model and PyTorch tensors
@@ -115,18 +116,21 @@ class Model:
         self.encoder_structural = self.encoder_structural.train()
         self.encoder_cell_content = self.encoder_cell_content.train()
 
-    def predict(self, file_path):
+    def predict(self, file_path, maxT=2000):
         ''' Only works for a single example.'''
         self.set_eval()
         # instantiate the fixed CNN encoder
         # with ResNet-18, the features map will be (features_map_size * features_map_size, 512)
         features_map_size = 12
         fixedEncoder = FixedEncoder('ResNet18', features_map_size)
+
         # open image
         image = PIL.Image.open(file_path)
+
         # preprocess image
         preprocessed_images = [fixedEncoder.preprocess(image)]
         preprocessed_image = torch.stack(preprocessed_images)
+
         # run through ResNet-18
         features_map = fixedEncoder.encode(preprocessed_image)
         features_map_float32 = features_map.astype(np.float32)
@@ -134,14 +138,16 @@ class Model:
 
         # permute axes of features map in the same way as during training
         features_map_tensor = features_map_tensor.permute(0, 2, 1)
+
         # reshape to correct dimensions
         features_map_input = torch.reshape(
             features_map_tensor, (1, 512, features_map_size, features_map_size))
+
         # pass through encoders
         encoded_structural_features_map = self.encoder_structural.forward(
             features_map_input)
         predictions, storage, pred_triggers, structure_attention_weights = self.decoder_structural.predict(
-            encoded_structural_features_map, structural_target=None, store_attention=True)
+            encoded_structural_features_map, structural_target=None, store_attention=True, maxT = maxT)
         encoded_cell_content_features_map = self.encoder_cell_content.forward(
             features_map_input)
         predictions_cell, cell_attention_weights = self.decoder_cell_content.predict(
@@ -163,7 +169,8 @@ class Model:
             batch_size=10,
             batch_size_val=10,
             storage_size=1000,
-            val=None):
+            val=None,
+            maxT_val = 2000):
 
         assert epochs == len(lambdas) == len(
             lrs) == len(val), "number of epoch, learning rates, lambdas and val are inconsistent"
@@ -187,7 +194,8 @@ class Model:
 
         # then reinitialize so we haven't used up batch
         batching.initialise()
-
+        losses_s = []
+        losses_s_val = []
         for epoch in range(epochs):
             print(epoch)
             # change model to training
@@ -222,7 +230,6 @@ class Model:
 
             # batch looping for training
             for batch in batches:
-
                 # call 'get_batch' to actually load the tensors from file
                 features_maps, structural_tokens, triggers, cells_content_tokens = batching.get_batch(
                     batch)
@@ -237,16 +244,15 @@ class Model:
 
                 # apply logsoftmax
                 log_p = torch.nn.LogSoftmax(dim=2)(predictions)
-                # if val:
-                #     if val[epoch]:
-                #
-                #         log_p_cell = torch.nn.LogSoftmax(dim=2)(predictions_cell)
+                if val and abs(LAMBDA-1.0>0.001):
+                    if val[epoch]:
+                        log_p_cell = torch.nn.LogSoftmax(dim=2)(predictions_cell)
 
                 # greedy decoder to check prediction WITH teacher forcing
                 _, predict_id = torch.max(log_p, dim=2)
-                # if val:
-                #     if val[epoch]:
-                #         _, predict_id_cell = torch.max(log_p_cell, dim=2)
+                if val and abs(LAMBDA-1.0>0.001):
+                    if val[epoch]:
+                        _, predict_id_cell = torch.max(log_p_cell, dim=2)
 
 
                 total_loss_s += loss_s
@@ -254,7 +260,7 @@ class Model:
                 if loss_cc:
                     total_loss_cc += loss_cc
 
-            total_loss_s /= len(batches)
+#           total_loss_s /= len(batches)
             print("Ground truth, structural:")
             print([self.structural_integer2token[p.item()]
                    for p in structural_tokens[0].detach().numpy()])
@@ -265,18 +271,17 @@ class Model:
             print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(
             ).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])
 
-            # if val:
-            #     if val[epoch]:
-            #
-            #         print("Ground truth, cells:")
-            #         print([self.cell_content_integer2token[p.item()]
-            #                for p in cells_content_tokens[0][0].detach().numpy()])
-            #         print("Prediction WITH teacher forcing (1 example):")
-            #         print([self.cell_content_integer2token[p.item()]
-            #                for p in predict_id_cell[:, 0,].detach().numpy()])
-#            print("Accuracy WITH teacher forcing (1 example):")
-#            print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(
-#            ).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])
+            if val and abs(LAMBDA-1.0)>0.001:
+                if val[epoch]:
+                    print("Ground truth, cells:")
+                    print([self.cell_content_integer2token[p.item()]
+                           for p in cells_content_tokens[0][0].detach().numpy()])
+                    print("Prediction WITH teacher forcing (1 example):")
+                    print([self.cell_content_integer2token[p.item()]
+                           for p in predict_id_cell[:, 0].detach().numpy()])
+            #print("Accuracy WITH teacher forcing (1 example):")
+            #print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(#
+            #).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])
 
 
             checkpoint.save_checkpoint(epoch, self.encoder_structural, self.encoder_cell_content, self.decoder_structural, self.decoder_cell_content,
@@ -290,42 +295,43 @@ class Model:
             # batch loop for validation
             if val:
                 if val[epoch]:
-                    # change state of encoder and decoders to .eval
-                    self.set_eval()
+                    with torch.no_grad():
+                        # change state of encoders and decoders to .eval
+                        self.set_eval()
 
-                    batches_val = batching_val.build_batches(randomise=False)
+                        batches_val = batching_val.build_batches(randomise=False)
 
-                    # batch looping for validation
-                    for batch in batches_val:
-                        # call 'get_batch' to actually load the tensors from file
-                        features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(
-                            batch)
-                        predictions_val, loss_s_val, predictions_cell_val, loss_cc_val, loss_val = val_step(
-                            features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val, self, LAMBDA)
-
-                        total_loss_s_val += loss_s_val
-                        if loss_cc_val:
-                            total_loss_cc_val += loss_cc_val
-                    total_loss_s_val /= len(batches)
-                    total_loss_cc_val /= len(batches)
-                    print("-------------Validation loss:---------------")
-                    print("-- structural decoder:---")
-                    print("Truth (1 example)")
-                    print([self.structural_integer2token[p.item()]
-                           for p in structural_tokens_val[0]])
-                    print("Prediction (1 example)")
-                    print([self.structural_integer2token[p.item()]
-                           for p in predictions_val[0]])
-                    if abs(LAMBDA-1.0) > 0.01:
-                        print("-- cell decoder:---")
-                        print("Truth")
-                        print([self.cell_content_integer2token[p.item()]
-                               for p in cells_content_tokens_val[0][0]])
-                        print("Prediction")
-                        print([self.cell_content_integer2token[p.item()]
-                               for p in predictions_cell_val[0][0]])
-                ######################
-
+                        # batch looping for validation
+                        for batch in batches_val:
+                            # call 'get_batch' to actually load the tensors from file
+                            features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(
+                                batch)
+                            predictions_val, loss_s_val, predictions_cell_val, loss_cc_val, loss_val = val_step(
+                                features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val, self, LAMBDA, maxT_val = maxT_val)
+                            total_loss_s_val += loss_s_val
+                            if loss_cc_val:
+                                total_loss_cc_val += loss_cc_val
+                        #total_loss_s_val /= len(batches)
+                        #total_loss_cc_val /= len(batches)
+                        print("-------------Validation loss:---------------")
+                        print("-- structural decoder:---")
+                        print("Truth (1 example)")
+                        print([self.structural_integer2token[p.item()]
+                               for p in structural_tokens_val[0]])
+                        print("Prediction (1 example)")
+                        print([self.structural_integer2token[p.item()]
+                               for p in predictions_val[0]])
+                        if abs(LAMBDA-1.0) > 0.01:
+                            print("-- cell decoder:---")
+                            print("Truth")
+                            print([self.cell_content_integer2token[p.item()]
+                                   for p in cells_content_tokens_val[0][0]])
+                            print("Prediction")
+                            print([self.cell_content_integer2token[p.item()]
+                                   for p in predictions_cell_val[0][0]])
+                    ######################
+            losses_s.append(total_loss_s)
+            losses_s_val.append(total_loss_s_val)
             t1_stop = perf_counter()
             print("----------------------")
             print('epoch: %d \tLAMBDA: %.2f\tlr:%.5f\ttime: %.2f' %
@@ -333,9 +339,10 @@ class Model:
             print('Total loss: %.5f' % total_loss)
             print('Struct. decod. loss: %.5f' % total_loss_s)
             print("Cell dec. loss:", total_loss_cc)
-
-#            print('Validation struct. decod. loss: %.5f'%total_loss_s_val)
+            if val:
+                print('Validation struct. decod. loss: %.5f'%total_loss_s_val)
 #            if loss_cc_val:
 #                print('Validation cell decoder. loss: %.5f'%loss_cc_val)
             print('time for 100k examples:', "%.2f hours" %
                   ((t1_stop-t1_start)/number_examples*100000/3600))
+        return losses_s, losses_s_val

@@ -24,7 +24,7 @@ from Model import Model
 model = Model(relative_path, model_tag, in_channels = in_channels, out_channels = out_channels, encoder_size = encoder_size, structural_embedding_size=structural_embedding_size, structural_hidden_size=structural_hidden_size, structural_attention_size=structural_attention_size, cell_content_embedding_size=cell_content_embedding_size, cell_content_hidden_size=cell_content_hidden_size, cell_content_attention_size=cell_content_attention_size)
 
 # reload latest checkpoint
-model.load_checkpoint("../../checkpoint.pth.tar")
+model.load_checkpoint(file_path = "checkpoint1.pth.tar")
 
 image_path = '/Users/andersborges/Documents/Capstone/code/PMC1797029_008_00.png'
 

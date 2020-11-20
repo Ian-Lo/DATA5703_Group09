@@ -82,7 +82,7 @@ class DecoderStructural(torch.nn.Module):
 
     def forward(self, encoded_features_map, structural_target):
 
-        alpha_c = 0
+        alpha_c = 1
 
         batch_size = encoded_features_map.shape[0]
         first_nonzero = (structural_target == 0).sum(dim=1)

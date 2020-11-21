@@ -126,7 +126,6 @@ class Model:
 
         # open image
         image = PIL.Image.open(file_path)
-
         # preprocess image
         preprocessed_images = [fixedEncoder.preprocess(image)]
         preprocessed_image = torch.stack(preprocessed_images)
@@ -156,7 +155,13 @@ class Model:
         predicted_struc_tokens = [
             self.structural_integer2token[p.item()] for p in predictions[0]]
 
-        return predicted_struc_tokens, predictions_cell, structure_attention_weights, cell_attention_weights
+        predicted_cell_tokens = []
+        for n, l in enumerate(predictions_cell[0]): #
+            predicted_cell_tokens.append([])
+            for cell_pred in l:
+                predicted_cell_tokens[n].append(self.cell_content_integer2token[cell_pred.item()])
+
+        return predicted_struc_tokens, predicted_cell_tokens, structure_attention_weights, cell_attention_weights
 
     def train(self,
             gauth=None,
@@ -276,10 +281,13 @@ class Model:
                     print("Ground truth, cells:")
                     print([self.cell_content_integer2token[p.item()]
                            for p in cells_content_tokens[0][0].detach().numpy()])
-
+                    print(len([self.cell_content_integer2token[p.item()]
+                           for p in cells_content_tokens[0][0].detach().numpy()]))
                     print("Prediction WITH teacher forcing (1 example):")
                     print([self.cell_content_integer2token[p.item()]
                            for p in predict_id_cell[:, 0].detach().numpy()])
+                    print(len([self.cell_content_integer2token[p.item()]
+                           for p in predict_id_cell[:, 0].detach().numpy()]))
                     print("Accuracy WITH teacher forcing (1 example):")
                     print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(#
                     ).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])

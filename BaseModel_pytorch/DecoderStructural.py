@@ -86,6 +86,7 @@ class DecoderStructural(torch.nn.Module):
 
         batch_size = encoded_features_map.shape[0]
         first_nonzero = (structural_target == 0).sum(dim=1)
+
         # find lengths without padding
         caption_lengths = structural_target.shape[1]*torch.ones(batch_size).long()-first_nonzero
         caption_lengths, sort_ind = caption_lengths.sort(dim=0, descending = True)

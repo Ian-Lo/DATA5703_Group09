@@ -2,7 +2,8 @@
 relative_path = "../../Dataset"
 
 # model_tag is the name of the folder that the checkpoints folders will be saved in
-model_tag = "cell_decoder_try"
+
+model_tag = "baseline_cell"
 
 # tunable parameters
 out_channels_structural = 64 # number of channels
@@ -20,7 +21,7 @@ cell_content_embedding_size = 80 # determined from preprocessing, do not change
 # 50 epochs with batch size 10 to get a decent length
 
 # set number of epochs
-epochs = 10
+epochs = 5
 #epochs = 25
 
 # make list of lambdas to use for each epoch in training
@@ -36,14 +37,14 @@ lrs = [0.001 for _ in range(epochs)] #+ [0.001]*25
 #lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 
 # Number of examples to include in the training set
-number_examples=10
+number_examples=3
 
 # Number of examples to include in validation set
-number_examples_val=3000 # not used if val==None
+number_examples_val=2 # not used if val==None
 
 # size of batches
-batch_size=10
-batch_size_val = 10
+batch_size=3
+batch_size_val = 2
 
 # number of examples in each preprocessed file
 storage_size=1000 # fixed, do not change

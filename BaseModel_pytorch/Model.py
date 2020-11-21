@@ -244,13 +244,13 @@ class Model:
 
                 # apply logsoftmax
                 log_p = torch.nn.LogSoftmax(dim=2)(predictions)
-                if val and abs(LAMBDA-1.0>0.001):
+                if val and abs(LAMBDA-1.0)>0.001:
                     if val[epoch]:
                         log_p_cell = torch.nn.LogSoftmax(dim=2)(predictions_cell)
 
                 # greedy decoder to check prediction WITH teacher forcing
                 _, predict_id = torch.max(log_p, dim=2)
-                if val and abs(LAMBDA-1.0>0.001):
+                if val and abs(1.0-LAMBDA)>0.001:
                     if val[epoch]:
                         _, predict_id_cell = torch.max(log_p_cell, dim=2)
 
@@ -279,9 +279,9 @@ class Model:
                     print("Prediction WITH teacher forcing (1 example):")
                     print([self.cell_content_integer2token[p.item()]
                            for p in predict_id_cell[:, 0].detach().numpy()])
-            #print("Accuracy WITH teacher forcing (1 example):")
-            #print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(#
-            #).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])
+                    print("Accuracy WITH teacher forcing (1 example):")
+                    print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(#
+                    ).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])
 
 
             checkpoint.save_checkpoint(epoch, self.encoder_structural, self.encoder_cell_content, self.decoder_structural, self.decoder_cell_content,

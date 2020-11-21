@@ -15,6 +15,9 @@ from torch.autograd import Variable
 from PIL import Image
 from FeatureVector.settings import MEDIA_ROOT, CAPTION_MODEL_ROOT
 
+import sys
+sys.path.append('/Users/andersborges/Documents/Capstone/code/DATA5703_Group09/BaseModel_pytorch/')
+
 
 def handle_uploaded_file(f):
     name = str(datetime.datetime.now().strftime('%H%M%S')) + \
@@ -35,20 +38,112 @@ def _get_caption(img_path):
 
     return stream.read()
 
+def build_html_structure(structure_information):
+    ''' Build the structure skeleton of the HTML code
+        Add the structural <thead> and the structural <tbody> sections to a fixed <html> header
+    '''
+
+    html_structure = '''<html>
+                       <head>
+                       <meta charset="UTF-8">
+                       <style>
+                       table, th, td {
+                         border: 1px solid black;
+                         font-size: 10px;
+                       }
+                       </style>
+                       </head>
+                       <body>
+                       <table frame="hsides" rules="groups" width="100%%">
+                         %s
+                       </table>
+                       </body>
+                       </html>''' % ''.join(structure_information)
+
+    return html_structure
+
+
+def fill_html_structure(html_structure, cells_information):
+    ''' Fill the structure skeleton of the HTML code with the cells content
+        Every cell description is stored in a separate "token" field
+        An initial assessment is performed to check that the cells content
+        is compatible with the HTML structure skeleton
+    '''
+
+    import re
+    from bs4 import BeautifulSoup as bs
+
+    # initial compatibility assessment
+    cell_nodes = list(re.finditer(r'(<td[^<>]*>)(</td>)', html_structure))
+    assert len(cell_nodes) == len(cells_information), 'Number of cells defined in tags does not match the length of cells'
+
+    # create a list with each cell content compacted into a single string
+    cells = [''.join(cell) for cell in cells_information]
+
+    # sequentially fill the HTML structure with the cells content at the appropriate spots
+    offset = 0
+    html_string = html_structure
+    for n, cell in zip(cell_nodes, cells):
+        html_string = html_string[:n.end(1) + offset] + cell + html_string[n.start(2) + offset:]
+        offset += len(cell)
+#    soup = bs(html_string, features="lxml")
+#    html_string = soup.prettify(formatter='minimal')
+    return html_string
+
+
 
 def index(request):
     if request.POST:
-        imgtovec = Img2Vec(cuda=torch.cuda.is_available())
+
         file1_path, file1_name = handle_uploaded_file(request.FILES['file1'])
 
-        # Captioning
-        # caption = _get_caption(file1_path)
-        table_tags = "<table><tr><th>Header1</th><th>Header2</th><th>Header3</th></tr><tr><td>A</td><td>B</td><td>C</td></tr><tr><td>A</td><td>B</td><td>C</td></tr></table>"
+        relative_path = "."
+
+        # model_tag is the name of the folder that the checkpoints folders will be saved in
+
+        model_tag = "django_predict"
+
+        # tunable parameters
+        out_channels_structural = 64 # number of channels
+        out_channels_cell_content = 64 # number of channels
+        structural_hidden_size = 128 # dimensions of hidden layer in structural decoder
+        structural_attention_size = 128 # dimensions of context vector in structural decoder
+        cell_content_hidden_size = 256 # dimensions of hidden layer in cell decoder
+        cell_content_attention_size = 128 # dimensions of ontext vector in structural decoder
+
+        # fixed parameters
+        in_channels = 512 # fixed in output from resnet, do not change
+        structural_embedding_size = 16 # determined from preprocessing, do not change
+        cell_content_embedding_size = 80 # determined from preprocessing, do not change
+
+        # import model
+        from Model import Model
+
+        # instantiate model
+        model = Model(relative_path,
+                model_tag,
+                in_channels = in_channels,
+                out_channels_structural = out_channels_structural,
+                out_channels_cell_content = out_channels_cell_content,
+                structural_embedding_size=structural_embedding_size,
+                structural_hidden_size=structural_hidden_size,
+                structural_attention_size=structural_attention_size,
+                cell_content_embedding_size=cell_content_embedding_size,
+                cell_content_hidden_size=cell_content_hidden_size,
+                cell_content_attention_size=cell_content_attention_size)
+
+        # reload latest checkpoint
+        model.load_checkpoint("../../trained_struc_cell_dec.pth.tar")
+        predicted_struc_tokens, predictions_cell, structure_attention_weights , cell_attention_weights = model.predict(file1_path)
+
+        html_struc = build_html_structure(predicted_struc_tokens)
+        html_out = fill_html_structure(html_struc, predictions_cell)
+
 
         return render(request, "index.html", {
             "post": True,
             "img1src": file1_name,
-            "table_tags": table_tags
+            "table_tags": html_out
         })
     return render(request, "index.html", {'post': False})
 

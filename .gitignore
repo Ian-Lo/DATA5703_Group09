@@ -1,7 +1,4 @@
 
-
-
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -151,7 +148,6 @@ TEDS/pubtabnet1000_pretty.jsonl
 TEDS/pubtabnet1000.jsonl
 .vscode/settings.json
 client_secrets.json
-
 BaseModel_pytorch/__pycache__/
 Dataset/
 BaseModel_pytorch/Dataset/

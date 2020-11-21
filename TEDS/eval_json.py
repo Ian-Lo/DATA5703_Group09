@@ -226,7 +226,8 @@ def teds_jsonl_parallel(pred_jsonl, gt_jsonl, max_count = 600000):
                     {'pred':pred_html[fn], 'true':gt_html[fn]} 
                     for fn in pred_img_fns
                  ]        
-        scores, delta_ts = parallel_process(
+
+        scores_time = parallel_process(
                                 inputs, 
                                 teds_metric.evaluate, # Function to parallelise
                                 use_kwargs=True, 
@@ -240,8 +241,13 @@ def teds_jsonl_parallel(pred_jsonl, gt_jsonl, max_count = 600000):
             \n\tEND: {end_t} \
             \n\tDELTA: {(str(end_t - start_t))} \
             ")
-    # return_dict = {'TEDS_score':pred_score, 'pred_file':pred_jsonl}
-    return dict(zip(pred_img_fns, zip(['score'],scores))) #, pred_html, gt_html
+
+    
+    # unpack scores_deltat into score and proc_time dictionary for each img_fn
+    scores_dict = [{img_fn:{"score":scores_time[i][0], "proc_time": scores_time[i][1]}} for i, img_fn in enumerate(pred_img_fns)]
+    
+    return scores_dict
+
 
 # Single threaded for checking function performance
 def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
@@ -250,15 +256,15 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
     print(f'START: {start_t}')
     pred_html, gt_html = json2html_TEDS(pred_jsonl, gt_jsonl, max_count)
     pred_img_fns = pred_html.keys()
-    scores = []
-    delta_ts = []
+
+    scores_dict={}
 
     # Eval PRED and GT HTML     
     for fn in pred_img_fns:
         
         score, delta_t = teds_metric.evaluate(pred_html[fn], gt_html[fn])
-        scores.append(score)
-        delta_ts.append(delta_t)
+        scores_dict[fn]={"score":score, "proc_time": delta_t} #Build dictionary of scores and time for each image
+
 
     end_t = datetime.now()
     print(f"\n \
@@ -266,9 +272,8 @@ def teds_jsonl(pred_jsonl, gt_jsonl, max_count = 600000):
             \n\tEND: {end_t} \
             \n\tDELTA: {(str(end_t - start_t))} \
             ")
-    # return_dict = {'TEDS_score':pred_score, 'pred_file':pred_jsonl}
-    # return dict(zip(pred_img_fns, zip(scores, delta_ts))) #, pred_html, gt_html
-    return dict(zip(pred_img_fns, zip([score],scores))) #, pred_html, gt_html
+    return scores_dict #, pred_html, gt_html
+                          
 
 
 

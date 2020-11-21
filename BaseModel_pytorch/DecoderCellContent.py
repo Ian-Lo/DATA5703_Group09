@@ -104,13 +104,16 @@ class DecoderCellContent(torch.nn.Module):
 
         alpha_c = 0
 
-        # prepare to collect all predictions
-        num_timesteps = cell_content_target.size()[-1]
         batch_size = encoded_features_map.shape[0]
+
         first_nonzero = (cell_content_target == 0).sum(dim=1)
 
         # find lengths without padding
-        caption_lengths = cell_content_target.shape[1] * torch.ones(batch_size).long() - first_nonzero
+        caption_lengths = cell_content_target.shape[-1] * torch.ones(batch_size).long() - first_nonzero
+
+        # prepare to collect all predictions
+        num_timesteps = torch.max(caption_lengths)
+
         caption_lengths, sort_ind = caption_lengths.sort(dim=0, descending=True)
 
         encoded_features_map = encoded_features_map[sort_ind]

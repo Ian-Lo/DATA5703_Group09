@@ -1,4 +1,6 @@
-import os, datetime, random
+import os
+import datetime
+import random
 
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -11,80 +13,48 @@ import torchvision.transforms as transforms
 
 from torch.autograd import Variable
 from PIL import Image
-from FeatureVector.settings import MEDIA_ROOT
-
-import sys
-sys.path.append('/Users/andersborges/Documents/Capstone/code/DATA5703_Group09/BaseModel_pytorch/')
+from FeatureVector.settings import MEDIA_ROOT, CAPTION_MODEL_ROOT
 
 
 def handle_uploaded_file(f):
-    name = str(datetime.datetime.now().strftime('%H%M%S')) + str(random.randint(0, 1000)) + str(f)
+    name = str(datetime.datetime.now().strftime('%H%M%S')) + \
+        str(random.randint(0, 1000)) + str(f)
     path = default_storage.save(MEDIA_ROOT + '/' + name,
                                 ContentFile(f.read()))
     return os.path.join(MEDIA_ROOT, path), name
 
+
+def _get_caption(img_path):
+    shell = "python -W ignore \
+    main/caption.py \
+    --img={} \
+    --model='BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar' \
+    --word_map='WORDMAP_coco_5_cap_per_img_5_min_word_freq.json' \
+    --beam_size=5".format(img_path)
+    stream = os.popen(shell)
+
+    return stream.read()
+
+
 def index(request):
     if request.POST:
-        # the relative path of the folder containing the dataset
-        relative_path = "../../Dataset"
+        imgtovec = Img2Vec(cuda=torch.cuda.is_available())
+        file1_path, file1_name = handle_uploaded_file(request.FILES['file1'])
 
-        # model_tag is the name of the folder that the checkpoints folders will be saved in
+        # Captioning
+        # caption = _get_caption(file1_path)
+        table_tags = "<table><tr><th>Header1</th><th>Header2</th><th>Header3</th></tr><tr><td>A</td><td>B</td><td>C</td></tr><tr><td>A</td><td>B</td><td>C</td></tr></table>"
 
-        model_tag = "baseline_cell"
-
-        # tunable parameters
-        out_channels_structural = 64 # number of channels
-        out_channels_cell_content = 64 # number of channels
-        structural_hidden_size = 128 # dimensions of hidden layer in structural decoder
-        structural_attention_size = 128 # dimensions of context vector in structural decoder
-        cell_content_hidden_size = 256 # dimensions of hidden layer in cell decoder
-        cell_content_attention_size = 128 # dimensions of ontext vector in structural decoder
-
-        # fixed parameters
-        in_channels = 512 # fixed in output from resnet, do not change
-        structural_embedding_size = 16 # determined from preprocessing, do not change
-        cell_content_embedding_size = 80 # determined from preprocessing, do not change
-
-        # import model
-        from Model import Model
-
-        # instantiate model
-        model = Model(relative_path,
-                model_tag,
-                in_channels = in_channels,
-                out_channels_structural = out_channels_structural,
-                out_channels_cell_content = out_channels_cell_content,
-                structural_embedding_size=structural_embedding_size,
-                structural_hidden_size=structural_hidden_size,
-                structural_attention_size=structural_attention_size,
-                cell_content_embedding_size=cell_content_embedding_size,
-                cell_content_hidden_size=cell_content_hidden_size,
-                cell_content_attention_size=cell_content_attention_size)
-
-        # reload latest checkpoint
-        model.load_checkpoint("../../trained_struc_cell_dec.pth.tar")
-
-        # get path of selected image
-        image_path, file1_name = handle_uploaded_file(request.FILES['file1'])
-        print(image_path)
-
-        predictions, predictions_cell = model.predict(image_path)
-
-        print(predictions)
-        quit()
-
-
-
-        print('\nCosine similarity: {0:.2f}\n'.format(float(cos_sim)))
-        return render(request, "index.html", {"cos_sim": 'Score: {0:.2f}'.format(float(cos_sim)),
-                                              "post": True,
-                                              "img1src": file1_name,
-                                              })
+        return render(request, "index.html", {
+            "post": True,
+            "img1src": file1_name,
+            "table_tags": table_tags
+        })
     return render(request, "index.html", {'post': False})
 
 
 class Img2Vec:
-    def __init__(self, cuda=False, model='resnet-18', layer='default', layer_output_size=512):
+    def __init__(self, cuda=True, model='resnet-18', layer='default', layer_output_size=512):
         """ Img2Vec
         :param cuda: If set to True, will run forward pass on GPU
         :param model: String name of requested model
@@ -93,7 +63,8 @@ class Img2Vec:
         """
         self.device = torch.device("cuda" if cuda else "cpu")
         self.layer_output_size = layer_output_size
-        self.model, self.extraction_layer = self._get_model_and_layer(model, layer)
+        self.model, self.extraction_layer = self._get_model_and_layer(
+            model, layer)
 
         self.model = self.model.to(self.device)
 
@@ -110,7 +81,8 @@ class Img2Vec:
         :param tensor: If True, get_vec will return a FloatTensor instead of Numpy array
         :returns: Numpy ndarray
         """
-        image = self.normalize(self.to_tensor(self.scaler(img))).unsqueeze(0).to(self.device)
+        image = self.normalize(self.to_tensor(
+            self.scaler(img))).unsqueeze(0).to(self.device)
 
         my_embedding = torch.zeros(1, self.layer_output_size, 1, 1)
 

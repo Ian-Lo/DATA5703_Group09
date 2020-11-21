@@ -118,8 +118,9 @@ class DecoderStructural(torch.nn.Module):
         loss = 0
 
         # run the timesteps
-        for t in range(0, num_timesteps):
+        for t in range(max(decode_lengths)):
             batch_size_t = sum([l > t for l in decode_lengths]) #
+
             prediction, structural_hidden_state, attention_weight = self.timestep(encoded_features_map[:batch_size_t], structural_input[:batch_size_t], structural_hidden_state[:, :batch_size_t, :])
 
             # stores the predictions

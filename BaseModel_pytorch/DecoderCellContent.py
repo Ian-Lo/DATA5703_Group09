@@ -112,15 +112,17 @@ class DecoderCellContent(torch.nn.Module):
         caption_lengths = cell_content_target.shape[-1] * torch.ones(batch_size).long() - first_nonzero
 
         # prepare to collect all predictions
+
         num_timesteps = torch.max(caption_lengths)
 
-        caption_lengths, sort_ind = caption_lengths.sort(dim=0, descending=True)
+        caption_lengths_sorted, sort_ind = caption_lengths.sort(dim=0, descending=True)
 
-        encoded_features_map = encoded_features_map[sort_ind]
-        cell_content_target = cell_content_target[sort_ind]
+        encoded_features_map = encoded_features_map[sort_ind, :, :]
+        cell_content_target = cell_content_target[sort_ind, :]
 
         structural_hidden_state = structural_hidden_state[: , sort_ind, : ]
-        decode_lengths = (caption_lengths).tolist()
+
+        decode_lengths = (caption_lengths_sorted).tolist()
 
         predictions = np.zeros((num_timesteps, batch_size, self.vocabulary_size), dtype=np.float32)
         predictions = torch.from_numpy(predictions).to(self.device)
@@ -137,8 +139,7 @@ class DecoderCellContent(torch.nn.Module):
         loss = 0
 
         # run the timesteps
-        for t in range(0, num_timesteps):
-
+        for t in range(max(decode_lengths)):
             batch_size_t = sum([l > t for l in decode_lengths])
 
             prediction, cell_content_hidden_state, attention_weights = self.timestep(encoded_features_map[:batch_size_t], structural_hidden_state[:, :batch_size_t, :], cell_content_input[:batch_size_t], cell_content_hidden_state[:, :batch_size_t, :])
@@ -156,7 +157,9 @@ class DecoderCellContent(torch.nn.Module):
             loss += self.loss_criterion(prediction, cell_content_input)
 
         # reorder back to original positions
+
         predictions = predictions[:, sort_ind, :]
+
 
         # normalize
 #       loss = loss/num_timesteps/batch_size

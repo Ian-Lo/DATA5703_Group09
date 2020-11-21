@@ -2,6 +2,7 @@
 relative_path = "../../Dataset"
 
 # model_tag is the name of the folder that the checkpoints folders will be saved in
+
 model_tag = "baseline_cell"
 
 # tunable parameters

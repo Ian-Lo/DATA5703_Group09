@@ -1,4 +1,6 @@
-import os, datetime, random
+import os
+import datetime
+import random
 
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -11,26 +13,95 @@ import torchvision.transforms as transforms
 
 from torch.autograd import Variable
 from PIL import Image
-from FeatureVector.settings import MEDIA_ROOT
+from FeatureVector.settings import MEDIA_ROOT, CAPTION_MODEL_ROOT
 
 import sys
 sys.path.append('/Users/andersborges/Documents/Capstone/code/DATA5703_Group09/BaseModel_pytorch/')
 
 
 def handle_uploaded_file(f):
-    name = str(datetime.datetime.now().strftime('%H%M%S')) + str(random.randint(0, 1000)) + str(f)
+    name = str(datetime.datetime.now().strftime('%H%M%S')) + \
+        str(random.randint(0, 1000)) + str(f)
     path = default_storage.save(MEDIA_ROOT + '/' + name,
                                 ContentFile(f.read()))
     return os.path.join(MEDIA_ROOT, path), name
 
+
+def _get_caption(img_path):
+    shell = "python -W ignore \
+    main/caption.py \
+    --img={} \
+    --model='BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar' \
+    --word_map='WORDMAP_coco_5_cap_per_img_5_min_word_freq.json' \
+    --beam_size=5".format(img_path)
+    stream = os.popen(shell)
+
+    return stream.read()
+
+def build_html_structure(structure_information):
+    ''' Build the structure skeleton of the HTML code
+        Add the structural <thead> and the structural <tbody> sections to a fixed <html> header
+    '''
+
+    html_structure = '''<html>
+                       <head>
+                       <meta charset="UTF-8">
+                       <style>
+                       table, th, td {
+                         border: 1px solid black;
+                         font-size: 10px;
+                       }
+                       </style>
+                       </head>
+                       <body>
+                       <table frame="hsides" rules="groups" width="100%%">
+                         %s
+                       </table>
+                       </body>
+                       </html>''' % ''.join(structure_information)
+
+    return html_structure
+
+
+def fill_html_structure(html_structure, cells_information):
+    ''' Fill the structure skeleton of the HTML code with the cells content
+        Every cell description is stored in a separate "token" field
+        An initial assessment is performed to check that the cells content
+        is compatible with the HTML structure skeleton
+    '''
+
+    import re
+    from bs4 import BeautifulSoup as bs
+
+    # initial compatibility assessment
+    cell_nodes = list(re.finditer(r'(<td[^<>]*>)(</td>)', html_structure))
+    assert len(cell_nodes) == len(cells_information), 'Number of cells defined in tags does not match the length of cells'
+
+    # create a list with each cell content compacted into a single string
+    cells = [''.join(cell) for cell in cells_information]
+
+    # sequentially fill the HTML structure with the cells content at the appropriate spots
+    offset = 0
+    html_string = html_structure
+    for n, cell in zip(cell_nodes, cells):
+        html_string = html_string[:n.end(1) + offset] + cell + html_string[n.start(2) + offset:]
+        offset += len(cell)
+#    soup = bs(html_string, features="lxml")
+#    html_string = soup.prettify(formatter='minimal')
+    return html_string
+
+
+
 def index(request):
     if request.POST:
-        # the relative path of the folder containing the dataset
-        relative_path = "../../Dataset"
+
+        file1_path, file1_name = handle_uploaded_file(request.FILES['file1'])
+
+        relative_path = "."
 
         # model_tag is the name of the folder that the checkpoints folders will be saved in
 
-        model_tag = "baseline_cell"
+        model_tag = "django_predict"
 
         # tunable parameters
         out_channels_structural = 64 # number of channels
@@ -63,28 +134,22 @@ def index(request):
 
         # reload latest checkpoint
         model.load_checkpoint("../../trained_struc_cell_dec.pth.tar")
+        predicted_struc_tokens, predictions_cell, structure_attention_weights , cell_attention_weights = model.predict(file1_path)
 
-        # get path of selected image
-        image_path, file1_name = handle_uploaded_file(request.FILES['file1'])
-        print(image_path)
-
-        predictions, predictions_cell = model.predict(image_path)
-
-        print(predictions)
-        quit()
+        html_struc = build_html_structure(predicted_struc_tokens)
+        html_out = fill_html_structure(html_struc, predictions_cell)
 
 
-
-        print('\nCosine similarity: {0:.2f}\n'.format(float(cos_sim)))
-        return render(request, "index.html", {"cos_sim": 'Score: {0:.2f}'.format(float(cos_sim)),
-                                              "post": True,
-                                              "img1src": file1_name,
-                                              })
+        return render(request, "index.html", {
+            "post": True,
+            "img1src": file1_name,
+            "table_tags": html_out
+        })
     return render(request, "index.html", {'post': False})
 
 
 class Img2Vec:
-    def __init__(self, cuda=False, model='resnet-18', layer='default', layer_output_size=512):
+    def __init__(self, cuda=True, model='resnet-18', layer='default', layer_output_size=512):
         """ Img2Vec
         :param cuda: If set to True, will run forward pass on GPU
         :param model: String name of requested model
@@ -93,7 +158,8 @@ class Img2Vec:
         """
         self.device = torch.device("cuda" if cuda else "cpu")
         self.layer_output_size = layer_output_size
-        self.model, self.extraction_layer = self._get_model_and_layer(model, layer)
+        self.model, self.extraction_layer = self._get_model_and_layer(
+            model, layer)
 
         self.model = self.model.to(self.device)
 
@@ -110,7 +176,8 @@ class Img2Vec:
         :param tensor: If True, get_vec will return a FloatTensor instead of Numpy array
         :returns: Numpy ndarray
         """
-        image = self.normalize(self.to_tensor(self.scaler(img))).unsqueeze(0).to(self.device)
+        image = self.normalize(self.to_tensor(
+            self.scaler(img))).unsqueeze(0).to(self.device)
 
         my_embedding = torch.zeros(1, self.layer_output_size, 1, 1)
 

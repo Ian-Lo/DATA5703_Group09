@@ -25,7 +25,7 @@ SECRET_KEY = '$0u2@8w8**nuq(j0qopme(&4orxls)9ex^)ja^)vjsg6v$7@y5'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*', 'django-env-2.eba-3nempmmz.us-west-2.elasticbeanstalk.com']
 
 
 # Application definition
@@ -116,5 +116,7 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [ os.path.join(BASE_DIR, 'static'),]
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+CAPTION_MODEL_ROOT = os.path.join(BASE_DIR, 'main')
 
 MEDIA_URL = "/media/"

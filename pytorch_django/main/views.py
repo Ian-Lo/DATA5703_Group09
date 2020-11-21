@@ -15,6 +15,13 @@ from torch.autograd import Variable
 from PIL import Image
 from FeatureVector.settings import MEDIA_ROOT, CAPTION_MODEL_ROOT
 
+
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+from PIL import Image
+import skimage.transform
+
+
 import sys
 sys.path.append('/Users/andersborges/Documents/Capstone/code/DATA5703_Group09/BaseModel_pytorch/')
 
@@ -138,6 +145,52 @@ def index(request):
 
         html_struc = build_html_structure(predicted_struc_tokens)
         html_out = fill_html_structure(html_struc, predictions_cell)
+
+        # add attention plot
+
+        # load image
+        image = Image.open(file1_path)
+        image = image.resize([32 * 12, 32 * 12], Image.LANCZOS)
+
+        structure_attention_weights = structure_attention_weights[0]
+
+        #  structural tokens
+        structural_tks = ['<start>'] + predicted_struc_tokens
+
+        num_subplots = min(len(structure_attention_weights), 25)
+
+        rows = num_subplots // 5
+        cols = min(num_subplots, 5)
+        fig, axes = plt.subplots(rows, cols)
+
+        for t in range(num_subplots):
+
+            row = t // 5
+            col = t % 5
+
+            # to obtain structure tokens in every time step
+            alphas = structure_attention_weights[t]
+            alphas = alphas.detach().numpy().reshape(12,12)
+
+            axes[row, col].text(0, 1, '%s' % (structural_tks[t]), color='black', backgroundcolor='white', fontsize=7)
+            axes[row, col].imshow(image)
+
+            alphas = skimage.transform.pyramid_expand(alphas, upscale=32, sigma=8)
+
+            axes[row, col].imshow(image)
+
+            if t == 0:
+                axes[row, col].imshow(alphas, alpha=0, cmap=cm.Greys_r)
+            else:
+                axes[row, col].imshow(alphas, alpha=0.8, cmap=cm.Greys_r)
+
+            axes[row, col].axis('off')
+
+        attention_file_path  = file1_path[::-1].split(sep = '.' ,maxsplit = 1)[1][::-1]+ "_attention.png"
+        print(attention_file_path)
+        plt.savefig(attention_file_path)
+
+
 
 
         return render(request, "index.html", {

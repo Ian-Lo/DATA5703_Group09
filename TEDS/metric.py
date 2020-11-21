@@ -114,7 +114,9 @@ class TEDS(object):
         '''
         loop_start_t = datetime.now()
         if (not pred) or (not true):
+
             score = 0.0
+
         parser = html.HTMLParser(remove_comments=True, encoding='utf-8')
         pred = html.fromstring(pred, parser=parser)
         true = html.fromstring(true, parser=parser)
@@ -130,12 +132,14 @@ class TEDS(object):
             tree_pred = self.load_html_tree(pred)
             tree_true = self.load_html_tree(true)
             distance = APTED(tree_pred, tree_true, CustomConfig()).compute_edit_distance()
+
             score = 1.0 - (float(distance) / n_nodes)
         else:
             score = 0.0
         loop_end_t = datetime.now()
         delta_t = (loop_end_t - loop_start_t).total_seconds() # time to calculate TEDS
         return score, delta_t
+
 
 
     def batch_evaluate(self, pred_json, true_json):

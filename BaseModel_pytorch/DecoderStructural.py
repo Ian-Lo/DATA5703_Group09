@@ -55,7 +55,7 @@ class DecoderStructural(torch.nn.Module):
 
         # compute the context vector
         # context_vector: (batch_size, encoder_size)
-        context_vector = self.structural_attention.forward(encoded_features_map, structural_hidden_state)
+        context_vector, attention_weights = self.structural_attention.forward(encoded_features_map, structural_hidden_state)
 
         # embed the input
         # embedded_structural_input: (batch size, embedding_size)
@@ -78,13 +78,28 @@ class DecoderStructural(torch.nn.Module):
         # output: (batch_size, vocabulary_size)
         prediction = self.fc(output)
 
-        return prediction, structural_hidden_state
+        return prediction, structural_hidden_state, attention_weights
 
     def forward(self, encoded_features_map, structural_target):
 
+        alpha_c = 0
+
+        batch_size = encoded_features_map.shape[0]
+        first_nonzero = (structural_target == 0).sum(dim=1)
+
+        # find lengths without padding
+        caption_lengths = structural_target.shape[1]*torch.ones(batch_size).long()-first_nonzero
+        caption_lengths, sort_ind = caption_lengths.sort(dim=0, descending = True)
+        # sort
+        encoded_features_map = encoded_features_map[sort_ind]
+        structural_target = structural_target[sort_ind]
+
+        decode_lengths = (caption_lengths).tolist()
+
         # prepare to collect all predictions
         num_timesteps = structural_target.size()[-1]
-        batch_size = encoded_features_map.shape[0]
+
+#        batch_size = encoded_features_map.shape[0]
         predictions = np.zeros((num_timesteps, batch_size, self.vocabulary_size), dtype=np.float32)
         predictions = torch.from_numpy(predictions).to(self.device)
 
@@ -92,29 +107,45 @@ class DecoderStructural(torch.nn.Module):
         storage = np.zeros((num_timesteps, 1, batch_size, self.hidden_size), dtype=np.float32)
         storage = torch.from_numpy(storage).to(self.device)
 
+        # define the size of feature map
+        feature_sizes = encoded_features_map.shape[1]
+
         # initialisation
         structural_input, structural_hidden_state = self.initialise(batch_size)
+        attention_weights = torch.zeros(num_timesteps, batch_size, feature_sizes).to(self.device)
+
 
         loss = 0
 
         # run the timesteps
         for t in range(0, num_timesteps):
-
-            prediction, structural_hidden_state = self.timestep(encoded_features_map, structural_input, structural_hidden_state)
+            batch_size_t = sum([l > t for l in decode_lengths]) #
+            prediction, structural_hidden_state, attention_weight = self.timestep(encoded_features_map[:batch_size_t], structural_input[:batch_size_t], structural_hidden_state[:, :batch_size_t, :])
 
             # stores the predictions
-            predictions[t] = prediction
+            predictions[t, :batch_size_t, :] = prediction
+
+            # stores the attention weights
+            attention_weights[t,:batch_size_t,:] = attention_weight
 
             # teacher forcing
-            structural_input = structural_target[:, t]
+            structural_input = structural_target[:batch_size_t, t]
 
             loss += self.loss_criterion(prediction, structural_input)
 
+
             # TODO: implement more efficiently
-            storage[t] = structural_hidden_state
+            storage[t, :, :batch_size_t] = structural_hidden_state
+
+        # reorder back to original positions
+        storage = storage[:,:, sort_ind]
+        predictions = predictions[:, sort_ind, :]
 
         # normalize by the number of timesteps and examples to allow comparison
-        loss = loss/num_timesteps/batch_size
+        #loss = loss/num_timesteps/batch_size
+        regularisation_term = alpha_c * torch.mean(((1 - attention_weights.sum(dim=0)) ** 2))
+        loss += regularisation_term
+
 
         return predictions, loss, storage
 
@@ -161,18 +192,19 @@ class DecoderStructural(torch.nn.Module):
 
 #                print('pad prob', compatible_target.size(), compatible_prediction_prob.size())
 
-            loss+= self.loss_criterion(compatible_prediction_prob, compatible_target)/num_predictions
+            loss+= self.loss_criterion(compatible_prediction_prob, compatible_target)#/num_predictions
         return loss
 
-
-    def predict(self, encoded_features_map, structural_target = None, maxT = 2000):
+    def predict(self, encoded_features_map, structural_target = None, maxT = 2000, store_attention=False):
         ''' For use on validation set and test set.
         encoded_features_map: torch.tensor of shape (num_examples, encoder_size, encoder_size)
         structural target: None or tensor of shape (timesteps, batch_size)
             Targets for prediction. If None: loss function is not calculated
             and returned.
         maxT: Integer. The maximum number of timesteps that is attempted to
-            find <end> if structural target is not supplied.  '''
+            find <end> if structural target is not supplied.
+        store_attention: Boolean. Flag to activate the storage of attention weights.
+        '''
 
         batch_size = encoded_features_map.shape[0]
 
@@ -186,11 +218,13 @@ class DecoderStructural(torch.nn.Module):
         # create list to store hidden state
         storage = [ [] for n in range(batch_size)]
 
+        # create a list to store the attention weights
+        attention_storage = [ [] for n in range(batch_size)]
+
         # initialisation
         predict_id, structural_hidden_state = self.initialise(batch_size)
 
         loss = 0
-
 
         # define tensor to contain batch indices to run through timestep.
         batch_indices_to_keep = torch.tensor(range(batch_size), dtype = torch.long)
@@ -199,7 +233,6 @@ class DecoderStructural(torch.nn.Module):
         indices_to_keep = torch.tensor(range(batch_size), dtype = torch.long)
 #        print("outside")
 #        print(structural_input.shape)
-
         #run the timesteps
         for t in range(maxT):
 
@@ -209,7 +242,7 @@ class DecoderStructural(torch.nn.Module):
 
             structural_hidden_state_in = structural_hidden_state[:, indices_to_keep, :]
             # run through rnn
-            prediction, structural_hidden_state = self.timestep(encoded_features_map_in, structural_input_in, structural_hidden_state_in)
+            prediction, structural_hidden_state, attention_weights = self.timestep(encoded_features_map_in, structural_input_in, structural_hidden_state_in)
 
             # apply logsoftmax
             log_p = self.LogSoftmax(prediction)
@@ -230,12 +263,16 @@ class DecoderStructural(torch.nn.Module):
                 batch_index = batch_indices_to_keep[n]
 
                 # if stop:
-                if id in [self.structural_token2integer["<end>"],self.structural_token2integer["<pad>"] ]:
+                if id in [self.structural_token2integer["<end>"], self.structural_token2integer["<pad>"] ]:
                     #store to later remove element from continue_decoder
                     removes.append(batch_index)
                     # do not save prediction or hidden state
                     predictions[batch_index].append(id)
                     prediction_props[batch_index].append(prediction[n,:])
+
+                    if store_attention:
+                        attention_storage[batch_index].append(attention_weights[n, :])
+
                     continue
                 #if not stop
                 else:
@@ -246,6 +283,10 @@ class DecoderStructural(torch.nn.Module):
                     # save prediction
                     predictions[batch_index].append(id)
                     prediction_props[batch_index].append(prediction[n,:])
+
+                    if store_attention:
+                        attention_storage[batch_index].append(attention_weights[n, :])
+
                 # if <td> or >:
                 if id in [self.structural_token2integer["<td>"], self.structural_token2integer[">"]]:
                     # keep hidden state
@@ -264,6 +305,9 @@ class DecoderStructural(torch.nn.Module):
         if structural_target is not None:
             loss = self.calc_loss_struc(structural_target, prediction_props )
             return predictions, loss, storage, pred_triggers
+
+        elif store_attention:
+            return predictions, storage, pred_triggers, attention_storage
 
         else:
             return predictions, storage, pred_triggers

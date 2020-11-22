@@ -175,7 +175,9 @@ class Model:
             batch_size_val=10,
             storage_size=1000,
             val=None,
-            maxT_val = 2000):
+            maxT_val = 2000,
+            alpha_c_struc = 0.0,
+            alpha_c_cell_content = 0.0):
 
         assert epochs == len(lambdas) == len(
             lrs) == len(val), "number of epoch, learning rates, lambdas and val are inconsistent"

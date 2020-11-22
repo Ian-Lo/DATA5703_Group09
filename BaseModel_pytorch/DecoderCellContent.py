@@ -29,9 +29,6 @@ class DecoderCellContent(torch.nn.Module):
         # the loss criterion
         self.loss_criterion = torch.nn.CrossEntropyLoss()
 
-        # factor for regularization term in attention mechanism
-        self.alpha_c = alpha_c
-
         # softmax function for inference
         self.LogSoftmax = torch.nn.LogSoftmax(dim=1)
         # the device we are running on
@@ -103,9 +100,7 @@ class DecoderCellContent(torch.nn.Module):
 
         return prediction, cell_content_hidden_state, attention_weights
 
-    def forward(self, encoded_features_map, structural_hidden_state, cell_content_target):
-
-        alpha_c = self.alpha_c
+    def forward(self, encoded_features_map, structural_hidden_state, cell_content_target, alpha_c_cell_content = 0.0):
 
         batch_size = encoded_features_map.shape[0]
 
@@ -167,7 +162,7 @@ class DecoderCellContent(torch.nn.Module):
 
         # normalize
 #       loss = loss/num_timesteps/batch_size
-        regularisation_term = alpha_c * torch.mean(((1 - attention_weights_cell_content.sum(dim=0)) ** 2))
+        regularisation_term = alpha_c_cell_content * torch.mean(((1 - attention_weights_cell_content.sum(dim=0)) ** 2))
 
         loss += regularisation_term
 
@@ -235,13 +230,6 @@ class DecoderCellContent(torch.nn.Module):
         maxT: integer, maximum number of time steps
         '''
 
-        # print("encoded_features_map")
-        # print(encoded_features_map.shape)
-        # print("structural_hidden_state")
-        # print(len(structural_hidden_state))
-        # print("cell_content_target")
-        # print(cell_content_target.shape)
-
         batch_size = encoded_features_map.shape[0] #number of triggers for each example. Will vary from image to image
 
         # create list to hold predictions since we sometimes dont know the size
@@ -290,15 +278,6 @@ class DecoderCellContent(torch.nn.Module):
                 # keep only those examples that have not predicted and <end> token
                 cell_content_input_in = predict_id[indices_to_keep]
                 cell_content_hidden_state_in = cell_content_hidden_state[:, indices_to_keep, :]
-                # print("outside ")
-                # print("encoded_features_map_in")
-                # print(encoded_features_map_in.shape)
-                # print("structural_hidden_states_in.shape")
-                # print(structural_hidden_state_in.shape)
-                # print("cell_content_input_in")
-                # print(cell_content_input_in.shape)
-                # print("cell_content_hidden_state_in")
-                # print(cell_content_hidden_state_in.shape)
 
                 # run through rnn
                 prediction, cell_content_hidden_state, attention_weights = self.timestep(encoded_features_map_in, structural_hidden_state_in, cell_content_input_in, cell_content_hidden_state_in)

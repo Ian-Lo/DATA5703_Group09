@@ -1,13 +1,20 @@
 import torch
 
-def train_step(features_map, structural_tokens, triggers, cells_content_tokens, model, LAMBDA=0.5):
+def train_step(features_map,
+                structural_tokens,
+                triggers,
+                cells_content_tokens,
+                model,
+                LAMBDA=0.5,
+                alpha_c_struc = 0.0,
+                alpha_c_cell_content = 0.0):
 
     # pass features through encoder
     encoded_structural_features_map = model.encoder_structural.forward(features_map)
     encoded_cell_content_features_map = model.encoder_cell_content.forward(features_map)
 
     # pass encoded features through structural decoder
-    predictions, loss_s, storage_hidden = model.decoder_structural.forward(encoded_structural_features_map, structural_tokens)
+    predictions, loss_s, storage_hidden = model.decoder_structural.forward(encoded_structural_features_map, structural_tokens, alpha_c_struc = alpha_c_struc)
 
 
     # run structural decoder only if lambda != 1
@@ -78,7 +85,8 @@ def train_step(features_map, structural_tokens, triggers, cells_content_tokens, 
         structural_hidden_state = list2_.unsqueeze(0)
         new_cells_content_tokens = list3_
 
-        predictions_cell, loss_cc = model.decoder_cell_content.forward(new_encoded_features_map, structural_hidden_state, new_cells_content_tokens)
+        predictions_cell, loss_cc = model.decoder_cell_content.forward(new_encoded_features_map, structural_hidden_state, new_cells_content_tokens, alpha_c_cell_content = alpha_c_cell_content)
+
     # calculate loss and update weights
 
     if abs(LAMBDA-1.0)>=0.001:

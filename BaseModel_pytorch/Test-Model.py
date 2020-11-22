@@ -25,13 +25,13 @@ epochs = 100
 #epochs = 25
 
 # make list of lambdas to use for each epoch in training
-lambdas = [0.1 for n in range(epochs) ] # LAMBDA = 1 turns OFF cell decoder
+lambdas = [0.3 for n in range(epochs) ] # LAMBDA = 1 turns OFF cell decoder
 #lambdas = [1.0]*25 + 25*[1, 1, 0.5, 0.5]# for n in range(epochs)] # LAMBDA = 1 turns OFF cell decoder
 # if you want to run WITH cell decoder, you can uncomment the line below, remember to change epochs to 25
 #lambdas = [1 for _ in range(30)] + [0.5 for _ in range(70)]#+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
 
 # make list of learning rate to use for each epoch in training
-lrs = [0.01 for _ in range(epochs)] #+ [0.001]*25
+lrs = [0.001 for _ in range(epochs)] #+ [0.001]*25
 #lrs =[0.001 for n in range(20)]+ [0.0001 for _ in range(30)] + [0.00001 for _ in range(50)]# + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 #if you want to run WITH cell decoder, you can uncomment the line below, rembember to change epochs to 25
 #lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
@@ -54,6 +54,9 @@ f = epochs
 val = f*[False]+(epochs-f)*[True]#, False, True, True]
 
 maxT_val = 200
+
+alpha_c_struc = 1.0
+alpha_c_cell_content = 1.0
 
 # import model
 from Model import Model
@@ -84,4 +87,6 @@ loss_s, loss_s_val = model.train(epochs=epochs,
             batch_size_val = batch_size_val,
             storage_size=storage_size,
             val = val,
-            maxT_val = maxT_val)
+            maxT_val = maxT_val,
+            alpha_c_struc = alpha_c_struc,
+            alpha_c_cell_content = alpha_c_cell_content)

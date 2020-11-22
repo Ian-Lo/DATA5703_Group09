@@ -1,41 +1,62 @@
-# Img2VecCosSim-Django-Pytorch
-[![HitCount](http://hits.dwyl.com/MexsonFernandes/Img2VecCosSim-Django-Pytorch.svg)](http://hits.dwyl.com/MexsonFernandes/Img2VecCosSim-Django-Pytorch)
+# Image2Caption
 
-Extract a feature vector for any image and find the cosine similarity for comparison using Pytorch. I have used ResNet-18 to extract the feature vector of images. Finally a Django app is developed to input two images and to find the cosine similarity.
 
-<a href='https://ko-fi.com/Y8Y31LBT4' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://cdn.ko-fi.com/cdn/kofi3.png?v=2' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+[![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://github.com/xden2331/img2caption)
 
-#### Packages:
-  - Pytorch
-  - Django 2.0
-  
-#### Credits:
-  - Inspired from <a href="https://becominghuman.ai/extract-a-feature-vector-for-any-image-with-pytorch-9717561d1d4c">Medium post by Christian Safka</a>
-  
-#### How to start:
-  * Clone repository
-  
-    `git clone https://github.com/MexsonFernandes/Img2VecCosSim-Django-Pytorch`
-  * Change directory
-  
-    `cd Img2VecCosSim-Django-Pytorch`
-  * Install virtual environment
-  
-    `pipenv install`
-  * Install all dependencies
-  
-    `pipenv install -r requirements.txt` or `pip install -r requirements.txt`
-    
-  * Start django server
-  
-    `python manage.py runserver`
+Image2Caption is a web application for captioning one image.
 
-#### Showcase:
-*Dashboard*
-![Dashboard](https://raw.githubusercontent.com/realSaddy/Img2VecCosSim-Django-Pytorch/master/dashboard.png)
+# New Features!
 
----
+  - Upload one image and get the caption automatically!
 
-*Example Comparison*
-![Example Comparison](https://github.com/realSaddy/Img2VecCosSim-Django-Pytorch/blob/master/example_comparison.png?raw=true)
+### Tech
 
+Dillinger uses a number of open source projects to work properly:
+
+* [PyTorch] - The Deep Learning Lib.
+* [Django] - Awesome web framework
+
+### Installation
+
+Clone repository
+
+```sh
+$ git clone https://github.com/xden2331/img2caption.git
+```
+
+Go to the work directory
+```sh
+$ cd img2caption
+```
+
+Install virtual environment
+```sh
+$ pipenv install
+```
+
+Download the caption model
+```sh
+$ chmod a+x main/download_caption_model.sh
+$ ./main/download_caption_model.sh
+```
+
+Install the dependencies and devDependencies and start the server.
+
+```sh
+$ pipenv install -r requirements.txt
+```
+
+Start Django Server
+```sh
+$ python manage.py runserver
+```
+
+### Todos
+
+ - Integrate more image captioning models
+ - Deploy the web app
+
+### Acknowledge
+
+MexsonFernandes - The whole project is modified on [MexsonFernandes's project](https://github.com/MexsonFernandes/Img2VecCosSim-Django-Pytorch).
+David Chung - The idea of this project is given by David Chung.

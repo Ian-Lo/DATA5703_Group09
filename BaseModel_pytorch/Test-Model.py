@@ -21,7 +21,7 @@ cell_content_embedding_size = 80 # determined from preprocessing, do not change
 # 50 epochs with batch size 10 to get a decent length
 
 # set number of epochs
-epochs = 5
+epochs = 100
 #epochs = 25
 
 # make list of lambdas to use for each epoch in training
@@ -40,7 +40,7 @@ lrs = [0.001 for _ in range(epochs)] #+ [0.001]*25
 number_examples=3
 
 # Number of examples to include in validation set
-number_examples_val=2 # not used if val==None
+number_examples_val=3 # not used if val==None
 
 # size of batches
 batch_size=3
@@ -50,7 +50,7 @@ batch_size_val = 2
 storage_size=1000 # fixed, do not change
 
 # whether to calculate the validation loss
-f = 0
+f = epochs
 val = f*[False]+(epochs-f)*[True]#, False, True, True]
 
 maxT_val = 200

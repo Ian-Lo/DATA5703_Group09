@@ -187,10 +187,7 @@ def index(request):
             axes[row, col].axis('off')
 
         attention_file_path  = file1_path[::-1].split(sep = '.' ,maxsplit = 1)[1][::-1]+ "_attention.png"
-        print(attention_file_path)
         plt.savefig(attention_file_path)
-
-
 
 
         return render(request, "index.html", {
@@ -198,6 +195,7 @@ def index(request):
             "img1src": file1_name,
             "table_tags": html_out
         })
+
     return render(request, "index.html", {'post': False})
 
 

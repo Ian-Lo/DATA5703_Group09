@@ -37,6 +37,7 @@ class DecoderStructural(torch.nn.Module):
         # the device we are running on
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+
     def initialise(self, batch_size):
 
         # initialise structural input
@@ -80,9 +81,9 @@ class DecoderStructural(torch.nn.Module):
 
         return prediction, structural_hidden_state, attention_weights
 
-    def forward(self, encoded_features_map, structural_target):
+    def forward(self, encoded_features_map, structural_target, alpha_c_struc = 0.05):
 
-        alpha_c = 0
+
 
         batch_size = encoded_features_map.shape[0]
         first_nonzero = (structural_target == 0).sum(dim=1)
@@ -144,7 +145,7 @@ class DecoderStructural(torch.nn.Module):
 
         # normalize by the number of timesteps and examples to allow comparison
         #loss = loss/num_timesteps/batch_size
-        regularisation_term = alpha_c * torch.mean(((1 - attention_weights.sum(dim=0)) ** 2))
+        regularisation_term = alpha_c_struc * torch.mean(((1 - attention_weights.sum(dim=0)) ** 2))
         loss += regularisation_term
 
 

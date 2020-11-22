@@ -175,7 +175,9 @@ class Model:
             batch_size_val=10,
             storage_size=1000,
             val=None,
-            maxT_val = 2000):
+            maxT_val = 2000,
+            alpha_c_struc = 0.0,
+            alpha_c_cell_content = 0.0):
 
         assert epochs == len(lambdas) == len(
             lrs) == len(val), "number of epoch, learning rates, lambdas and val are inconsistent"
@@ -249,16 +251,12 @@ class Model:
 
                 # apply logsoftmax
                 log_p = torch.nn.LogSoftmax(dim=2)(predictions)
-                if val and abs(LAMBDA-1.0)>0.001:
-                    if val[epoch]:
-                        log_p_cell = torch.nn.LogSoftmax(dim=2)(predictions_cell)
 
                 # greedy decoder to check prediction WITH teacher forcing
                 _, predict_id = torch.max(log_p, dim=2)
-                if val and abs(1.0-LAMBDA)>0.001:
-                    if val[epoch]:
-                        _, predict_id_cell = torch.max(log_p_cell, dim=2)
-
+                if abs(1.0-LAMBDA)>0.001:
+                    log_p_cell = torch.nn.LogSoftmax(dim=2)(predictions_cell)
+                    _, predict_id_cell = torch.max(log_p_cell, dim=2)
 
                 total_loss_s += loss_s
                 total_loss += loss
@@ -275,22 +273,21 @@ class Model:
             print("Accuracy WITH teacher forcing (1 example):")
             print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(
             ).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])
+#            for name, param in self.decoder_cell_content.named_parameters():
+#                if param.requires_grad:
+#                    print(name, param.data)
+#            print(self.decoder_cell_content.cell_content_attention.attention_encoded_features_map.bias)
 
             if val and abs(LAMBDA-1.0)>0.001:
-                if val[epoch]:
-                    print("Ground truth, cells:")
-                    print([self.cell_content_integer2token[p.item()]
-                           for p in cells_content_tokens[0][0].detach().numpy()])
-                    print(len([self.cell_content_integer2token[p.item()]
-                           for p in cells_content_tokens[0][0].detach().numpy()]))
-                    print("Prediction WITH teacher forcing (1 example):")
-                    print([self.cell_content_integer2token[p.item()]
-                           for p in predict_id_cell[:, 0].detach().numpy()])
-                    print(len([self.cell_content_integer2token[p.item()]
-                           for p in predict_id_cell[:, 0].detach().numpy()]))
-                    print("Accuracy WITH teacher forcing (1 example):")
-                    print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(#
-                    ).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])
+                print("Ground truth, cells:")
+                print([self.cell_content_integer2token[p.item()]
+                       for p in cells_content_tokens[0][0].detach().numpy()])
+                print("Prediction WITH teacher forcing (1 example):")
+                print([self.cell_content_integer2token[p.item()]
+                       for p in predict_id_cell[:, 0].detach().numpy()])
+                print("Accuracy WITH teacher forcing (1 example):")
+                print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(#
+                ).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])
 
 
             checkpoint.save_checkpoint(epoch, self.encoder_structural, self.encoder_cell_content, self.decoder_structural, self.decoder_cell_content,

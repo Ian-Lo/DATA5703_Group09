@@ -75,7 +75,7 @@ def train_step(features_map, structural_tokens, triggers, cells_content_tokens, 
         # structural_hidden_state = torch.stack(list2).unsqueeze(0)
         # new_cells_content_tokens = torch.stack(list3)
         new_encoded_features_map = list1_
-        structural_hidden_state_ = list2_.unsqueeze(0)
+        structural_hidden_state = list2_.unsqueeze(0)
         new_cells_content_tokens = list3_
 
         predictions_cell, loss_cc = model.decoder_cell_content.forward(new_encoded_features_map, structural_hidden_state, new_cells_content_tokens)

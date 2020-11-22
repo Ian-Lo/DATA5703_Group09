@@ -5,7 +5,7 @@ import numpy as np
 
 class DecoderCellContent(torch.nn.Module):
 
-    def __init__(self, cell_content_token2integer, embedding_size, encoder_size, structural_hidden_size, cell_content_hidden_size, cell_content_attention_size):
+    def __init__(self, cell_content_token2integer, embedding_size, encoder_size, structural_hidden_size, cell_content_hidden_size, cell_content_attention_size, alpha_c = 0.0):
 
         super(DecoderCellContent, self).__init__()
 
@@ -29,6 +29,8 @@ class DecoderCellContent(torch.nn.Module):
         # the loss criterion
         self.loss_criterion = torch.nn.CrossEntropyLoss()
 
+        # factor for regularization term in attention mechanism
+        self.alpha_c = alpha_c
 
         # softmax function for inference
         self.LogSoftmax = torch.nn.LogSoftmax(dim=1)
@@ -66,6 +68,7 @@ class DecoderCellContent(torch.nn.Module):
         # print("cell_content_hidden_state")
         # print(cell_content_hidden_state.shape)
 
+
         # compute the context vector
         # context_vector: (batch_size, encoder_size)
         context_vector, attention_weights = self.cell_content_attention.forward(encoded_features_map, structural_hidden_state, cell_content_hidden_state)
@@ -102,7 +105,7 @@ class DecoderCellContent(torch.nn.Module):
 
     def forward(self, encoded_features_map, structural_hidden_state, cell_content_target):
 
-        alpha_c = 0
+        alpha_c = self.alpha_c
 
         batch_size = encoded_features_map.shape[0]
 
@@ -124,8 +127,9 @@ class DecoderCellContent(torch.nn.Module):
 
         decode_lengths = (caption_lengths_sorted).tolist()
 
-        predictions = np.zeros((num_timesteps, batch_size, self.vocabulary_size), dtype=np.float32)
-        predictions = torch.from_numpy(predictions).to(self.device)
+        predictions = torch.zeros((num_timesteps, batch_size, self.vocabulary_size)).to(self.device)
+        #np.zeros((num_timesteps, batch_size, self.vocabulary_size), dtype=np.float32)
+#        predictions = torch.from_numpy(predictions).to(self.device)
 
         # (for loss regularisation) define the size of feature map
         feature_sizes = encoded_features_map.shape[1]

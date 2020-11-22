@@ -7,7 +7,7 @@ import numpy as np
 
 class DecoderStructural(torch.nn.Module):
 
-    def __init__(self, structural_token2integer, embedding_size, encoder_size, structural_hidden_size, structural_attention_size):
+    def __init__(self, structural_token2integer, embedding_size, encoder_size, structural_hidden_size, structural_attention_size, alpha_c=0.0):
 
         super(DecoderStructural, self).__init__()
 
@@ -36,6 +36,9 @@ class DecoderStructural(torch.nn.Module):
 
         # the device we are running on
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        # factor for regularisation loss in attention
+        self.alpha_c = alpha_c
 
     def initialise(self, batch_size):
 
@@ -82,7 +85,7 @@ class DecoderStructural(torch.nn.Module):
 
     def forward(self, encoded_features_map, structural_target):
 
-        alpha_c = 0
+        alpha_c = self.alpha_c
 
         batch_size = encoded_features_map.shape[0]
         first_nonzero = (structural_target == 0).sum(dim=1)

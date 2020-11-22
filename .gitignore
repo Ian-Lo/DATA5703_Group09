@@ -152,3 +152,6 @@ TEDS/pubtabnet1000.jsonl
 .vscode/settings.json
 client_secrets.json
 
+BaseModel_pytorch/Dataset/val_dataset_000.hdf5
+Analysis.ipynb
+BaseModel_pytorch/Dataset/train_dataset_000.hdf5

@@ -108,7 +108,7 @@ def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
         try:
             annotation = next(reader.iter())
         except StopIteration:
-            print("Oops!", sys.exc_info()[0], "occurred.")
+            print("test_pred_html()", sys.exc_info()[0], "occurred.")
             break
         except:
             print(
@@ -155,7 +155,7 @@ def json2html_TEDS(pred_jsonl, gt_jsonl, max_count):
         try:
             annotation = next(reader.iter())
         except StopIteration:
-            print("Oops!", sys.exc_info()[0], "occurred.")
+            print("json2html_TEDS() PRED Loop", sys.exc_info()[0], "occurred.")
             break
         except:
             print(f"{sys.exc_info()[0]} last file processed {annotation['filename']}")
@@ -188,7 +188,7 @@ def json2html_TEDS(pred_jsonl, gt_jsonl, max_count):
                 try:
                     annotation = next(reader.iter())
                 except StopIteration:
-                    print("Oops!", sys.exc_info()[0], "occurred.")
+                    print("json2html_TEDS() GT Loop", sys.exc_info()[0], "occurred.")
                     break
                 except:
                     print(f"{sys.exc_info()[0]} last file processed {annotation['filename']}")

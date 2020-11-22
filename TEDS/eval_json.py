@@ -139,7 +139,7 @@ def test_pred_html(img_name, pred_html, gt_file, max_count = 600000):
     return test_pred_score, delta_t
 
 # Takes pred and GT JSON and formats them into two dictionarys of PRED and GT
-def json2html_TEDS(pred_jsonl, gt_jsonl, max_count):
+def json2html_TEDS(pred_jsonl, gt_jsonl, max_count = 600000):
     import sys
 
     reader = jsonlines.open(f'{pred_jsonl}', 'r') # Load JSON with predictions
@@ -172,6 +172,7 @@ def json2html_TEDS(pred_jsonl, gt_jsonl, max_count):
 
 
     # Check if prediction is in GT and then generate valid HTML from structural/cell tokens
+    reader.close()
     reader = jsonlines.open(f'{gt_jsonl}', 'r') # Load JSON with Ground Truth
     count = 0 # Reset counter for GT loop
     match_count = 0 # count number of matches

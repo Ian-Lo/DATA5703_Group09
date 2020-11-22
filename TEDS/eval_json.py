@@ -190,6 +190,7 @@ def json2html_TEDS(pred_jsonl, gt_jsonl, max_count = 600000):
                     annotation = next(reader.iter())
                 except StopIteration:
                     print("json2html_TEDS() GT Loop", sys.exc_info()[0], "occurred.")
+                    print(f'{img_filename} worked')
                     break
                 except:
                     print(f"{sys.exc_info()[0]} last file processed {annotation['filename']}")

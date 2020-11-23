@@ -21,11 +21,11 @@ cell_content_embedding_size = 80 # determined from preprocessing, do not change
 # 50 epochs with batch size 10 to get a decent length
 
 # set number of epochs
-epochs = 50
+epochs = 100
 #epochs = 25
 
 # make list of lambdas to use for each epoch in training
-lambdas = [0.0 for n in range(epochs) ] # LAMBDA = 1 turns OFF cell decoder
+lambdas = [0.5 for n in range(epochs) ] # LAMBDA = 1 turns OFF cell decoder
 #lambdas = [1.0]*25 + 25*[1, 1, 0.5, 0.5]# for n in range(epochs)] # LAMBDA = 1 turns OFF cell decoder
 # if you want to run WITH cell decoder, you can uncomment the line below, remember to change epochs to 25
 #lambdas = [1 for _ in range(30)] + [0.5 for _ in range(70)]#+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
@@ -74,7 +74,7 @@ model = Model(relative_path,
                 cell_content_hidden_size=cell_content_hidden_size,
                 cell_content_attention_size=cell_content_attention_size)
 
-model.load_checkpoint(file_path="checkpoint_004.pth.tar")
+#model.load_checkpoint(file_path="checkpoint_004.pth.tar")
 
 # train model
 

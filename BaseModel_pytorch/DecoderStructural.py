@@ -101,12 +101,14 @@ class DecoderStructural(torch.nn.Module):
         num_timesteps = structural_target.size()[-1]
 
 #        batch_size = encoded_features_map.shape[0]
-        predictions = np.zeros((num_timesteps, batch_size, self.vocabulary_size), dtype=np.float32)
-        predictions = torch.from_numpy(predictions).to(self.device)
+        predictions = torch.zeros((num_timesteps, batch_size, self.vocabulary_size), dtype=torch.float).to(self.device)
+#        predictions = np.zeros((num_timesteps, batch_size, self.vocabulary_size), dtype=np.float32)
+#        predictions = torch.from_numpy(predictions).to(self.device)
 
         # TODO: implement more efficiently
-        storage = np.zeros((num_timesteps, 1, batch_size, self.hidden_size), dtype=np.float32)
-        storage = torch.from_numpy(storage).to(self.device)
+        storage = torch.zeros((num_timesteps, 1, batch_size, self.hidden_size) , dtype = torch.float).to(self.device)
+#        storage = np.zeros((num_timesteps, 1, batch_size, self.hidden_size), dtype=np.float32)
+#        storage = torch.from_numpy(storage).to(self.device)
 
         # define the size of feature map
         feature_sizes = encoded_features_map.shape[1]

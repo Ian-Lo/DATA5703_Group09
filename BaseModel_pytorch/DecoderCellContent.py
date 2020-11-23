@@ -57,15 +57,6 @@ class DecoderCellContent(torch.nn.Module):
         cell_content_input: torch.tensor of shape (number_examples)
         cell_content_hidden_state : torch.tensor of shape (1, num_examples, structural_hidden_size + structural_attention_size )
         """
-        # print("inside timestep")
-        # print("encoded_features_map.shape")
-        # print(encoded_features_map.shape)
-        # print("structural_hidden_state")
-        # print(structural_hidden_state.shape)
-        # print("cell_content_hidden_state")
-        # print(cell_content_hidden_state.shape)
-
-
         # compute the context vector
         # context_vector: (batch_size, encoder_size)
         context_vector, attention_weights = self.cell_content_attention.forward(encoded_features_map, structural_hidden_state, cell_content_hidden_state)
@@ -136,12 +127,13 @@ class DecoderCellContent(torch.nn.Module):
         cell_content_input, cell_content_hidden_state = self.initialise(batch_size)
 
         loss = 0
-
         # run the timesteps
         for t in range(max(decode_lengths)):
+
             batch_size_t = sum([l > t for l in decode_lengths])
 
             prediction, cell_content_hidden_state, attention_weights = self.timestep(encoded_features_map[:batch_size_t], structural_hidden_state[:, :batch_size_t, :], cell_content_input[:batch_size_t], cell_content_hidden_state[:, :batch_size_t, :])
+
 
             # stores the predictions
             predictions[t, :batch_size_t, :] = prediction

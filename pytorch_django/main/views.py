@@ -140,13 +140,13 @@ def index(request):
                 cell_content_attention_size=cell_content_attention_size)
 
         # reload latest checkpoint
-        model.load_checkpoint("../../trained_struc_cell_dec.pth.tar")
+        model.load_checkpoint(file_path = "/Users/andersborges/Downloads/checkpoint_002.pth.tar")
         predicted_struc_tokens, predictions_cell, structure_attention_weights , cell_attention_weights = model.predict(file1_path)
 
         html_struc = build_html_structure(predicted_struc_tokens)
         html_out = fill_html_structure(html_struc, predictions_cell)
 
-        # add attention plot
+        # add attention plot of structural tokens
 
         # load image
         image = Image.open(file1_path)
@@ -190,6 +190,57 @@ def index(request):
         attention_file_name = attention_file_path.split("/media")[1]
         print( "attention_file_name", attention_file_name)
         plt.savefig(attention_file_path)
+
+
+        # add attention plot of cell tokens
+        max_cell_tokens = 3
+        print(predictions_cell)
+
+        for cell_token in range(max_cell_tokens):
+
+            # load image
+            image = Image.open(file1_path)
+            image = image.resize([32 * 12, 32 * 12], Image.LANCZOS)
+
+            structure_attention_weights = cell_attention_weights[0][cell_token]
+
+            #  structural tokens
+            structural_tks = ['<start>'] + predictions_cell[cell_token]
+
+            num_subplots = min(len(structure_attention_weights), 25)
+
+            rows = num_subplots // 2
+            cols = min(num_subplots, 2)
+            fig, axes = plt.subplots(rows, cols)
+
+            for t in range(num_subplots):
+
+                row = t // 2
+                col = t % 2
+
+                # to obtain structure tokens in every time step
+                alphas = structure_attention_weights[t]
+                alphas = alphas.detach().numpy().reshape(12,12)
+
+                axes[row, col].text(0, 1, '%s' % (structural_tks[t]), color='black', backgroundcolor='white', fontsize=7)
+                axes[row, col].imshow(image)
+
+                alphas = skimage.transform.pyramid_expand(alphas, upscale=32, sigma=8)
+
+                axes[row, col].imshow(image)
+
+                if t == 0:
+                    axes[row, col].imshow(alphas, alpha=0, cmap=cm.Greys_r)
+                else:
+                    axes[row, col].imshow(alphas, alpha=0.8, cmap=cm.Greys_r)
+
+                axes[row, col].axis('off')
+
+            attention_file_path_cell  = file1_path.replace(".png", "_cell_attention%s.png"%cell_token)
+    #        attention_file_name = attention_file_path.split("/media")[1]
+    #        print( "attention_file_name", attention_file_name)
+            plt.savefig(attention_file_path_cell)
+
 
 
         return render(request, "index.html", {

@@ -25,6 +25,7 @@ def train_step(features_map,
             num_cells = example.numel() - (example == 0).sum()
             cells_in_examples.append(num_cells)
 
+
         # stack feature maps. One example corresponds to on trigger predicted
         list1_ = torch.repeat_interleave(encoded_cell_content_features_map, torch.stack(cells_in_examples) , dim = 0)
 
@@ -83,14 +84,19 @@ def train_step(features_map,
         # new_cells_content_tokens = torch.stack(list3)
         new_encoded_features_map = list1_
         structural_hidden_state = list2_.unsqueeze(0)
+        print(structural_hidden_state.shape)
+        print(structural_hidden_state[0,0, :10])
+        print(structural_hidden_state[0,1, :10])
+        print("/")
+#        print(structural_hidden_state[])
         new_cells_content_tokens = list3_
 
         predictions_cell, loss_cc = model.decoder_cell_content.forward(new_encoded_features_map, structural_hidden_state, new_cells_content_tokens, alpha_c_cell_content = alpha_c_cell_content)
 
     # calculate loss and update weights
 
-    if abs(LAMBDA-1.0)>=0.001:
-        loss = LAMBDA * loss_s + (1.0-LAMBDA) * loss_cc
+    if abs(1.0-LAMBDA)>=0.001:
+        loss =  LAMBDA * loss_s + (1.0-LAMBDA) * loss_cc
         # Back propagation
         model.decoder_cell_content_optimizer.zero_grad()
         model.decoder_structural_optimizer.zero_grad()
@@ -104,7 +110,7 @@ def train_step(features_map,
         model.encoder_cell_content_optimizer.step()
         model.encoder_structural_optimizer.step()
 
-    if abs(LAMBDA-1.0)<0.001:
+    if abs(1.0-LAMBDA)<0.001:
         loss = loss_s
         # Back propagation
         model.decoder_structural_optimizer.zero_grad()

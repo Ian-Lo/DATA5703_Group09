@@ -247,7 +247,7 @@ class Model:
                 #####
                 # send to training function for forward pass, backpropagation and weight updates
                 predictions, loss_s, predictions_cell, loss_cc, loss = train_step(
-                    features_maps, structural_tokens, triggers, cells_content_tokens, self, LAMBDA=LAMBDA)
+                    features_maps, structural_tokens, triggers, cells_content_tokens, self, LAMBDA=LAMBDA, alpha_c_struc=alpha_c_struc, alpha_c_cell_content = alpha_c_cell_content)
 
                 # apply logsoftmax
                 log_p = torch.nn.LogSoftmax(dim=2)(predictions)
@@ -281,10 +281,10 @@ class Model:
             if val and abs(LAMBDA-1.0)>0.001:
                 print("Ground truth, cells:")
                 print([self.cell_content_integer2token[p.item()]
-                       for p in cells_content_tokens[0][0].detach().numpy()])
+                       for p in cells_content_tokens[0][1].detach().numpy()])
                 print("Prediction WITH teacher forcing (1 example):")
                 print([self.cell_content_integer2token[p.item()]
-                       for p in predict_id_cell[:, 0].detach().numpy()])
+                       for p in predict_id_cell[:, 1].detach().numpy()])
                 print("Accuracy WITH teacher forcing (1 example):")
                 print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(#
                 ).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])

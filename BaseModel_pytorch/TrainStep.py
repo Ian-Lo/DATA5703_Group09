@@ -84,10 +84,10 @@ def train_step(features_map,
         # new_cells_content_tokens = torch.stack(list3)
         new_encoded_features_map = list1_
         structural_hidden_state = list2_.unsqueeze(0)
-        print(structural_hidden_state.shape)
-        print(structural_hidden_state[0,0, :10])
-        print(structural_hidden_state[0,1, :10])
-        print("/")
+        # print(structural_hidden_state.shape)
+        # print(structural_hidden_state[0,0, :10])
+        # print(structural_hidden_state[0,1, :10])
+        # print("/")
 #        print(structural_hidden_state[])
         new_cells_content_tokens = list3_
 

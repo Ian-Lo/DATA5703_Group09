@@ -140,7 +140,7 @@ def index(request):
                 cell_content_attention_size=cell_content_attention_size)
 
         # reload latest checkpoint
-        model.load_checkpoint(file_path = "/Users/andersborges/Downloads/checkpoint_002.pth.tar")
+        model.load_checkpoint(file_path = "/Users/andersborges/Downloads/checkpoint_004.pth.tar")
         predicted_struc_tokens, predictions_cell, structure_attention_weights , cell_attention_weights = model.predict(file1_path)
 
         html_struc = build_html_structure(predicted_struc_tokens)

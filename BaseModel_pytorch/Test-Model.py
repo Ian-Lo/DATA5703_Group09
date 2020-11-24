@@ -18,45 +18,48 @@ in_channels = 512 # fixed in output from resnet, do not change
 structural_embedding_size = 16 # determined from preprocessing, do not change
 cell_content_embedding_size = 80 # determined from preprocessing, do not change
 
-# 50 epochs with batch size 10 to get a decent length
 
 # set number of epochs
-epochs = 50
+epochs = 10
 #epochs = 25
 
+
 # make list of lambdas to use for each epoch in training
-lambdas = [0.0 for n in range(epochs) ] # LAMBDA = 1 turns OFF cell decoder
+lambda_ratio = 0.4
+lambdas = int(lambda_ratio * epochs) * [1.0] + int((1-lambda_ratio) * epochs) * [0.0001]
+
 #lambdas = [1.0]*25 + 25*[1, 1, 0.5, 0.5]# for n in range(epochs)] # LAMBDA = 1 turns OFF cell decoder
 # if you want to run WITH cell decoder, you can uncomment the line below, remember to change epochs to 25
 #lambdas = [1 for _ in range(30)] + [0.5 for _ in range(70)]#+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
 
+
 # make list of learning rate to use for each epoch in training
-lrs = [0.001 for _ in range(epochs)] #+ [0.001]*25
+lrs = [0.01 for _ in range(epochs)] #+ [0.001]*25
 #lrs =[0.001 for n in range(20)]+ [0.0001 for _ in range(30)] + [0.00001 for _ in range(50)]# + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 #if you want to run WITH cell decoder, you can uncomment the line below, rembember to change epochs to 25
 #lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 
 # Number of examples to include in the training set
-number_examples=1
+number_examples=10
 
 # Number of examples to include in validation set
-number_examples_val=3 # not used if val==None
+number_examples_val=10 # not used if val==None
 
 # size of batches
-batch_size=3
-batch_size_val = 2
+batch_size=1
+batch_size_val = 10
 
 # number of examples in each preprocessed file
 storage_size=1000 # fixed, do not change
 
 # whether to calculate the validation loss
-f = epochs
+f = 1
 val = f*[False]+(epochs-f)*[True]#, False, True, True]
 
 maxT_val = 200
 
-alpha_c_struc = 1.0
-alpha_c_cell_content = 1.0
+alpha_c_struc = 0.0
+alpha_c_cell_content = 0.0
 
 # import model
 from Model import Model
@@ -74,11 +77,11 @@ model = Model(relative_path,
                 cell_content_hidden_size=cell_content_hidden_size,
                 cell_content_attention_size=cell_content_attention_size)
 
-model.load_checkpoint(file_path="checkpoint_004.pth.tar")
+#model.load_checkpoint(file_path="overtrained1example.pth.tar")
 
 # train model
 
-loss_s, loss_s_val = model.train(epochs=epochs,
+loss,loss_s, loss_cc, loss_val, loss_s_val, loss_cc_val = model.train(epochs=epochs,
             lambdas=lambdas,
             lrs=lrs,
             number_examples=number_examples,
@@ -90,3 +93,11 @@ loss_s, loss_s_val = model.train(epochs=epochs,
             maxT_val = maxT_val,
             alpha_c_struc = alpha_c_struc,
             alpha_c_cell_content = alpha_c_cell_content)
+print(loss_val)
+
+
+from matplotlib import pylab as plt
+plt.plot(loss, label = 'training loss')
+plt.plot(loss_val, label = 'validation loss')
+plt.legend()
+plt.savefig('epochs_loss.png')

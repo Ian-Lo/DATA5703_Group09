@@ -16,7 +16,7 @@ def train_step(features_map,
     # pass encoded features through structural decoder
     predictions, loss_s, storage_hidden = model.decoder_structural.forward(encoded_structural_features_map, structural_tokens, alpha_c_struc = alpha_c_struc)
 
-
+#    print(storage_hidden)
     # run structural decoder only if lambda != 1
     if abs(LAMBDA-1)>0.001:
         # find number of cells in each example
@@ -95,8 +95,8 @@ def train_step(features_map,
 
     # calculate loss and update weights
 
-    if abs(1.0-LAMBDA)>=0.001:
-        loss =  LAMBDA * loss_s + (1.0-LAMBDA) * loss_cc
+    if abs(1.0-LAMBDA)>=0.0000001:
+        loss =  LAMBDA * loss_s +(1.0-LAMBDA) * loss_cc
         # Back propagation
         model.decoder_cell_content_optimizer.zero_grad()
         model.decoder_structural_optimizer.zero_grad()
@@ -110,7 +110,7 @@ def train_step(features_map,
         model.encoder_cell_content_optimizer.step()
         model.encoder_structural_optimizer.step()
 
-    if abs(1.0-LAMBDA)<0.001:
+    if abs(1.0-LAMBDA)<0.0000001:
         loss = loss_s
         # Back propagation
         model.decoder_structural_optimizer.zero_grad()

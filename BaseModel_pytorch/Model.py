@@ -203,6 +203,10 @@ class Model:
         batching.initialise()
         losses_s = []
         losses_s_val = []
+        losses_cc = []
+        losses_cc_val = []
+        losses_total = []
+        losses_total_val = []
         for epoch in range(epochs):
             print(epoch)
             # change model to training
@@ -216,7 +220,7 @@ class Model:
             total_loss = 0
             total_loss_s_val = 0
             total_loss_cc_val = 0
-
+            total_loss_val = 0
             # create random batches of examples
             # these "batches" are the just information needed to retrieve the actual tensors
             # batch = (storage number, [list of indices within the storage])
@@ -237,6 +241,7 @@ class Model:
 
             # batch looping for training
             for batch in batches:
+
                 # call 'get_batch' to actually load the tensors from file
                 features_maps, structural_tokens, triggers, cells_content_tokens = batching.get_batch(
                     batch)
@@ -310,13 +315,20 @@ class Model:
                         # batch looping for validation
                         for batch in batches_val:
                             # call 'get_batch' to actually load the tensors from file
-                            features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(
-                                batch)
+                            features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val = batching_val.get_batch(batch)
                             predictions_val, loss_s_val, predictions_cell_val, loss_cc_val, loss_val = val_step(
                                 features_maps_val, structural_tokens_val, triggers_val, cells_content_tokens_val, self, LAMBDA, maxT_val = maxT_val)
                             total_loss_s_val += loss_s_val
+                            total_loss_val += loss_val
                             if loss_cc_val:
                                 total_loss_cc_val += loss_cc_val
+                        losses_total.append( total_loss)
+                        losses_s.append(total_loss_s)
+                        losses_cc.append(total_loss_cc)
+                        losses_total_val.append( total_loss_val)
+                        losses_s_val.append(total_loss_s_val)
+                        losses_cc_val.append(total_loss_cc_val)
+
                         #total_loss_s_val /= len(batches)
                         #total_loss_cc_val /= len(batches)
                         print("-------------Validation loss:---------------")
@@ -327,17 +339,17 @@ class Model:
                         print("Prediction (1 example)")
                         print([self.structural_integer2token[p.item()]
                                for p in predictions_val[0]])
-                        if abs(LAMBDA-1.0) > 0.01:
+                        if abs(LAMBDA-1.0) > 0.000000001:
                             print("-- cell decoder:---")
                             print("Truth")
                             print([self.cell_content_integer2token[p.item()]
                                    for p in cells_content_tokens_val[0][0]])
                             print("Prediction")
-                            print([self.cell_content_integer2token[p.item()]
-                                   for p in predictions_cell_val[0][0]])
+                            if len(predictions_cell_val[0])>0:
+                                print([self.cell_content_integer2token[p.item()]
+                                       for p in predictions_cell_val[0][0]])
                     ######################
-            losses_s.append(total_loss_s)
-            losses_s_val.append(total_loss_s_val)
+
             t1_stop = perf_counter()
             print("----------------------")
             print('epoch: %d \tLAMBDA: %.2f\tlr:%.5f\ttime: %.2f' %
@@ -346,9 +358,10 @@ class Model:
             print('Struct. decod. loss: %.5f' % total_loss_s)
             print("Cell dec. loss:", total_loss_cc)
             if val:
+                print("Total val. loss: %.5f" %total_loss_val)
                 print('Validation struct. decod. loss: %.5f'%total_loss_s_val)
-#            if loss_cc_val:
-#                print('Validation cell decoder. loss: %.5f'%loss_cc_val)
+                if abs(1-LAMBDA) > 0.0000001:
+                    print('Validation cell decoder. loss: %.5f'% loss_cc_val)
             print('time for 100k examples:', "%.2f hours" %
                   ((t1_stop-t1_start)/number_examples*100000/3600))
-        return losses_s, losses_s_val
+        return losses_total,losses_s, losses_cc, losses_total_val, losses_s_val, losses_cc_val

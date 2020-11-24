@@ -9,7 +9,7 @@ def val_step(features_map_val, structural_tokens_val,triggers_val,cells_content_
 
 
     # run cell decoder
-    if abs(1.0 - LAMBDA)>=0.001:
+    if abs(1.0 - LAMBDA)>=0.0000001:
         # get shapes
         num_examples = features_map_val.shape[0]
         max_struc_token_pred = max([ len(t) for t in pred_triggers])
@@ -46,7 +46,7 @@ def val_step(features_map_val, structural_tokens_val,triggers_val,cells_content_
 
 
     # do not run cell decoder:
-    if abs( 1.0 - LAMBDA ) < 0.001:
+    if abs( 1.0 - LAMBDA ) < 0.0000001:
         loss_val = loss_s_val
         predictions_cell_val = None
         loss_cc_val = None

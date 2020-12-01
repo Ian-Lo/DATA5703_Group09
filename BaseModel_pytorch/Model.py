@@ -278,9 +278,12 @@ class Model:
             print("Accuracy WITH teacher forcing (1 example):")
             print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(
             ).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])
-#            for name, param in self.decoder_cell_content.named_parameters():
-#                if param.requires_grad:
-#                    print(name, param.data)
+            # for name, param in self.decoder_cell_content.named_parameters():
+            #     if param.requires_grad:
+            #         print(name)#, param.data)
+            # for name, param in self.decoder_structural.named_parameters():
+            #     if param.requires_grad:
+            #         print(name)#, param.data)
 #            print(self.decoder_cell_content.cell_content_attention.attention_encoded_features_map.bias)
 
             if val and abs(LAMBDA-1.0)>0.001:

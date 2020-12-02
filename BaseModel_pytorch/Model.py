@@ -33,7 +33,9 @@ class Model:
                  cell_content_embedding_size=80,
                  cell_content_hidden_size=512,
                  cell_content_attention_size=256,
-                 maxT_structure = 2000):
+                 maxT_structure = 2000,
+                 structural_encoder_conv = False,
+                 cell_content_encoder_conv = False):
 
         # set device
         # sets device for model and PyTorch tensors
@@ -55,7 +57,7 @@ class Model:
         self.cell_content_integer2token = cell_content_integer2token
         # initialize structural_encoder
         encoder_structural = EncoderStructural(
-            in_channels, out_channels_structural)
+            in_channels, out_channels_structural,conv = structural_encoder_conv )
         encoder_structural_optimizer = torch.optim.Adam(params=filter(
             lambda p: p.requires_grad, encoder_structural.parameters()))
         self.encoder_structural = encoder_structural.to(self.device)
@@ -63,7 +65,7 @@ class Model:
 
         # initialize cell_encoder
         encoder_cell_content = EncoderCellContent(
-            in_channels, out_channels_cell_content)
+            in_channels, out_channels_cell_content, conv = cell_content_encoder_conv)
         encoder_cell_content_optimizer = torch.optim.Adam(params=filter(
             lambda p: p.requires_grad, encoder_cell_content.parameters()))
         self.encoder_cell_content = encoder_cell_content.to(self.device)

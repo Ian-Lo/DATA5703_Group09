@@ -10,7 +10,7 @@ class EncoderStructural(torch.nn.Module):
 
         self.conv = conv
         if self.conv:
-            self.conv1x1 = torch.nn.Conv2d(in_channels=in_channels, out_channels=out_channels_cell_content, kernel_size=1)
+            self.conv1x1 = torch.nn.Conv2d(in_channels=in_channels, out_channels=out_channels_structural, kernel_size=1)
         else:
             self.fc = torch.nn.Linear(in_channels, out_channels_structural)
 

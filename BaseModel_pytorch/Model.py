@@ -179,10 +179,13 @@ class Model:
             val=None,
             maxT_val = 2000,
             alpha_c_struc = 0.0,
-            alpha_c_cell_content = 0.0):
+            alpha_c_cell_content = 0.0,
+            test_link =None):
 
-        assert epochs == len(lambdas) == len(
-            lrs) == len(val), "number of epoch, learning rates, lambdas and val are inconsistent"
+        if not test_link:
+            test_link = epochs*[None]
+
+        assert epochs == len(lambdas) == len(lrs) == len(val) ==len(test_link), "number of epoch, learning rates, lambdas, val and test_link are inconsistent"
 
         # instantiate the batching object
         batching = BatchingMechanism(
@@ -253,8 +256,9 @@ class Model:
 #                assert 0
                 #####
                 # send to training function for forward pass, backpropagation and weight updates
+
                 predictions, loss_s, predictions_cell, loss_cc, loss = train_step(
-                    features_maps, structural_tokens, triggers, cells_content_tokens, self, LAMBDA=LAMBDA, alpha_c_struc=alpha_c_struc, alpha_c_cell_content = alpha_c_cell_content)
+                    features_maps, structural_tokens, triggers, cells_content_tokens, self, LAMBDA=LAMBDA, alpha_c_struc=alpha_c_struc, alpha_c_cell_content = alpha_c_cell_content, test_link =test_link[epoch])
 
                 # apply logsoftmax
                 log_p = torch.nn.LogSoftmax(dim=2)(predictions)
@@ -269,6 +273,11 @@ class Model:
                 total_loss += loss
                 if loss_cc:
                     total_loss_cc += loss_cc
+
+            losses_total.append( total_loss)
+            losses_s.append(total_loss_s)
+            losses_cc.append(total_loss_cc)
+
 
 #           total_loss_s /= len(batches)
             print("Ground truth, structural:")
@@ -327,9 +336,6 @@ class Model:
                             total_loss_val += loss_val
                             if loss_cc_val:
                                 total_loss_cc_val += loss_cc_val
-                        losses_total.append( total_loss)
-                        losses_s.append(total_loss_s)
-                        losses_cc.append(total_loss_cc)
                         losses_total_val.append( total_loss_val)
                         losses_s_val.append(total_loss_s_val)
                         losses_cc_val.append(total_loss_cc_val)
@@ -363,10 +369,13 @@ class Model:
             print('Struct. decod. loss: %.5f' % total_loss_s)
             print("Cell dec. loss:", total_loss_cc)
             if val:
-                print("Total val. loss: %.5f" %total_loss_val)
-                print('Validation struct. decod. loss: %.5f'%total_loss_s_val)
-                if abs(1-LAMBDA) > 0.0000001:
-                    print('Validation cell decoder. loss: %.5f'% loss_cc_val)
+                if val[epoch]:
+                    print("Total val. loss: %.5f" %total_loss_val)
+                    print('Validation struct. decod. loss: %.5f'%total_loss_s_val)
+                    if abs(1-LAMBDA) > 0.0000001:
+                        print(val)
+                        quit()
+                        print('Validation cell decoder. loss: %.5f'% loss_cc_val)
             print('time for 100k examples:', "%.2f hours" %
                   ((t1_stop-t1_start)/number_examples*100000/3600))
-        return losses_total,losses_s, losses_cc, losses_total_val, losses_s_val, losses_cc_val
+        return losses_total , losses_s, losses_cc, losses_total_val, losses_s_val, losses_cc_val

@@ -4,7 +4,7 @@ relative_path = "../../Dataset"
 
 # model_tag is the name of the folder that the checkpoints folders will be saved in
 
-model_tag = "Encoder_LL"
+model_tag = "test"
 
 # tunable parameters
 out_channels_structural = 64 # number of channels
@@ -19,11 +19,8 @@ in_channels = 512 # fixed in output from resnet, do not change
 structural_embedding_size = 16 # determined from preprocessing, do not change
 cell_content_embedding_size = 80 # determined from preprocessing, do not change
 
-
 # set number of epochs
-epochs = 20
-#epochs = 25
-
+epochs = 500
 
 # make list of lambdas to use for each epoch in training
 

@@ -61,6 +61,7 @@ class DecoderCellContent(torch.nn.Module):
         # context_vector: (batch_size, encoder_size)
         context_vector, attention_weights = self.cell_content_attention.forward(encoded_features_map, structural_hidden_state, cell_content_hidden_state)
 
+
         # print("context_vector")
         # print(context_vector.shape)
 
@@ -135,6 +136,7 @@ class DecoderCellContent(torch.nn.Module):
             prediction, cell_content_hidden_state, attention_weights = self.timestep(encoded_features_map[:batch_size_t], structural_hidden_state[:, :batch_size_t, :], cell_content_input[:batch_size_t], cell_content_hidden_state[:, :batch_size_t, :])
 
 
+
             # stores the predictions
             predictions[t, :batch_size_t, :] = prediction
 
@@ -145,15 +147,17 @@ class DecoderCellContent(torch.nn.Module):
             cell_content_input = cell_content_target[:batch_size_t, t]
 
             # compute loss
-            loss += self.loss_criterion(prediction, cell_content_input)
+            loss += self.loss_criterion(prediction, cell_content_input)/batch_size_t
 
         # reorder back to original positions
+
+
 
         predictions = predictions[:, sort_ind, :]
 
 
         # normalize
-#       loss = loss/num_timesteps/batch_size
+        loss = loss/num_timesteps
         regularisation_term = alpha_c_cell_content * torch.mean(((1 - attention_weights_cell_content.sum(dim=0)) ** 2))
 
         loss += regularisation_term
@@ -211,8 +215,9 @@ class DecoderCellContent(torch.nn.Module):
 
 #                print('pad prob', compatible_target.size(), compatible_prediction_prob.size())
 
-            loss+= self.loss_criterion(compatible_prediction_prob, compatible_target)#/num_predictions
-        return loss
+            time_steps = compatible_target.shape[0]
+            loss+= self.loss_criterion(compatible_prediction_prob, compatible_target)/time_steps
+        return loss/batch_size
 
     def predict(self, encoded_features_map, structural_hidden_state, cell_content_target=None, maxT = 150, store_attention=False):
         ''' For use on validation set and test set.

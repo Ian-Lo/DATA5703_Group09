@@ -1,14 +1,13 @@
-
 # the relative path of the folder containing the dataset
 relative_path = "../../Dataset"
 
 # model_tag is the name of the folder that the checkpoints folders will be saved in
 
-model_tag = "test"
+model_tag = "baseline_cell"
 
 # tunable parameters
 out_channels_structural = 64 # number of channels
-out_channels_cell_content =64 # number of channels
+out_channels_cell_content = 64 # number of channels
 structural_hidden_size = 128 # dimensions of hidden layer in structural decoder
 structural_attention_size = 128 # dimensions of context vector in structural decoder
 cell_content_hidden_size = 256 # dimensions of hidden layer in cell decoder
@@ -19,15 +18,23 @@ in_channels = 512 # fixed in output from resnet, do not change
 structural_embedding_size = 16 # determined from preprocessing, do not change
 cell_content_embedding_size = 80 # determined from preprocessing, do not change
 
+
 # set number of epochs
-epochs = 300
+epochs = 100
+#epochs = 25
+
 
 # make list of lambdas to use for each epoch in training
+lambda_ratio = 0.2
+lambdas = int(lambda_ratio * epochs) * [1.0] + int((1-lambda_ratio) * epochs) * [0.5]
 
-lambdas = epochs*[1.0]
+#lambdas = [1.0]*25 + 25*[1, 1, 0.5, 0.5]# for n in range(epochs)] # LAMBDA = 1 turns OFF cell decoder
+# if you want to run WITH cell decoder, you can uncomment the line below, remember to change epochs to 25
+#lambdas = [1 for _ in range(30)] + [0.5 for _ in range(70)]#+ [0.5 for _ in range(10)] + [0.5 for _ in range(2)]
+
 
 # make list of learning rate to use for each epoch in training
-lrs = epochs * [0.001] #+ [0.001]*25
+lrs = [0.001]*100 #+ [0.001]*25
 #lrs =[0.001 for n in range(20)]+ [0.0001 for _ in range(30)] + [0.00001 for _ in range(50)]# + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 #if you want to run WITH cell decoder, you can uncomment the line below, rembember to change epochs to 25
 #lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
@@ -54,11 +61,8 @@ maxT_val = 200
 alpha_c_struc = 0.0
 alpha_c_cell_content = 0.0
 
-structural_encoder_conv = False
-cell_content_encoder_conv = False
-
+# import model
 from Model import Model
-from matplotlib import pylab as plt
 
 # instantiate model
 model = Model(relative_path,
@@ -71,8 +75,11 @@ model = Model(relative_path,
                 structural_attention_size=structural_attention_size,
                 cell_content_embedding_size=cell_content_embedding_size,
                 cell_content_hidden_size=cell_content_hidden_size,
-                cell_content_attention_size=cell_content_attention_size,
-                structural_encoder_conv = False)
+                cell_content_attention_size=cell_content_attention_size)
+
+model.load_checkpoint(file_path="checkpoint_066.pth.tar")
+
+# train model
 
 loss,loss_s, loss_cc, loss_val, loss_s_val, loss_cc_val = model.train(epochs=epochs,
             lambdas=lambdas,
@@ -86,10 +93,18 @@ loss,loss_s, loss_cc, loss_val, loss_s_val, loss_cc_val = model.train(epochs=epo
             maxT_val = maxT_val,
             alpha_c_struc = alpha_c_struc,
             alpha_c_cell_content = alpha_c_cell_content)
-plt.plot(loss)
+print(loss_val)
 
-plt.title("Test of link between structural decoder and cell decoder")
-plt.ylabel("Cell content loss")
-plt.xlabel("Epochs")
+
+from matplotlib import pylab as plt
+plt.plot(loss, label = 'total loss')
+plt.plot(loss_s, label = 'structural loss')
+plt.plot(loss_cc, label = 'cell loss')
 plt.legend()
-plt.savefig("Figures/Test-Link.png")
+plt.savefig('Figures/Test-Model-Norm.png')
+
+# plt.plot(loss, label = 'total loss')
+# plt.plot(loss_s, label = 'structural loss')
+# plt.plot(loss_cc, label = 'cell loss')
+# plt.legend()
+# plt.savefig('Figures/Test-Model-Norm.png')

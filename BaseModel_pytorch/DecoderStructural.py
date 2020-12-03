@@ -57,7 +57,6 @@ class DecoderStructural(torch.nn.Module):
         # compute the context vector
         # context_vector: (batch_size, encoder_size)
         context_vector, attention_weights = self.structural_attention.forward(encoded_features_map, structural_hidden_state)
-
         # embed the input
         # embedded_structural_input: (batch size, embedding_size)
         embedded_structural_input = self.embedding(structural_input)
@@ -82,8 +81,6 @@ class DecoderStructural(torch.nn.Module):
         return prediction, structural_hidden_state, attention_weights
 
     def forward(self, encoded_features_map, structural_target, alpha_c_struc = 0.05):
-
-
 
         batch_size = encoded_features_map.shape[0]
         first_nonzero = (structural_target == 0).sum(dim=1)
@@ -135,18 +132,20 @@ class DecoderStructural(torch.nn.Module):
             # teacher forcing
             structural_input = structural_target[:batch_size_t, t]
 
-            loss += self.loss_criterion(prediction, structural_input)
+            loss += self.loss_criterion(prediction, structural_input)/batch_size_t
 
 
             # TODO: implement more efficiently
             storage[t, :, :batch_size_t] = structural_hidden_state
+
 
         # reorder back to original positions
         storage = storage[:,:, sort_ind]
         predictions = predictions[:, sort_ind, :]
 
         # normalize by the number of timesteps and examples to allow comparison
-        #loss = loss/num_timesteps/batch_size
+        loss = loss/num_timesteps
+
         regularisation_term = alpha_c_struc * torch.mean(((1 - attention_weights.sum(dim=0)) ** 2))
         loss += regularisation_term
 
@@ -186,7 +185,6 @@ class DecoderStructural(torch.nn.Module):
                 compatible_prediction_prob = prediction_prob
 
             else:
-
                 # pad the probability predictions to reach the number of target tokens
                 padded_prediction_prob = torch.zeros((unpadded_target_size, num_probs))
                 padded_prediction_prob[0:num_predictions, :] = prediction_prob
@@ -195,9 +193,10 @@ class DecoderStructural(torch.nn.Module):
                 compatible_prediction_prob = padded_prediction_prob
 
 #                print('pad prob', compatible_target.size(), compatible_prediction_prob.size())
+            time_steps = compatible_target.shape[0]
+            loss+= self.loss_criterion(compatible_prediction_prob, compatible_target)/time_steps
 
-            loss+= self.loss_criterion(compatible_prediction_prob, compatible_target)#/num_predictions
-        return loss
+        return loss/batch_size
 
     def predict(self, encoded_features_map, structural_target = None, maxT = 2000, store_attention=False):
         ''' For use on validation set and test set.

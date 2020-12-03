@@ -1,3 +1,4 @@
+# checkout branch test-link2
 
 # the relative path of the folder containing the dataset
 relative_path = "../../Dataset"
@@ -20,11 +21,13 @@ structural_embedding_size = 16 # determined from preprocessing, do not change
 cell_content_embedding_size = 80 # determined from preprocessing, do not change
 
 # set number of epochs
+
 epochs = 300
+
 
 # make list of lambdas to use for each epoch in training
 
-lambdas = epochs*[1.0]
+lambdas = 10*[1.0]#+10*[0.5]
 
 # make list of learning rate to use for each epoch in training
 lrs = epochs * [0.001] #+ [0.001]*25
@@ -33,7 +36,7 @@ lrs = epochs * [0.001] #+ [0.001]*25
 #lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 
 # Number of examples to include in the training set
-number_examples=10
+number_examples=1
 
 # Number of examples to include in validation set
 number_examples_val=10 # not used if val==None
@@ -46,8 +49,8 @@ batch_size_val = 10
 storage_size=1000 # fixed, do not change
 
 # whether to calculate the validation loss
-f = 0
-val = f*[False]+(epochs-f)*[True]#, False, True, True]
+f = epochs
+val = f*[False]#+(epochs-f)*[True]#, False, True, True]
 
 maxT_val = 200
 
@@ -56,6 +59,8 @@ alpha_c_cell_content = 0.0
 
 structural_encoder_conv = False
 cell_content_encoder_conv = False
+
+test_link = 10*[None]
 
 from Model import Model
 from matplotlib import pylab as plt
@@ -85,6 +90,7 @@ loss,loss_s, loss_cc, loss_val, loss_s_val, loss_cc_val = model.train(epochs=epo
             val = val,
             maxT_val = maxT_val,
             alpha_c_struc = alpha_c_struc,
+
             alpha_c_cell_content = alpha_c_cell_content)
 plt.plot(loss)
 
@@ -92,4 +98,5 @@ plt.title("Test of link between structural decoder and cell decoder")
 plt.ylabel("Cell content loss")
 plt.xlabel("Epochs")
 plt.legend()
+
 plt.savefig("Figures/Test-Link.png")

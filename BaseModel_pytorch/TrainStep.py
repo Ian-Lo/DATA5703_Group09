@@ -7,7 +7,8 @@ def train_step(features_map,
                 model,
                 LAMBDA=0.5,
                 alpha_c_struc = 0.0,
-                alpha_c_cell_content = 0.0):
+                alpha_c_cell_content = 0.0,
+                test_link = None):
 
     # pass features through encoder
     encoded_structural_features_map = model.encoder_structural.forward(features_map)
@@ -96,7 +97,10 @@ def train_step(features_map,
     # calculate loss and update weights
 
     if abs(1.0-LAMBDA)>=0.0000001:
-        loss =  LAMBDA * loss_s +(1.0-LAMBDA) * loss_cc
+        if test_link:
+            loss = loss_cc # LAMBDA * loss_s +(1.0-LAMBDA)
+        else:
+            loss =  LAMBDA * loss_s +(1.0-LAMBDA) * loss_cc
         # Back propagation
         model.decoder_cell_content_optimizer.zero_grad()
         model.decoder_structural_optimizer.zero_grad()
@@ -105,10 +109,18 @@ def train_step(features_map,
         loss.backward()
 
         # Update weights
-        model.decoder_cell_content_optimizer.step()#
-        model.decoder_structural_optimizer.step()
-        model.encoder_cell_content_optimizer.step()
-        model.encoder_structural_optimizer.step()
+
+        if test_link:
+            print("test-link is active")
+            # only update structural decoder and encoder
+            model.decoder_structural_optimizer.step()
+            model.encoder_structural_optimizer.step()
+
+        else:
+            model.decoder_cell_content_optimizer.step()#
+            model.decoder_structural_optimizer.step()
+            model.encoder_cell_content_optimizer.step()
+            model.encoder_structural_optimizer.step()
 
     if abs(1.0-LAMBDA)<0.0000001:
         loss = loss_s

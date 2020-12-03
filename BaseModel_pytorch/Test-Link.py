@@ -21,25 +21,23 @@ structural_embedding_size = 16 # determined from preprocessing, do not change
 cell_content_embedding_size = 80 # determined from preprocessing, do not change
 
 # set number of epochs
-
-epochs = 300
-
-
+epochs =100
 # make list of lambdas to use for each epoch in training
-
-lambdas = 10*[1.0]#+10*[0.5]
-
+lambdas = epochs*[0.0]#+10*[0.5]
 # make list of learning rate to use for each epoch in training
-lrs = epochs * [0.001] #+ [0.001]*25
-#lrs =[0.001 for n in range(20)]+ [0.0001 for _ in range(30)] + [0.00001 for _ in range(50)]# + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
-#if you want to run WITH cell decoder, you can uncomment the line below, rembember to change epochs to 25
-#lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
+lrs = epochs * [0.0001] #+ [0.001]*25
+
+# whether to calculate the validation loss
+f = epochs
+val = f*[False]#+(epochs-f)*[True]#, False, True, True]
+# whether to neglect structural loss and only backpropagate the structural decoder
+test_link = epochs*[True]
 
 # Number of examples to include in the training set
 number_examples=1
 
 # Number of examples to include in validation set
-number_examples_val=10 # not used if val==None
+number_examples_val=1 # not used if val==None
 
 # size of batches
 batch_size=10
@@ -48,11 +46,8 @@ batch_size_val = 10
 # number of examples in each preprocessed file
 storage_size=1000 # fixed, do not change
 
-# whether to calculate the validation loss
-f = epochs
-val = f*[False]#+(epochs-f)*[True]#, False, True, True]
 
-maxT_val = 200
+maxT_val = 100
 
 alpha_c_struc = 0.0
 alpha_c_cell_content = 0.0
@@ -60,7 +55,6 @@ alpha_c_cell_content = 0.0
 structural_encoder_conv = False
 cell_content_encoder_conv = False
 
-test_link = 10*[None]
 
 from Model import Model
 from matplotlib import pylab as plt
@@ -90,13 +84,28 @@ loss,loss_s, loss_cc, loss_val, loss_s_val, loss_cc_val = model.train(epochs=epo
             val = val,
             maxT_val = maxT_val,
             alpha_c_struc = alpha_c_struc,
+            alpha_c_cell_content = alpha_c_cell_content,
+            test_link = test_link)
 
-            alpha_c_cell_content = alpha_c_cell_content)
-plt.plot(loss)
+import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 8})
 
-plt.title("Test of link between structural decoder and cell decoder")
-plt.ylabel("Cell content loss")
-plt.xlabel("Epochs")
-plt.legend()
+fig, ax1 = plt.subplots(figsize=(4,2))
+ax1.title.set_text("Test structural-/cell decoder link")
+
+color = 'tab:red'
+ax1.set_xlabel('Epochs')
+ax1.set_ylabel('Cell decoder loss', color=color)
+ax1.plot(loss_cc, color=color)
+ax1.tick_params(axis='y', labelcolor=color)
+
+ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+color = 'tab:blue'
+ax2.set_ylabel('Structural decoder loss', color=color)  # we already handled the x-label with ax1
+ax2.plot(loss_s, color=color)
+ax2.tick_params(axis='y', labelcolor=color)
+
+fig.tight_layout()  # otherwise the right y-label is slightly clipped
 
 plt.savefig("Figures/Test-Link.png")

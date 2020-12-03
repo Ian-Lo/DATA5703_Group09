@@ -30,7 +30,7 @@ epochs = 20
 lambdas = epochs*[1.0]
 
 # make list of learning rate to use for each epoch in training
-lrs = epochs * [0.01] #+ [0.001]*25
+lrs = epochs * [0.001] #+ [0.001]*25
 #lrs =[0.001 for n in range(20)]+ [0.0001 for _ in range(30)] + [0.00001 for _ in range(50)]# + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 #if you want to run WITH cell decoder, you can uncomment the line below, rembember to change epochs to 25
 #lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
@@ -61,7 +61,7 @@ structural_encoder_conv = False
 cell_content_encoder_conv = False
 
 convs = [False, True]
-outsize = [64, 256]
+outsize = [64, 512]
 
 from Model import Model
 from matplotlib import pylab as plt

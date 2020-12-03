@@ -28,14 +28,42 @@ class StructuralAttention(torch.nn.Module):
         attention_structural_hidden_state = self.attention_structural_hidden_state(structural_hidden_state)
         # we add an extra dimension so to be able to sum up the two tensor
         # attention_structural_hidden: (batch_size, 1, structural_attention_size)
-        attention_structural_hidden_state = attention_structural_hidden_state.unsqueeze(1)
+#        print(attention_structural_hidden_state.shape)
+#         quit()
 
+        attention_structural_hidden_state = attention_structural_hidden_state.unsqueeze(1)
         # print("attention_structural_hidden_state[0]")
         # print(torch.min(attention_structural_hidden_state[0]), torch.max(attention_structural_hidden_state[0]))
         # print("attention_encoded_features_map[0]")
         # print(torch.min(attention_encoded_features_map[0]), torch.max(attention_encoded_features_map[0]))
 
-        # combine the attentions
+        # from matplotlib import pylab as plt
+        # plt.matshow(encoded_features_map[0,:,:].detach().numpy())
+        # plt.colorbar()
+        # plt.savefig('encoded_features_map.png')
+        # plt.close()
+        #
+        # print(structural_hidden_state.shape)
+        # plt.matshow(structural_hidden_state.detach().numpy())
+        # plt.colorbar()
+        # plt.savefig("structural_hidden_state.png")
+        # plt.close()
+        #
+        # # combine the attentions
+        # print(attention_encoded_features_map.shape)
+        # print(attention_structural_hidden_state.shape)
+        # from matplotlib import pylab as plt
+        # plt.matshow(attention_encoded_features_map[0,:,:].detach().numpy())
+        # plt.colorbar()
+        # plt.savefig('attention_encoded_features_map.png')
+        # plt.close()
+        #
+        # plt.matshow(attention_structural_hidden_state[:,0,:].detach().numpy())
+        # plt.colorbar()
+        # plt.savefig('attention_structural_hidden_state.png')
+        # plt.close()
+
+
         attention_combined = self.attention_combined(self.relu(attention_encoded_features_map + attention_structural_hidden_state))
         # we remove last dimension
         # attention_combined: (batch_size, n*n)
@@ -49,6 +77,7 @@ class StructuralAttention(torch.nn.Module):
 
         # context_vector: (batch_size, encoder_size)
         context_vector = (encoded_features_map * attention_weights).sum(dim=1)
+
 
         attention_weights = torch.squeeze(attention_weights, 2)
 

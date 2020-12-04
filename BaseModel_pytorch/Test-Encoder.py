@@ -30,7 +30,7 @@ epochs = 20
 lambdas = epochs*[1.0]
 
 # make list of learning rate to use for each epoch in training
-lrs = epochs * [0.001] #+ [0.001]*25
+lrs = epochs * [0.0005] #+ [0.001]*25
 #lrs =[0.001 for n in range(20)]+ [0.0001 for _ in range(30)] + [0.00001 for _ in range(50)]# + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 #if you want to run WITH cell decoder, you can uncomment the line below, rembember to change epochs to 25
 #lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
@@ -66,8 +66,15 @@ outsize = [64, 512]
 from Model import Model
 from matplotlib import pylab as plt
 
-for conv in convs:
-    for out in outsize:
+import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 8})
+
+fig, ax1 = plt.subplots(figsize=(3,2))
+
+conv_labels = ["LL", "Conv."]
+out_labels = ['Features:']
+for n, conv in enumerate(convs):
+    for m, out in enumerate(outsize):
         # instantiate model
         model = Model(relative_path,
                         model_tag,
@@ -94,10 +101,12 @@ for conv in convs:
                     maxT_val = maxT_val,
                     alpha_c_struc = alpha_c_struc,
                     alpha_c_cell_content = alpha_c_cell_content)
-        plt.plot(loss, label = 'Conv:%s, out_size:%d'%(conv, out))
+        ax1.plot(loss, label = '%s, Out-dim:%d'%(conv_labels[n], out))
 
-plt.title("Training with different encoders and with different output dimensions")
-plt.ylabel("Loss")
-plt.xlabel("Epochs")
-plt.legend()
+
+ax1.title.set_text("Encoder type and out-put dimensions")
+ax1.set_ylabel("Training loss")
+ax1.set_xlabel("Epochs")
+ax1.legend()
+fig.tight_layout()
 plt.savefig("Figures/Test-Encoders.png")

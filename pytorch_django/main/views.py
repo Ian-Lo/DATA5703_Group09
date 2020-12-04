@@ -140,11 +140,17 @@ def index(request):
                 cell_content_attention_size=cell_content_attention_size)
 
         # reload latest checkpoint
-        model.load_checkpoint(file_path = "/Users/andersborges/Downloads/checkpoint_004.pth (1).tar")
+        model.load_checkpoint(file_path = "checkpoint_004.pth.tar")
         predicted_struc_tokens, predictions_cell, structure_attention_weights , cell_attention_weights = model.predict(file1_path)
 
         html_struc = build_html_structure(predicted_struc_tokens)
         html_out = fill_html_structure(html_struc, predictions_cell).replace("<end>", " ")
+
+        pred_file_path  = file1_path.replace(".png", "_pred.html")
+
+        f = open(pred_file_path, "w")
+        f.write(html_out)
+        f.close()
         # add attention plot of structural tokens
 
         # load image
@@ -206,16 +212,16 @@ def index(request):
             #  structural tokens
             structural_tks = ['<start>'] + predictions_cell[cell_token]
 
-            num_subplots = min(len(structure_attention_weights), 9)
+            num_subplots = min(len(structure_attention_weights), 25)
 
-            rows = num_subplots // 3
-            cols = min(num_subplots, 3)
+            rows = num_subplots // 5
+            cols = min(num_subplots, 5)
             fig, axes = plt.subplots(rows, cols)
 
             for t in range(num_subplots):
 
-                row = t // 3
-                col = t % 3
+                row = t // 5
+                col = t % 5
 
                 # to obtain structure tokens in every time step
                 alphas = structure_attention_weights[t]
@@ -240,7 +246,7 @@ def index(request):
     #        print( "attention_file_name", attention_file_name)
             plt.savefig(attention_file_path_cell)
 
-            
+
 
         return render(request, "index.html", {
             "post": True,

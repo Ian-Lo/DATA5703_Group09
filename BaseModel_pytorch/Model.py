@@ -287,7 +287,8 @@ class Model:
             print([self.structural_integer2token[p.item()]
                    for p in predict_id[:, 0].detach().numpy()])
             print("Accuracy WITH teacher forcing (1 example):")
-            print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(
+
+            print(np.sum(structural_tokens[0,:].detach().numpy() == predict_id.detach(
             ).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])
             # for name, param in self.decoder_cell_content.named_parameters():
             #     if param.requires_grad:
@@ -305,8 +306,10 @@ class Model:
                 print([self.cell_content_integer2token[p.item()]
                        for p in predict_id_cell[:, 1].detach().numpy()])
                 print("Accuracy WITH teacher forcing (1 example):")
-                print(np.sum(structural_tokens[0].detach().numpy() == predict_id.detach(#
-                ).numpy()[:, 0])/structural_tokens[0].detach().numpy().shape[0])
+                print(cells_content_tokens.shape, predict_id_cell.shape)
+
+                print(np.sum(cells_content_tokens[0,:,:].detach().numpy().T == predict_id_cell.detach(
+                 ).numpy())/cells_content_tokens[0,:,:].detach().numpy().size)
 
 
             checkpoint.save_checkpoint(epoch, self.encoder_structural, self.encoder_cell_content, self.decoder_structural, self.decoder_cell_content,

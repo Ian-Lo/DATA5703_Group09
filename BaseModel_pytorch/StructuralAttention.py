@@ -37,12 +37,50 @@ class StructuralAttention(torch.nn.Module):
         # print("attention_encoded_features_map[0]")
         # print(torch.min(attention_encoded_features_map[0]), torch.max(attention_encoded_features_map[0]))
 
-        # from matplotlib import pylab as plt
-        # plt.matshow(encoded_features_map[0,:,:].detach().numpy())
-        # plt.colorbar()
-        # plt.savefig('encoded_features_map.png')
-        # plt.close()
-        #
+#         from matplotlib import pylab as plt
+#         import numpy as np
+#         fig, axes = plt.subplots(nrows=2, ncols=1, figsize = (50, 10))
+#         ax0 = axes.flat[0]
+#         ax1 = axes.flat[1]
+#         print(encoded_features_map[0,:,:].detach().numpy().shape)
+#         print(structural_hidden_state.detach().numpy().shape)
+#         print(attention_encoded_features_map[0,:,:].detach().numpy().shape)
+#         print(np.repeat(attention_structural_hidden_state[0,:,:].detach().numpy(), 144, axis = 0).shape)
+#         print( (attention_encoded_features_map + attention_structural_hidden_state).shape)
+#
+#         ax0.matshow(encoded_features_map[0,:,:].detach().numpy())
+#         ax1.matshow(structural_hidden_state.detach().numpy())
+#         plt.savefig('Figures/attention_input.png')
+#
+#         fig, axes = plt.subplots(nrows=1, ncols=3, figsize = (6,1.7))
+#         ax0 = axes.flat[0]
+#         ax1 = axes.flat[1]
+#         ax2 = axes.flat[2]
+#         print("attention_encoded_features_map")
+#         print(attention_encoded_features_map[0,:,:].detach().numpy().min(), attention_encoded_features_map[0,:,:].detach().numpy().max())
+#         print("attention_structural_hidden_state")
+#         print(attention_structural_hidden_state[0,:,:].detach().numpy().min(), attention_structural_hidden_state[0,:,:].detach().numpy().max())
+#         min_ = min(attention_encoded_features_map[0,:,:].detach().numpy().min(),attention_structural_hidden_state[0,:,:].detach().numpy().min() )
+#         max_ = max(attention_encoded_features_map[0,:,:].detach().numpy().max(),attention_structural_hidden_state[0,:,:].detach().numpy().max() )
+#         im0 = ax0.matshow(attention_encoded_features_map[0,:,:].detach().numpy(),vmin = min_, vmax = max_)
+#         ax0.set_xticks([])
+#         ax0.set_yticks([])
+#         im1 = ax1.matshow(np.repeat(attention_structural_hidden_state[0,:,:].detach().numpy(), 144, axis = 0), vmin = min_, vmax = max_)
+#         ax1.set_xticks([])
+#         ax1.set_yticks([])
+#         im2 = ax2.matshow( (attention_encoded_features_map + attention_structural_hidden_state).detach().numpy()[0,:,:], vmin  = min_, vmax = max_)
+#         ax2.set_xticks([])
+#         ax2.set_yticks([])
+#         fig.subplots_adjust(bottom = 0.4)
+# #      cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
+#         cbar_ax = fig.add_axes([0.15, 0.25, 0.7, 0.07])
+#         fig.colorbar(im2, cax=cbar_ax, orientation = 'horizontal')
+# #        fig.tight_layout()
+#         plt.savefig('Figures/attention_intoReLu.png')
+# #        quit()
+
+        #plt.close()
+
         # print(structural_hidden_state.shape)
         # plt.matshow(structural_hidden_state.detach().numpy())
         # plt.colorbar()
@@ -71,6 +109,8 @@ class StructuralAttention(torch.nn.Module):
 
         # compute the attention weights
         attention_weights = self.softmax(attention_combined)
+#        print("attention_weigths")
+#        print(attention_weights.detach().numpy().min(), attention_weights.detach().numpy().max(), attention_weights.detach().numpy().mean())
         # we restore last dimension
         # attention_weights: (batch_size, n*n, 1)
         attention_weights = attention_weights.unsqueeze(2)

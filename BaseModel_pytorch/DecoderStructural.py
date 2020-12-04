@@ -160,6 +160,7 @@ class DecoderStructural(torch.nn.Module):
         """
 
         batch_size = targets.size()[0]
+
         loss =0
 
         for example_idx in range(batch_size):
@@ -174,27 +175,27 @@ class DecoderStructural(torch.nn.Module):
             prediction_prob = torch.stack(prediction_probs[example_idx])
             num_predictions, num_probs = prediction_prob.size()
 
-            if unpadded_target_size < num_predictions:
+            # if unpadded_target_size < num_predictions:
 
-                # pad the target tokens to reach the the number of predictions
-                padded_target = torch.zeros(num_predictions, dtype=torch.int64)
-                padded_target[0:unpadded_target_size] = unpadded_target
+            # pad the target tokens to reach the the number of predictions
+            padded_target = torch.zeros(num_predictions, dtype=torch.int64)
+            padded_target[0:min(unpadded_target_size, num_predictions)] = unpadded_target[0:min(unpadded_target_size, num_predictions)]
 
-                # the tensors have compatible lengths
-                compatible_target = padded_target
-                compatible_prediction_prob = prediction_prob
+            # the tensors have compatible lengths
+            compatible_target = padded_target
+            compatible_prediction_prob = prediction_prob
 
-            else:
-                # pad the probability predictions to reach the number of target tokens
-                padded_prediction_prob = torch.zeros((unpadded_target_size, num_probs))
-                padded_prediction_prob[0:num_predictions, :] = prediction_prob
-
-                compatible_target = unpadded_target
-                compatible_prediction_prob = padded_prediction_prob
-
+            # else:
+            #     # pad the probability predictions to reach the number of target tokens
+            #     padded_prediction_prob = torch.zeros((unpadded_target_size, num_probs))
+            #     padded_prediction_prob[0:num_predictions, :] = prediction_prob
+            #
+            #     compatible_target = unpadded_target
+            #     compatible_prediction_prob = padded_prediction_prob
+            #
 #                print('pad prob', compatible_target.size(), compatible_prediction_prob.size())
-            time_steps = compatible_target.shape[0]
-            loss+= self.loss_criterion(compatible_prediction_prob, compatible_target)/time_steps
+
+            loss+= self.loss_criterion(compatible_prediction_prob, compatible_target)/unpadded_target_size
 
         return loss/batch_size
 

@@ -16,20 +16,21 @@ val_losses = []
 
 for l in ls:
     if "epoch" in l:
-        epochs.append(int(l.split()[1]))
+        epochs.append(int(l.split()[1])+1)
     if "Struct. decod. loss:" in l:
         losses.append(float(l.split()[-1]))
     if "Validation struct. decod. loss:" in l:
         val_losses.append(float(l.split()[-1]))
 f.close()
 
-fig, ax1 = plt.subplots(figsize=(4,2))
+fig, ax1 = plt.subplots(figsize=(4,3))
 ax1.title.set_text("10k samples, lr=0.001, lambda = 1.0")
 ax1.plot(epochs, losses, label = 'Training')
 ax1.plot(epochs, val_losses, label = "Validation")
 ax1.set_ylabel("Loss")
-ax1.set_xlabel("Epochs")
+ax1.set_xlabel("Epoch")
 ax1.legend()
+ax1.set_ylim([0, 1.1*max(losses)])
 fig.tight_layout()
 plt.savefig("Figures/train_val_loss.png")
 

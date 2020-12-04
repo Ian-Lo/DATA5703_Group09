@@ -343,8 +343,6 @@ class Model:
                         losses_s_val.append(total_loss_s_val)
                         losses_cc_val.append(total_loss_cc_val)
 
-                        #total_loss_s_val /= len(batches)
-                        #total_loss_cc_val /= len(batches)
                         print("-------------Validation loss:---------------")
                         print("-- structural decoder:---")
                         print("Truth (1 example)")
@@ -376,8 +374,8 @@ class Model:
                     print("Total val. loss: %.5f" %total_loss_val)
                     print('Validation struct. decod. loss: %.5f'%total_loss_s_val)
                     if abs(1-LAMBDA) > 0.0000001:
-                        print(val)
-                        quit()
+#                         print(val)
+# #                        quit()
                         print('Validation cell decoder. loss: %.5f'% loss_cc_val)
             print('time for 100k examples:', "%.2f hours" %
                   ((t1_stop-t1_start)/number_examples*100000/3600))

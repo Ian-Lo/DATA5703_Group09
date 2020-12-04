@@ -101,7 +101,7 @@ for n, conv in enumerate(convs):
                     maxT_val = maxT_val,
                     alpha_c_struc = alpha_c_struc,
                     alpha_c_cell_content = alpha_c_cell_content)
-        ax1.plot(loss, label = '%s, Out-dim:%d'%(conv_labels[n], out))
+        ax1.plot(range(1, len(loss)+1), loss, label = '%s, Out-dim:%d'%(conv_labels[n], out))
 
 
 ax1.title.set_text("Encoder type and out-put dimensions")

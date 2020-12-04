@@ -96,14 +96,14 @@ ax1.title.set_text("Test structural-/cell decoder link")
 color = 'tab:red'
 ax1.set_xlabel('Epochs')
 ax1.set_ylabel('Cell decoder loss', color=color)
-ax1.plot(loss_cc, color=color)
+ax1.plot(range(1, len(loss_cc)+1), loss_cc, color=color)
 ax1.tick_params(axis='y', labelcolor=color)
 
 ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
 color = 'tab:blue'
 ax2.set_ylabel('Structural decoder loss', color=color)  # we already handled the x-label with ax1
-ax2.plot(loss_s, color=color)
+ax2.plot(range(1, len(loss_s)+1), loss_s, color=color)
 ax2.tick_params(axis='y', labelcolor=color)
 
 fig.tight_layout()  # otherwise the right y-label is slightly clipped

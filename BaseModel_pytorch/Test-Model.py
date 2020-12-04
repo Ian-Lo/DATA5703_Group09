@@ -6,8 +6,8 @@ relative_path = "../../Dataset"
 model_tag = "baseline_cell"
 
 # tunable parameters
-out_channels_structural = 64 # number of channels
-out_channels_cell_content = 64 # number of channels
+out_channels_structural = 512 # number of channels
+out_channels_cell_content = 512 # number of channels
 structural_hidden_size = 128 # dimensions of hidden layer in structural decoder
 structural_attention_size = 128 # dimensions of context vector in structural decoder
 cell_content_hidden_size = 256 # dimensions of hidden layer in cell decoder
@@ -26,7 +26,7 @@ epochs = 10
 
 # make list of lambdas to use for each epoch in training
 lambda_ratio = 0.4
-lambdas = int(lambda_ratio * epochs) * [1.0] + int((1-lambda_ratio) * epochs) * [0.0001]
+lambdas = int(lambda_ratio * epochs) * [1.0] + int((1-lambda_ratio) * epochs) * [0.5]
 
 #lambdas = [1.0]*25 + 25*[1, 1, 0.5, 0.5]# for n in range(epochs)] # LAMBDA = 1 turns OFF cell decoder
 # if you want to run WITH cell decoder, you can uncomment the line below, remember to change epochs to 25
@@ -34,7 +34,7 @@ lambdas = int(lambda_ratio * epochs) * [1.0] + int((1-lambda_ratio) * epochs) * 
 
 
 # make list of learning rate to use for each epoch in training
-lrs = [0.01 for _ in range(epochs)] #+ [0.001]*25
+lrs = [0.001 for _ in range(epochs)] #+ [0.001]*25
 #lrs =[0.001 for n in range(20)]+ [0.0001 for _ in range(30)] + [0.00001 for _ in range(50)]# + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
 #if you want to run WITH cell decoder, you can uncomment the line below, rembember to change epochs to 25
 #lrs = [0.001 for _ in range(10)] + [0.0001 for _ in range(3)] + [0.001 for _ in range(10)] + [0.0001 for _ in range(2)]
@@ -46,14 +46,14 @@ number_examples=10
 number_examples_val=10 # not used if val==None
 
 # size of batches
-batch_size=1
+batch_size=10
 batch_size_val = 10
 
 # number of examples in each preprocessed file
 storage_size=1000 # fixed, do not change
 
 # whether to calculate the validation loss
-f = 1
+f = 0
 val = f*[False]+(epochs-f)*[True]#, False, True, True]
 
 maxT_val = 200
@@ -93,7 +93,7 @@ loss,loss_s, loss_cc, loss_val, loss_s_val, loss_cc_val = model.train(epochs=epo
             maxT_val = maxT_val,
             alpha_c_struc = alpha_c_struc,
             alpha_c_cell_content = alpha_c_cell_content)
-print(loss_val)
+
 
 
 from matplotlib import pylab as plt

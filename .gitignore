@@ -157,3 +157,5 @@ BaseModel_pytorch/Checkpoints/
 BaseModel_pytorch/Dataset/val_dataset_000.hdf5
 Analysis.ipynb
 BaseModel_pytorch/Dataset/train_dataset_000.hdf5
+/pytorch_django/media/
+.idea/

@@ -69,7 +69,7 @@ To reproduce the preprocessing step run the following files, in this order:
 
 # BATCHINGMECHANISM AND STORAGE CLASS
 
-The BatchingMechanism class contains the infrustructure to gather batches from the HDF5 files. It leverage the Storage class that wraps the low level communication with the HDF5 files. 
+The BatchingMechanism class contains the infrustructure to gather batches from the HDF5 files. It leverages the Storage class that wraps the low level communication with the HDF5 files. 
 
 # ENCODERSTRUCTURAL AND ENCODERCELLCONTENT CLASS
 

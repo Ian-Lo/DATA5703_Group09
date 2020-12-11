@@ -2,14 +2,10 @@
 
 # INSTRUCTIONS ON HOW TO RUN THE MODEL
 
-* Download the script 'run.sh' from https://github.com/Ian-Lo/DATA5703_Group09/blob/main/DevOps/run.sh.
-* Run the script run.sh (in the DevOps folder) in a bash terminal. 
- * This script will set up folders, clone the repository and download the HDF5 files.
+* An example of how to run the model is provided in this Colab notebook:
+https://colab.research.google.com/drive/1y9kbMLHX3UC3LEZhzauRrJxemZAKC3f_?usp=sharing
 
-* Our test model is at 'BaseModel_pytorch/Test_Model.py.
-
-* To run 'python3 Test_Model.py' from the directory 'BaseModel_pytorch'.
-
+* This script will set up folders, clone the repository and download the HDF5 files. It then allows running the training of the model.
 
 # REQUIREMENTS
 
@@ -55,17 +51,33 @@ Images were passed through a ResNet18 and the final tensor was stored in the HDF
 Structural tokens and cell content tokens were converted into numbers by means of vocabularies and the final tensors were stored in the HDF5 files.
 The input of the model are these HDF5 files not the original PubTabNet files.
 
+To reproduce the preprocessing step run the following files, in this order:
+
+* Dataset-Exploration.py (this, among other things, will create the vocabularies of structural and cell content tokens)
+
+* Dataset-Visualisation.py
+
+* Analysis_Test_Dev.py
+
+* Subset-Criteria-Analysis.py
+
+* Subset_Creation_dev.py
+
+* Subset_Creation_test.py
+
+* Subset-Creation.py
+
 # BATCHINGMECHANISM AND STORAGE CLASS
 
 The BatchingMechanism class contains the infrustructure to gather batches from the HDF5 files. It leverage the Storage class that wraps the low level communication with the HDF5 files. 
 
-# ENCODER CLASS
+# ENCODERSTRUCTURAL AND ENCODERCELLCONTENT CLASS
 
-The encoder class contains a 1x1 convolutional layer that takes in the features maps tensors contained in the HDF5 files and produces transformed features maps. The function of this layer is to adapt the features maps produced by the ResNet18 to out task.
+The encoder class contains both a 1x1 convolutional layer and a fully connected layer that takes in the features maps tensors contained in the HDF5 files and produces transformed features maps. The function of this layer is to adapt the features maps produced by the ResNet18 to out task. There is the option of using the 1x1 convolutional layer or the fully connected layer to perform this action. 
 
 # STRUCTURALATTENTION CLASS
 
-This StructuralAttention class contains the attention mechanism for the struictural decoder.
+This StructuralAttention class contains the attention mechanism for the structural decoder.
 
 # DECODERSTRUCTURAL CLASS
 
